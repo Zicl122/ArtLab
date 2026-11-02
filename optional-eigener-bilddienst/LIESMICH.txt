@@ -1,0 +1,3 @@
+Diese Variante ist optional und nicht in der Übersicht verlinkt.
+Sie ersetzt den eingebetteten Demo-Dienst durch ein eigenes Zeichenfeld, das über ein PHP-Skript auf deinem Webspace Replicate anspricht (kostet pro Bild etwa 6 Cent, braucht ein Replicate-Konto). Schritte stehen in EINRICHTEN.txt.
+Sinnvoll wird das erst, wenn die kostenlosen Demo-Dienste für deinen Einsatz zu eingeschränkt sind, zum Beispiel bei ganzen Klassen im Schulnetz.

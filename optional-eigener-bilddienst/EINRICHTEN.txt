@@ -1,0 +1,13 @@
+Aus Kritzel wird Bild, Einrichtung auf All-Inkl
+
+Die Seite kritzel-bild-eigener-dienst.html zeichnet nur. Das Bild erzeugt ein Bilddienst (Replicate), den der Ordner api anspricht. Der Zugangsschlüssel liegt nur auf dem Server und nie im Browser.
+
+1. Bei replicate.com ein Konto anlegen, Guthaben aufladen und unter Account, API tokens einen Schlüssel erzeugen (beginnt mit r8_). Ein Bild kostet laut Modellseite etwa 6 Cent.
+2. Im Ordner api die Datei config.beispiel.php kopieren und config.php nennen. Dort eintragen: token, klassencode, admincode. Die Limits max_pro_ip_und_stunde und max_pro_tag bremsen die Kosten.
+3. Alles wie gehabt auf den Webspace hochladen (mit dem Ordner api).
+4. Im Browser https://DEINE-ADRESSE/api/diagnose.php?code=DEIN-ADMINCODE aufrufen. Die Seite meldet, ob PHP, cURL, Schreibrechte und Token in Ordnung sind und welche Eingabefelder das Modell wirklich erwartet. Stimmen die Namen nicht mit dem Eintrag eingabe in config.php überein, bitte dort anpassen.
+5. kritzel-bild-eigener-dienst.html öffnen, zeichnen, beschreiben, Bild erzeugen.
+
+Testmodus ohne Dienst: kritzel-bild-eigener-dienst.html?demo=1 (zeigt nur die Bedienung, kein KI-Bild).
+
+Datenschutz Zeichnung und Beschreibung gehen an einen US-Dienst. Für den Einsatz mit Klassen bitte Schulleitung oder Datenschutzbeauftragte fragen, Namen und persönliche Angaben ausschließen.

@@ -1,0 +1,601 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Gesichter klappen mit Kamera</title>
+<style>
+  :root {
+    color-scheme: dark;
+    --bg: #0e0d10;
+    --fg: #f1ece4;
+    --muted: rgba(241, 236, 228, .68);
+    --linie: rgba(241, 236, 228, .22);
+    --rahmen: #09090b;
+    --akzent: #f1ece4;
+  }
+  * { box-sizing: border-box; }
+  html { background: var(--bg); }
+  body { margin: 0; min-height: 100svh; background: var(--bg); color: var(--fg);
+         font: 300 18px/1.5 Georgia, "Times New Roman", serif; -webkit-text-size-adjust: 100%; }
+  main { max-width: 640px; margin: 0 auto; padding: 64px 16px calc(40px + env(safe-area-inset-bottom)); }
+  h1 { font-weight: 400; font-size: clamp(1.9rem, 6vw, 2.6rem); line-height: 1.1; margin: 0 0 .5em; letter-spacing: -.01em; }
+  .einleitung { margin: 0 0 1.4em; color: var(--muted); max-width: 34em; }
+
+  /* ---------- Tisch mit Rand-Knöpfen ---------- */
+  .tisch {
+    --b: max(250px, min(calc(100vw - 32px - 40px), 440px, calc((100svh - 270px) * .75)));
+    --rand: 34px;
+    width: calc(var(--b) + var(--rand) + 6px);
+    display: grid; grid-template-columns: var(--rand) var(--b); grid-template-rows: var(--rand) auto; gap: 6px;
+    margin: 0 auto 1.2rem;
+  }
+  .spalten { grid-column: 2; grid-row: 1; display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; padding: 0 6px; }
+  .zeilen  { grid-column: 1; grid-row: 2; display: grid; grid-template-rows: repeat(4, 1fr); gap: 6px; padding: 6px 0; }
+  .rand-knopf { background: transparent; color: var(--muted); border: 1px solid var(--linie); border-radius: 8px;
+                font: inherit; font-size: 15px; line-height: 1; cursor: pointer; padding: 0; touch-action: manipulation;
+                display: flex; align-items: center; justify-content: center; }
+  .rand-knopf:hover { color: var(--fg); border-color: var(--fg); }
+  .rand-knopf:focus-visible, .feld:focus-visible, .knopf:focus-visible, input[type=range]:focus-visible {
+    outline: 2px solid var(--fg); outline-offset: 3px; }
+
+  .brett { grid-column: 2; grid-row: 2; display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; padding: 6px;
+           background: var(--rahmen); border-radius: 6px; box-shadow: 0 18px 50px rgba(0,0,0,.55), 0 2px 0 rgba(255,255,255,.04) inset; }
+
+  /* ---------- ein Feld = obere und untere Klappe ---------- */
+  .feld { position: relative; display: block; aspect-ratio: 1 / 1; padding: 0; margin: 0; border: 0; background: #222;
+          perspective: calc(var(--b) * 1.05); cursor: pointer; touch-action: manipulation; -webkit-tap-highlight-color: transparent;
+          font: inherit; color: inherit; }
+  .feld .h { position: absolute; left: 0; right: 0; height: 50%; overflow: hidden; background-repeat: no-repeat; background-color: #2a2420; display: block; }
+  .feld .ob  { top: 0; }
+  .feld .un  { bottom: 0; }
+  /* Zwei einzelne Klappen ohne 3D-Verschachtelung. Das läuft auch in Safari zuverlässig. */
+  .feld .vorn, .feld .hinten { z-index: 2; visibility: hidden; }
+  .feld .vorn   { top: 0;    transform-origin: 50% 100%; }
+  .feld .hinten { bottom: 0; transform-origin: 50% 0; transform: rotateX(90deg); }
+  .feld .sch { position: absolute; inset: 0; background: #000; opacity: 0; pointer-events: none; display: block; }
+  .feld .sch-un { inset: 50% 0 0 0; }
+  /* Scharnier und kleine Haltestifte wie am echten Gerät */
+  .feld::after { content: ""; position: absolute; left: 0; right: 0; top: calc(50% - 1px); height: 2px; z-index: 4;
+                 background: rgba(0,0,0,.78); box-shadow: 0 1px 0 rgba(255,255,255,.07); pointer-events: none; }
+  .feld[data-c="2"]::before { content: ""; position: absolute; right: -11px; top: calc(50% - 9px); width: 9px; height: 18px; z-index: 4;
+                              background: #121214; border-radius: 3px; pointer-events: none; }
+  .feld[data-c="0"]::before { content: ""; position: absolute; left: -11px; top: calc(50% - 9px); width: 9px; height: 18px; z-index: 4;
+                              background: #121214; border-radius: 3px; pointer-events: none; }
+
+  /* ---------- Bedienung ---------- */
+  .leiste { display: flex; flex-wrap: wrap; gap: 10px; justify-content: center; align-items: center; margin: 0 auto 1rem; max-width: 560px; }
+  .knopf { font: inherit; font-size: 16px; color: var(--fg); background: transparent; border: 1px solid var(--linie); border-radius: 999px;
+           padding: .55em 1.15em; cursor: pointer; touch-action: manipulation; }
+  .knopf:hover { border-color: var(--fg); }
+  .knopf[aria-pressed="true"] { background: var(--fg); color: var(--bg); border-color: var(--fg); }
+  .knopf.haupt { background: var(--fg); color: var(--bg); border-color: var(--fg); }
+  .tempo { display: inline-flex; align-items: center; gap: 8px; color: var(--muted); font-size: 15px; }
+  .tempo input { width: 110px; accent-color: #f1ece4; }
+  #status { min-height: 1.5em; text-align: center; margin: 0 0 1rem; color: var(--muted); font-size: 15px; }
+  #status.fehler { color: #ffb0a8; }
+  .notiz { color: var(--muted); font-size: .85rem; text-align: center; margin: 0 auto 1.4rem; max-width: 30em; }
+
+  details { border-top: 1px solid var(--linie); padding-top: 1rem; max-width: 34em; margin: 0 auto; }
+  summary { cursor: pointer; font-size: 1.05rem; }
+  details ul { margin: .8em 0 0; padding-left: 1.2em; color: var(--muted); }
+  details li { margin: .4em 0; }
+
+  /* ---------- Kamera ---------- */
+  .kamera-box { position: fixed; inset: 0; z-index: 10000; background: rgba(8,8,10,.96); overflow-y: auto; -webkit-overflow-scrolling: touch; }
+  .kamera-innen { max-width: 560px; margin: 0 auto; padding: max(20px, env(safe-area-inset-top)) 16px calc(24px + env(safe-area-inset-bottom)); }
+  .kamera-innen h2 { font-weight: 400; font-size: 1.5rem; margin: 0 0 .4em; }
+  .kamera-innen p { margin: 0 0 1em; color: var(--muted); font-size: 16px; }
+  .buehne { position: relative; background: #000; border-radius: 8px; overflow: hidden; margin: 0 auto 1rem; max-height: 68svh; display: flex; justify-content: center; }
+  .buehne video { display: block; width: 100%; max-height: 68svh; object-fit: contain; transform: scaleX(-1); background: #000; }
+  .fuehrung { position: absolute; top: 4%; bottom: 4%; left: 50%; aspect-ratio: 3 / 4; height: 92%; transform: translateX(-50%);
+              box-shadow: 0 0 0 100vmax rgba(0,0,0,.55); border: 1px solid rgba(255,255,255,.6); pointer-events: none; }
+  .fuehrung i { position: absolute; left: 0; right: 0; height: 0; border-top: 1px dashed rgba(255,255,255,.75); }
+  .fuehrung i:nth-child(1) { top: 37.5%; } .fuehrung i:nth-child(2) { top: 87.5%; }
+  .fuehrung b { position: absolute; left: 6px; font: 400 11px/1 Georgia, serif; color: #fff; text-shadow: 0 0 4px #000; }
+  .fuehrung b:nth-of-type(1) { top: calc(37.5% - 14px); } .fuehrung b:nth-of-type(2) { top: calc(87.5% - 14px); }
+  .zaehler { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; font-size: 6rem; color: #fff; text-shadow: 0 0 20px #000; pointer-events: none; }
+  .ergebnis { display: block; max-width: min(100%, 300px); max-height: 56svh; margin: 0 auto 1rem; border-radius: 6px; }
+  .kamera-leiste { display: flex; gap: 10px; flex-wrap: wrap; justify-content: center; margin-bottom: 1rem; }
+  #kamStatus { min-height: 1.5em; text-align: center; font-size: 15px; color: var(--muted); }
+  #kamStatus.fehler { color: #ffb0a8; }
+  [hidden] { display: none !important; }
+  @media (prefers-reduced-motion: reduce) { * { scroll-behavior: auto !important; } }
+</style>
+<style>.zurueck{position:fixed;top:max(12px,env(safe-area-inset-top));left:max(12px,env(safe-area-inset-left));z-index:9999;font:400 14px/1 Georgia,serif;color:#f1f0f7;background:rgba(9,10,28,.55);border:1px solid rgba(255,255,255,.22);border-radius:999px;padding:9px 14px;text-decoration:none;-webkit-backdrop-filter:blur(6px);backdrop-filter:blur(6px);touch-action:manipulation}.zurueck:focus-visible{outline:2px solid #8fd3ff;outline-offset:3px}</style>
+</head>
+<body>
+<a class="zurueck" href="index.html" aria-label="Zurück zur Übersicht">← Übersicht</a>
+
+<main>
+  <h1>Gesichter klappen und du</h1>
+  <p class="einleitung">Tippe auf ein Feld. Es klappt um wie eine Anzeigetafel am Flughafen und zeigt einen anderen Menschen. In jedem Feld stecken oben und unten zwei verschiedene Gesichter. So entstehen immer neue Gesichter aus den Teilen von zwölf Menschen. Mit der Kamera klappt auch dein eigenes Gesicht als dreizehntes mit.</p>
+
+  <div class="tisch" id="tisch">
+    <div class="spalten" id="spalten"></div>
+    <div class="zeilen" id="zeilen"></div>
+    <div class="brett" id="brett" role="group" aria-label="Zwölf Klappfelder, die zusammen ein Gesicht ergeben"></div>
+  </div>
+
+  <div class="leiste">
+    <button class="knopf" id="zufall" type="button" aria-pressed="false">Zufall</button>
+    <label class="tempo">Tempo <input id="tempo" type="range" min="1" max="10" value="5" aria-label="Tempo im Zufallsmodus"></label>
+    <button class="knopf" id="alle" type="button">Alle weiter</button>
+    <button class="knopf" id="mischen" type="button">Mischen</button>
+  </div>
+  <div class="leiste">
+    <button class="knopf" id="klack" type="button" aria-pressed="false">Klack-Ton</button>
+    <button class="knopf haupt" id="speichern" type="button">Bild speichern</button>
+  </div>
+  <div class="leiste">
+    <button class="knopf" id="meinGesicht" type="button">Mein Gesicht</button>
+    <button class="knopf" id="zeigMich" type="button" hidden>Mein Gesicht zeigen</button>
+    <button class="knopf" id="wegMich" type="button" hidden>Mein Gesicht entfernen</button>
+  </div>
+  <p id="status" role="status"></p>
+  <p class="notiz" id="notiz"></p>
+  <p class="notiz">Dein Foto bleibt auf deinem Gerät. Es wird nicht hochgeladen und ist nach dem Neuladen der Seite wieder weg.</p>
+
+  <details>
+    <summary>Zum Nachdenken</summary>
+    <ul>
+      <li>Wann wirkt ein Mischgesicht noch wie ein Mensch, und wann kippt es ins Unheimliche?</li>
+      <li>Welches Gesichtsteil verrät dir am meisten über eine Person, Augen, Nase oder Mund?</li>
+      <li>Wer fehlt in diesen zwölf Gesichtern? Wer entscheidet, wer in einem Datensatz vorkommt?</li>
+      <li>Eine KI lernt Gesichter aus vielen Bildern. Was passiert, wenn manche Gesichter darin selten sind?</li>
+    </ul>
+  </details>
+</main>
+
+<div class="kamera-box" id="kamBox" role="dialog" aria-modal="true" aria-labelledby="kamTitel" hidden>
+  <div class="kamera-innen">
+    <h2 id="kamTitel">Dein Gesicht</h2>
+    <div id="stufeLive">
+      <p>Schau frontal in die Kamera, am besten bei hellem Licht und ohne Brille. Die Augen sollen auf der oberen Linie liegen, der Mund auf der unteren. Je größer dein Gesicht im Bild ist, desto schärfer wird das Ergebnis.</p>
+      <div class="buehne">
+        <video id="kamVideo" playsinline muted></video>
+        <div class="fuehrung" aria-hidden="true"><i></i><i></i><b>Augen</b><b>Mund</b></div>
+        <div class="zaehler" id="kamZaehler" aria-live="assertive"></div>
+      </div>
+      <div class="kamera-leiste">
+        <button class="knopf haupt" id="kamFoto" type="button">Foto in 3 Sekunden</button>
+        <button class="knopf" id="kamAbbruch" type="button">Abbrechen</button>
+      </div>
+    </div>
+    <div id="stufeErgebnis" hidden>
+      <img class="ergebnis" id="kamErgebnis" alt="Dein ausgerichtetes Gesicht">
+      <div class="kamera-leiste">
+        <button class="knopf haupt" id="kamOk" type="button">Übernehmen</button>
+        <button class="knopf" id="kamNochmal" type="button">Nochmal</button>
+      </div>
+    </div>
+    <p id="kamStatus" role="status"></p>
+  </div>
+</div>
+
+<script>
+// ============ Einstellungen ============
+const ORDNER   = "gesichter/";            // Dateien gesicht-01.jpg ... gesicht-12.jpg
+const ANZAHL   = 12;
+const SPALTEN  = 3, ZEILEN = 4;
+// Ausschnitt aus jedem Bild als Bruchteil (x, y, Breite, Höhe). Das Ergebnis muss das Seitenverhältnis 3 zu 4 haben.
+// Bei Gesichtern aus thispersondoesnotexist (quadratisch) wird hier hineingezoomt, damit Augen, Nase und Mund auf den Feldzeilen liegen.
+const AUSSCHNITT = { x: 0, y: 0, w: 1, h: 1 };
+const NOTIZ = "Die zwölf Gesichter sind KI-generiert. Es sind keine echten Menschen.";
+const KLAPPZEIT = 520;                    // Millisekunden für einen Klapp-Vorgang
+
+// ============ Aufbau ============
+const brett = document.getElementById("brett");
+const reduziert = matchMedia("(prefers-reduced-motion: reduce)").matches;
+document.getElementById("notiz").textContent = NOTIZ;
+const status = document.getElementById("status");
+function meldung(t, fehler) { status.textContent = t || ""; status.classList.toggle("fehler", !!fehler); }
+
+const bilder = [];       // geladene Gesichter
+const felder = [];       // 12 Felder
+const mod = (n, m) => ((n % m) + m) % m;
+const zufall = n => Math.floor(Math.random() * n);
+
+function hintergrund(el, gesicht, spalte, halbzeile) {
+  // Bild so skalieren, dass 3 Felder in der Breite und 8 Halbfelder in der Höhe genau den Ausschnitt füllen.
+  const A = AUSSCHNITT;
+  const iw = SPALTEN / A.w, ih = (ZEILEN * 2) / A.h;
+  const ox = -(A.x * iw + spalte), oy = -(A.y * ih + halbzeile);
+  el.style.backgroundImage = `url("${bilder[gesicht].src}")`;
+  el.style.backgroundSize = `${iw * 100}% ${ih * 100}%`;
+  el.style.backgroundPosition = `${(ox / (1 - iw)) * 100}% ${(oy / (1 - ih)) * 100}%`;
+}
+
+function feldBauen(r, c) {
+  const b = document.createElement("button");
+  b.type = "button"; b.className = "feld"; b.dataset.r = r; b.dataset.c = c;
+  b.setAttribute("aria-label", `Feld Zeile ${r + 1}, Spalte ${c + 1} umklappen`);
+  b.innerHTML = `<span class="h ob"></span><span class="h un"></span><span class="sch sch-un"></span>
+    <span class="h vorn"><span class="sch"></span></span><span class="h hinten"><span class="sch"></span></span>`;
+  const f = { el: b, r, c, t: 0, b: 0, z: 0, offen: 0, laeuft: false,
+    ob: b.querySelector(".ob"), un: b.querySelector(".un"), 
+    vorn: b.querySelector(".vorn"), hinten: b.querySelector(".hinten"),
+    schUn: b.querySelector(".sch-un"), schV: b.querySelector(".vorn .sch"), schH: b.querySelector(".hinten .sch") };
+  b.addEventListener("click", () => anstossen(f, 1));
+  return f;
+}
+
+// Zustand eines Feldes: oben steht Gesicht t, unten Gesicht b. Klappt die obere Klappe, steht auf ihrer Rückseite
+// der untere Teil von Gesicht t. Danach zeigt das Feld oben das nächste Gesicht und unten Gesicht t.
+function ruhe(f) {
+  const n = bilder.length;
+  hintergrund(f.ob,   mod(f.t, n), f.c, f.r * 2);
+  hintergrund(f.vorn, mod(f.t, n), f.c, f.r * 2);
+  hintergrund(f.un,   mod(f.b, n), f.c, f.r * 2 + 1);
+}
+
+// ---------- Ton ----------
+// Echte Klickgeräusche einer Klappanzeige (ton/klack-1.wav bis 6). Fehlen sie, gibt es ein einfaches Ersatzgeräusch.
+const KLICKS = 6;
+let ton = null, klackAn = false, letzterKlack = 0, klickPuffer = [];
+function tonStarten() {
+  if (!ton) {
+    try { ton = new (window.AudioContext || window.webkitAudioContext)(); } catch (e) { return; }
+    for (let i = 1; i <= KLICKS; i++) {
+      fetch(`ton/klack-${i}.wav`).then(r => r.ok ? r.arrayBuffer() : Promise.reject())
+        .then(buf => new Promise((ok, nein) => ton.decodeAudioData(buf, ok, nein)))
+        .then(pf => klickPuffer.push(pf)).catch(() => {});
+    }
+  }
+  if (ton.state === "suspended") ton.resume();
+}
+function ersatzKlack(t) {
+  const dauer = 0.04, buf = ton.createBuffer(1, Math.floor(ton.sampleRate * dauer), ton.sampleRate);
+  const d = buf.getChannelData(0);
+  for (let i = 0; i < d.length; i++) d[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / d.length, 3);
+  const q = ton.createBufferSource(); q.buffer = buf;
+  const fl = ton.createBiquadFilter(); fl.type = "bandpass"; fl.frequency.value = 1400 + Math.random() * 1400; fl.Q.value = 1.1;
+  const g = ton.createGain(); g.gain.value = 0.25;
+  q.connect(fl).connect(g).connect(ton.destination); q.start(t);
+}
+function klack() {
+  if (!klackAn || !ton) return;
+  const jetzt = performance.now();
+  if (jetzt - letzterKlack < 14) return;       // bei vielen Klappen gleichzeitig nicht übereinander knallen
+  letzterKlack = jetzt;
+  try {
+    if (ton.state === "suspended") ton.resume();
+    if (!klickPuffer.length) { ersatzKlack(ton.currentTime); return; }
+    const q = ton.createBufferSource();
+    q.buffer = klickPuffer[zufall(klickPuffer.length)];
+    q.playbackRate.value = 0.92 + Math.random() * 0.18;
+    const g = ton.createGain(); g.gain.value = 0.55 + Math.random() * 0.25;
+    q.connect(g).connect(ton.destination); q.start();
+  } catch (e) { /* Ton ist nur eine Zugabe */ }
+}
+
+// ---------- Klappen ----------
+function warte(ms) { return new Promise(r => setTimeout(r, ms)); }
+
+async function klappen(f, dauer) {
+  const n = bilder.length, t = f.t;
+  hintergrund(f.ob,     mod(t + 1, n), f.c, f.r * 2);      // darunter liegt schon das nächste Gesicht
+  hintergrund(f.hinten, mod(t, n),     f.c, f.r * 2 + 1);  // Rückseite der Klappe
+  if (reduziert) {
+    f.b = t; f.t = mod(t + 1, n); f.z++; ruhe(f); klack(); return;
+  }
+  const d1 = dauer * .45, d2 = dauer * .55;
+  // Erste Hälfte: die obere Klappe fällt bis zur Kante
+  f.vorn.style.visibility = "visible";
+  const a1 = f.vorn.animate([{ transform: "rotateX(0deg)" }, { transform: "rotateX(-90deg)" }], { duration: d1, easing: "cubic-bezier(.5,0,.9,.6)", fill: "forwards" });
+  f.schV.animate([{ opacity: 0 }, { opacity: .75 }], { duration: d1, easing: "ease-in", fill: "forwards" });
+  f.schUn.animate([{ opacity: 0 }, { opacity: .45 }], { duration: d1, fill: "forwards" });
+  await a1.finished;
+  // Zweite Hälfte: die neue untere Klappe klappt aus der Kante nach unten
+  f.vorn.style.visibility = "hidden";
+  f.hinten.style.visibility = "visible";
+  const a2 = f.hinten.animate([{ transform: "rotateX(90deg)" }, { transform: "rotateX(-4deg)", offset: .8 }, { transform: "rotateX(0deg)" }], { duration: d2, easing: "cubic-bezier(.25,.6,.4,1)", fill: "forwards" });
+  f.schH.animate([{ opacity: .75 }, { opacity: 0 }], { duration: d2, fill: "forwards" });
+  f.schUn.animate([{ opacity: .45 }, { opacity: 0 }], { duration: d2, fill: "forwards" });
+  await a2.finished;
+  f.b = t; f.t = mod(t + 1, bilder.length); f.z++;
+  ruhe(f);
+  f.hinten.style.visibility = "hidden";
+  [f.vorn, f.hinten, f.schV, f.schH, f.schUn].forEach(el => el.getAnimations().forEach(x => x.cancel()));
+  klack();
+}
+
+async function lauf(f) {
+  f.laeuft = true;
+  while (f.offen > 0) {
+    const eilig = f.offen > 1;
+    await klappen(f, eilig ? Math.round(KLAPPZEIT * .5) : KLAPPZEIT);
+    f.offen--;
+  }
+  f.laeuft = false;
+}
+
+let geplant = 0;   // Klappen, die schon beauftragt sind, aber noch auf ihren Start warten
+function anstossen(f, anzahl = 1, verzoegerung = 0) {
+  const los = () => { if (verzoegerung > 0) geplant--; f.offen += anzahl; if (!f.laeuft) lauf(f); };
+  if (verzoegerung > 0) { geplant++; setTimeout(los, verzoegerung); } else los();
+}
+
+function spalteKlappen(c) { for (let r = 0; r < ZEILEN; r++) anstossen(felder[r * SPALTEN + c], 1, r * 110); }
+function zeileKlappen(r)  { for (let c = 0; c < SPALTEN; c++) anstossen(felder[r * SPALTEN + c], 1, c * 110); }
+function alleWeiter()     { felder.forEach(f => anstossen(f, 1, f.r * 130 + f.c * 55)); }
+function mischen()        { felder.forEach(f => anstossen(f, 1 + zufall(5), zufall(500))); }
+
+// ---------- Zufallsmodus ----------
+let zufallAn = false, zufallTimer = null;
+const tempo = document.getElementById("tempo");
+function zufallSchritt() {
+  if (!zufallAn) return;
+  if (!document.hidden) {
+    const w = Math.random();
+    if (w < .12) zeileKlappen(zufall(ZEILEN));
+    else if (w < .22) spalteKlappen(zufall(SPALTEN));
+    else anstossen(felder[zufall(felder.length)], 1);
+  }
+  const t = Number(tempo.value);
+  zufallTimer = setTimeout(zufallSchritt, 1500 - (t - 1) * 150 + zufall(200));
+}
+document.getElementById("zufall").addEventListener("click", e => {
+  zufallAn = !zufallAn;
+  e.currentTarget.setAttribute("aria-pressed", zufallAn);
+  clearTimeout(zufallTimer);
+  if (zufallAn) zufallSchritt();
+});
+
+// ---------- Bild speichern ----------
+function speichern() {
+  try {
+    const n = bilder.length, A = AUSSCHNITT;
+    const q = bilder[0];
+    const sw = q.naturalWidth * A.w, sh = q.naturalHeight * A.h;
+    const cw = Math.round(Math.min(sw, 1200)), ch = Math.round(cw * 4 / 3);
+    const cv = document.createElement("canvas"); cv.width = cw; cv.height = ch;
+    const g = cv.getContext("2d");
+    g.fillStyle = "#09090b"; g.fillRect(0, 0, cw, ch);
+    const fw = cw / SPALTEN, fh = ch / ZEILEN;
+    for (const f of felder) {
+      for (const unten of [0, 1]) {
+        const gi = mod(unten ? f.b : f.t, n), im = bilder[gi];
+        const sx = im.naturalWidth * (A.x + A.w * f.c / SPALTEN), sbreit = im.naturalWidth * A.w / SPALTEN;
+        const shoch = im.naturalHeight * A.h / ZEILEN;
+        const sy = im.naturalHeight * A.y + shoch * f.r + (unten ? shoch / 2 : 0);
+        g.drawImage(im, sx, sy, sbreit, shoch / 2, f.c * fw, f.r * fh + (unten ? fh / 2 : 0), fw, fh / 2);
+      }
+    }
+    // Rahmenlinien und Scharniere wie auf dem Bildschirm
+    g.fillStyle = "#09090b";
+    const lw = Math.max(3, cw * 0.008);
+    for (let c = 1; c < SPALTEN; c++) g.fillRect(c * fw - lw / 2, 0, lw, ch);
+    for (let r = 1; r < ZEILEN; r++) g.fillRect(0, r * fh - lw / 2, cw, lw);
+    g.fillStyle = "rgba(0,0,0,.75)";
+    for (let r = 0; r < ZEILEN; r++) g.fillRect(0, r * fh + fh / 2 - lw / 4, cw, lw / 2);
+    cv.toBlob(blob => {
+      if (!blob) { meldung("Das Bild konnte nicht erzeugt werden.", true); return; }
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url; a.download = "gesichter-mischung.png";
+      document.body.appendChild(a); a.click(); a.remove();
+      setTimeout(() => URL.revokeObjectURL(url), 4000);
+      meldung("Gespeichert als gesichter-mischung.png");
+    }, "image/png");
+  } catch (e) {
+    meldung("Speichern klappt nur, wenn die Seite über das Internet geöffnet wird, nicht als lokale Datei.", true);
+  }
+}
+document.getElementById("speichern").addEventListener("click", speichern);
+document.getElementById("alle").addEventListener("click", alleWeiter);
+document.getElementById("mischen").addEventListener("click", mischen);
+document.getElementById("klack").addEventListener("click", e => {
+  klackAn = !klackAn; e.currentTarget.setAttribute("aria-pressed", klackAn);
+  if (klackAn) { tonStarten(); setTimeout(klack, 250); }
+});
+
+// ---------- Eigenes Gesicht per Kamera ----------
+let ich = -1;                       // Index des eigenen Gesichts in bilder, -1 wenn keins da ist
+let kamStrom = null, kamModell = null, kamFoto = null, kamAufnahmeLaeuft = false;
+const KB = id => document.getElementById(id);
+const kamStatus = (t, fehler) => { KB("kamStatus").textContent = t || ""; KB("kamStatus").classList.toggle("fehler", !!fehler); };
+const ZIEL_B = 768, ZIEL_H = 1024, AUGE_Y = .375, MUND_Y = .875;   // gleiche Lage wie bei den anderen Gesichtern
+
+async function modellLaden() {
+  if (kamModell) return kamModell;
+  const { FilesetResolver, FaceLandmarker } = await import("./vendor/vision_bundle.mjs");
+  const fileset = await FilesetResolver.forVisionTasks("./vendor/wasm");
+  const basis = { modelAssetPath: "./vendor/face_landmarker.task" };
+  const opt = { runningMode: "IMAGE", numFaces: 1 };
+  try { kamModell = await FaceLandmarker.createFromOptions(fileset, { baseOptions: { ...basis, delegate: "GPU" }, ...opt }); }
+  catch (e) { kamModell = await FaceLandmarker.createFromOptions(fileset, { baseOptions: { ...basis, delegate: "CPU" }, ...opt }); }
+  return kamModell;
+}
+
+function stufe(name) { KB("stufeLive").hidden = name !== "live"; KB("stufeErgebnis").hidden = name !== "ergebnis"; }
+
+function kameraStoppen() {
+  if (kamStrom) kamStrom.getTracks().forEach(t => t.stop());
+  kamStrom = null; KB("kamVideo").srcObject = null;
+}
+function kameraSchliessen() {
+  kamAufnahmeLaeuft = false; kameraStoppen();
+  KB("kamBox").hidden = true; KB("kamZaehler").textContent = "";
+  KB("meinGesicht").focus();
+}
+
+async function kameraOeffnen() {
+  KB("kamBox").hidden = false; stufe("live"); kamStatus("");
+  KB("kamFoto").disabled = true;
+  if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+    kamStatus("Die Kamera braucht eine sichere Verbindung (https). Öffne die Seite über ihre Internetadresse.", true); return;
+  }
+  kamStatus("Kamera wird gestartet …");
+  try {
+    kamStrom = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "user", width: { ideal: 1920 }, height: { ideal: 1080 } }, audio: false });
+    const v = KB("kamVideo"); v.srcObject = kamStrom; await v.play();
+    kamStatus("Das Gesichtsmodell wird geladen …");
+    await modellLaden();
+    kamStatus(""); KB("kamFoto").disabled = false; KB("kamFoto").focus();
+  } catch (e) {
+    kameraStoppen();
+    kamStatus(e && e.name === "NotAllowedError"
+      ? "Die Kamera ist nicht freigegeben. Erlaube sie im Browser und versuche es noch einmal."
+      : "Die Kamera oder das Gesichtsmodell konnte nicht gestartet werden.", true);
+  }
+}
+
+async function aufnehmen() {
+  if (kamAufnahmeLaeuft) return;
+  kamAufnahmeLaeuft = true; KB("kamFoto").disabled = true; kamStatus("");
+  for (let i = 3; i > 0 && kamAufnahmeLaeuft; i--) { KB("kamZaehler").textContent = i; await warte(850); }
+  KB("kamZaehler").textContent = "";
+  if (!kamAufnahmeLaeuft) return;
+  const v = KB("kamVideo"), vw = v.videoWidth, vh = v.videoHeight;
+  const quelle = document.createElement("canvas"); quelle.width = vw; quelle.height = vh;
+  quelle.getContext("2d").drawImage(v, 0, 0, vw, vh);          // nicht gespiegelt, wie die anderen Gesichter
+  kamStatus("Gesicht wird gesucht …");
+  try {
+    const modell = await modellLaden();
+    const erg = modell.detect(quelle);
+    if (!erg.faceLandmarks || !erg.faceLandmarks.length) {
+      kamStatus("Ich finde kein Gesicht. Schau frontal in die Kamera und sorge für mehr Licht.", true);
+      kamAufnahmeLaeuft = false; KB("kamFoto").disabled = false; return;
+    }
+    const L = erg.faceLandmarks[0];
+    const P = k => [L[k].x * vw, L[k].y * vh];
+    let e1 = P(468), e2 = P(473);
+    if (e1[0] > e2[0]) [e1, e2] = [e2, e1];
+    const ec = [(e1[0] + e2[0]) / 2, (e1[1] + e2[1]) / 2];
+    const m1 = P(13), m2 = P(14), mo = [(m1[0] + m2[0]) / 2, (m1[1] + m2[1]) / 2];
+    const ang = Math.atan2(e2[1] - e1[1], e2[0] - e1[0]);
+    const c = Math.cos(-ang), s = Math.sin(-ang);
+    const dy = s * (mo[0] - ec[0]) + c * (mo[1] - ec[1]);          // Abstand Augenlinie zu Mund, gedreht gemessen
+    const sc = (MUND_Y - AUGE_Y) * ZIEL_H / dy;
+    const a = sc * c, b = sc * s, cc = -sc * s, d = sc * c;
+    const e = ZIEL_B / 2 - (a * ec[0] + cc * ec[1]);
+    const f = AUGE_Y * ZIEL_H - (b * ec[0] + d * ec[1]);
+    const aus = document.createElement("canvas"); aus.width = ZIEL_B; aus.height = ZIEL_H;
+    const g = aus.getContext("2d");
+    g.fillStyle = "#3a2c25"; g.fillRect(0, 0, ZIEL_B, ZIEL_H);
+    g.imageSmoothingQuality = "high";
+    g.setTransform(a, b, cc, d, e, f); g.drawImage(quelle, 0, 0); g.setTransform(1, 0, 0, 1, 0, 0);
+    // Reicht der Ausschnitt über den Bildrand hinaus?
+    const inv = new DOMMatrix([a, b, cc, d, e, f]).inverse();
+    const randRaus = [[0, 0], [ZIEL_B, 0], [0, ZIEL_H], [ZIEL_B, ZIEL_H]].some(([x, y]) => {
+      const p = inv.transformPoint(new DOMPoint(x, y)); return p.x < -2 || p.y < -2 || p.x > vw + 2 || p.y > vh + 2; });
+    kamFoto = await new Promise(res => aus.toBlob(res, "image/jpeg", .92));
+    if (!kamFoto) throw new Error("kein Bild");
+    KB("kamErgebnis").src = URL.createObjectURL(kamFoto);
+    stufe("ergebnis");
+    kamStatus(randRaus ? "Dein Gesicht reicht über den Bildrand. Geh etwas weiter weg oder halte die Kamera mittig." :
+              sc > 3 ? "Das Bild wird etwas weich. Geh beim nächsten Mal näher an die Kamera." : "So sieht dein Feld-Gesicht aus.");
+  } catch (err) {
+    kamStatus("Das Foto konnte nicht verarbeitet werden. Versuche es noch einmal.", true);
+    KB("kamFoto").disabled = false;
+  }
+  kamAufnahmeLaeuft = false;
+}
+
+function uebernehmen() {
+  if (!kamFoto) return;
+  const url = URL.createObjectURL(kamFoto);
+  const im = new Image();
+  im.onload = () => {
+    if (ich >= 0) entfernen(true);
+    bilder.push(im); ich = bilder.length - 1;
+    KB("meinGesicht").textContent = "Neues Foto";
+    KB("zeigMich").hidden = false; KB("wegMich").hidden = false;
+    kameraSchliessen();
+    meldung("Dein Gesicht ist jetzt das dreizehnte. Gleich siehst du es ganz.");
+    setTimeout(zeigeMich, 400);
+  };
+  im.src = url;
+}
+
+async function untenAnpassen(f, gi) {
+  hintergrund(f.hinten, gi, f.c, f.r * 2 + 1);
+  if (reduziert) { f.b = gi; ruhe(f); return; }
+  f.hinten.style.visibility = "visible";
+  const an = f.hinten.animate([{ transform: "rotateX(90deg)" }, { transform: "rotateX(0deg)" }], { duration: 300, easing: "cubic-bezier(.25,.6,.4,1)", fill: "forwards" });
+  await an.finished;
+  f.b = gi; ruhe(f);
+  f.hinten.style.visibility = "hidden";
+  an.cancel(); klack();
+}
+
+const ruht = f => !(f.laeuft || f.offen > 0);
+async function zeigeMich() {
+  if (ich < 0) return;
+  const gi = ich;
+  await Promise.all(felder.map(async f => {
+    await warte(f.r * 130 + f.c * 55);
+    while (!ruht(f)) await warte(50);
+    const schritte = mod(gi - f.t, bilder.length);
+    if (schritte > 0) { anstossen(f, schritte); await warte(30); while (!ruht(f)) await warte(50); }
+    if (f.b !== gi) await untenAnpassen(f, gi);
+  }));
+  meldung("");
+}
+
+function entfernen(still) {
+  if (ich < 0) return;
+  const gi = ich, n = bilder.length - 1;
+  const im = bilder.pop(); try { URL.revokeObjectURL(im.src); } catch (e) {}
+  ich = -1;
+  felder.forEach(f => {
+    if (f.t >= n) f.t = 0;
+    if (f.b >= n) f.b = mod(f.t - 1, n);
+    ruhe(f);
+  });
+  KB("meinGesicht").textContent = "Mein Gesicht";
+  KB("zeigMich").hidden = true; KB("wegMich").hidden = true;
+  if (!still) meldung("Dein Gesicht ist entfernt.");
+}
+
+KB("meinGesicht").addEventListener("click", kameraOeffnen);
+KB("kamFoto").addEventListener("click", aufnehmen);
+KB("kamAbbruch").addEventListener("click", kameraSchliessen);
+KB("kamOk").addEventListener("click", uebernehmen);
+KB("kamNochmal").addEventListener("click", () => { stufe("live"); kamStatus(""); KB("kamFoto").disabled = !kamStrom; });
+KB("zeigMich").addEventListener("click", zeigeMich);
+KB("wegMich").addEventListener("click", () => entfernen(false));
+document.addEventListener("keydown", e => { if (e.key === "Escape" && !KB("kamBox").hidden) kameraSchliessen(); });
+
+// ---------- Start ----------
+function laden() {
+  meldung("Gesichter werden geladen …");
+  const jobs = [];
+  for (let i = 1; i <= ANZAHL; i++) {
+    jobs.push(new Promise(res => {
+      const im = new Image();
+      im.onload = () => res(im); im.onerror = () => res(null);
+      im.src = ORDNER + "gesicht-" + String(i).padStart(2, "0") + ".jpg";
+    }));
+  }
+  return Promise.all(jobs).then(l => l.filter(Boolean));
+}
+
+laden().then(liste => {
+  if (liste.length < 2) { meldung("Die Gesichter konnten nicht geladen werden. Ist der Ordner gesichter/ vorhanden?", true); return; }
+  bilder.push(...liste);
+  meldung("");
+  // Rand-Knöpfe
+  const sp = document.getElementById("spalten"), ze = document.getElementById("zeilen");
+  for (let c = 0; c < SPALTEN; c++) {
+    const b = document.createElement("button");
+    b.type = "button"; b.className = "rand-knopf"; b.textContent = "↓"; b.setAttribute("aria-label", `Ganze Spalte ${c + 1} umklappen`);
+    b.addEventListener("click", () => spalteKlappen(c)); sp.appendChild(b);
+  }
+  for (let r = 0; r < ZEILEN; r++) {
+    const b = document.createElement("button");
+    b.type = "button"; b.className = "rand-knopf"; b.textContent = "→"; b.setAttribute("aria-label", `Ganze Zeile ${r + 1} umklappen`);
+    b.addEventListener("click", () => zeileKlappen(r)); ze.appendChild(b);
+  }
+  // Felder, jedes mit eigenem Startzustand
+  for (let r = 0; r < ZEILEN; r++) for (let c = 0; c < SPALTEN; c++) {
+    const f = feldBauen(r, c);
+    f.t = zufall(bilder.length); f.b = mod(f.t - 1, bilder.length);
+    felder.push(f); brett.appendChild(f.el); ruhe(f);
+  }
+  window.__gk = { felder, anstossen, zustand: () => felder.map(f => f.z), ich: () => ich, anzahl: () => bilder.length, felder, laeuft: () => geplant > 0 || felder.some(f => f.laeuft || f.offen > 0), speichern };
+});
+</script>
+</body>
+</html>

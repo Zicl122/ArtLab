@@ -1,0 +1,498 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Lichtzeichnung</title>
+<style>
+  :root {
+    color-scheme: dark;
+    --bg: #07081a;
+    --fg: #f3efe2;
+    --muted: rgba(243, 239, 226, .68);
+  }
+  html, body { height: 100%; margin: 0; background: var(--bg); color: var(--fg); }
+  body { font: 300 18px/1.5 Georgia, "Times New Roman", serif; overflow: hidden; -webkit-text-size-adjust: 100%; touch-action: manipulation; }
+  canvas#buehne { position: fixed; inset: 0; width: 100%; height: 100%; display: block; }
+
+  #start {
+    position: fixed; inset: 0; display: flex; flex-direction: column; justify-content: center; align-items: flex-start;
+    padding: 24px max(24px, env(safe-area-inset-left)) 24px max(24px, env(safe-area-inset-left));
+    max-width: 560px; margin: 0 auto; box-sizing: border-box; gap: 16px; overflow-y: auto;
+  }
+  #start h1 { font-weight: 400; font-size: clamp(2rem, 7vw, 3rem); line-height: 1.1; margin: 0; letter-spacing: -.01em; }
+  #start p { margin: 0; color: var(--muted); }
+  #start .klein { font-size: .85rem; }
+  #start ul { margin: 0; padding-left: 1.1em; color: var(--muted); font-size: 1rem; }
+  #start li { margin: .25em 0; }
+  button { font: inherit; color: var(--bg); background: var(--fg); border: 0; border-radius: 999px; padding: .7em 1.6em; cursor: pointer; touch-action: manipulation; }
+  button:focus-visible { outline: 2px solid var(--fg); outline-offset: 4px; }
+  button[disabled] { opacity: .5; cursor: default; }
+  #meldung { color: var(--muted); min-height: 1.5em; }
+  #meldung.fehler { color: #ff9fc4; }
+
+  /* Bedienleiste unten */
+  .leiste { position: fixed; left: 0; right: 0; bottom: 0; display: flex; flex-wrap: wrap; gap: 8px; justify-content: center;
+            padding: 0 12px calc(14px + env(safe-area-inset-bottom)); pointer-events: none; }
+  .leiste button { pointer-events: auto; font-size: 15px; line-height: 1; padding: 11px 16px; color: #f1f0f7;
+                   background: rgba(9, 10, 28, .6); border: 1px solid rgba(255, 255, 255, .24);
+                   -webkit-backdrop-filter: blur(6px); backdrop-filter: blur(6px); }
+  .leiste button[aria-pressed="true"] { background: rgba(243, 239, 226, .92); color: #07081a; border-color: transparent; }
+  .leiste button:focus-visible { outline: 2px solid #8fd3ff; outline-offset: 3px; }
+
+  .oben { position: fixed; left: 0; right: 0; top: max(62px, calc(env(safe-area-inset-top) + 50px)); text-align: center; pointer-events: none; padding: 0 16px; }
+  #hinweis { margin: 0 auto; max-width: 28em; color: var(--muted); text-shadow: 0 0 12px #000, 0 0 4px #000; transition: opacity 1.6s ease; font-size: 1rem; }
+  #hinweis.weg { opacity: 0; }
+  #toast { margin: 8px 0 0; color: var(--fg); text-shadow: 0 0 12px #000, 0 0 4px #000; opacity: 0; transition: opacity .35s ease; font-size: 1.1rem; }
+  #toast.da { opacity: 1; }
+  [hidden] { display: none !important; }
+</style>
+<style>.zurueck{position:fixed;top:max(12px,env(safe-area-inset-top));left:max(12px,env(safe-area-inset-left));z-index:9999;font:400 14px/1 Georgia,serif;color:#f1f0f7;background:rgba(9,10,28,.55);border:1px solid rgba(255,255,255,.22);border-radius:999px;padding:9px 14px;text-decoration:none;-webkit-backdrop-filter:blur(6px);backdrop-filter:blur(6px);touch-action:manipulation}.zurueck:focus-visible{outline:2px solid #8fd3ff;outline-offset:3px}</style>
+</head>
+<body>
+<a class="zurueck" href="index.html" aria-label="Zurück zur Übersicht">← Übersicht</a>
+
+<canvas id="buehne" aria-label="Kamerabild, in das mit dem Finger leuchtende Linien gezeichnet werden"></canvas>
+<video id="kamera" playsinline muted hidden></video>
+
+<section id="start">
+  <h1>Lichtzeichnung</h1>
+  <p>Zeichne mit dem Finger in die Luft. Deine Linie bleibt als leuchtende Spur stehen, ähnlich wie bei den Lichtzeichnungen, die Picasso 1949 mit einer kleinen Lampe in die Luft zeichnete.</p>
+  <ul>
+    <li>Kneife Daumen und Zeigefinger zusammen, dann leuchtet der Stift.</li>
+    <li>Öffne die Finger, dann setzt du ab.</li>
+    <li>Mit einer zweiten Hand wechselst du die Farbe, indem du die offene Hand kurz hältst. Eine Faust, die du lange hältst, löscht alles.</li>
+  </ul>
+  <p class="klein">Das Kamerabild bleibt auf diesem Gerät und wird nirgendwohin gesendet.</p>
+  <button id="knopf" type="button">Kamera starten</button>
+  <p id="meldung" role="status"></p>
+</section>
+
+<div class="oben"><p id="hinweis" hidden>Zeige deine Hand und kneife Daumen und Zeigefinger zusammen</p><p id="toast" role="status"></p></div>
+
+<div class="leiste" id="leiste" hidden>
+  <button id="bLoeschen" type="button">Löschen</button>
+  <button id="bVerblassen" type="button" aria-pressed="false">Verblassen</button>
+  <button id="bFarbe" type="button">Farbe</button>
+  <button id="bSpeichern" type="button">Speichern</button>
+  <button id="bMitKamera" type="button">Mit Kamerabild</button>
+</div>
+
+<script type="module">
+import { FilesetResolver, HandLandmarker } from "./vendor/vision_bundle.mjs";
+
+// ---------- Einstellungen ----------
+const PINCH_AN = 0.30;            // Abstand Daumen zu Zeigefinger im Verhältnis zur Handgröße, darunter leuchtet der Stift
+const PINCH_AUS = 0.44;           // darüber setzt er ab, die Lücke verhindert Flackern
+const EURO_MIN = 1.6;             // Grundglättung in Hertz, niedriger ist ruhiger aber träger
+const EURO_BETA = 9;              // wie schnell die Glättung bei schnellen Strichen nachlässt
+const VERZOEGERUNG = 0.09;        // Sekunden, um die die Linie hinterherzeichnet, damit der Haken beim Loslassen wegfällt
+const TOTZONE = 0.9;              // kleinere Bewegungen in Pixeln (bei 1280 Breite) werden ignoriert
+const SPRUNG = 0.22;              // ein Sprung größer als dieser Anteil der Bildbreite gilt als Fehlerkennung
+const PINCH_FRAMES = 3;           // so viele Bilder in Folge muss der Pinch halten, bevor der Stift startet
+const KERN_MIN = 1.3, KERN_MAX = 3.6;   // Breite des hellen Kerns in Pixeln bei 1280 Pixeln Breite
+const HOF = 2.8;                  // Breite des farbigen Hofs im Verhältnis zum Kern
+const TEMPO_REF = 0.55;           // Geschwindigkeit in Bildbreiten pro Sekunde, ab der die Linie dünn wird
+const VERBLASSEN_SEK = 5;         // so lange dauert es, bis eine Linie im Modus Verblassen verschwunden ist
+const PALME_SEK = 0.8;            // offene zweite Hand halten für neue Farbe
+const FAUST_SEK = 1.5;            // Faust halten zum Löschen
+const BLUR_FAKTOR = 2.3;          // Stärke des Leuchtens
+const VIDEO_DUNKEL = 0.62;        // Kamerabild wird stark abgedunkelt, damit das Licht wirkt
+const ANZ = 21;
+
+// Farbwelten. Der Farbton wandert mit der Länge der Linie.
+const FARBEN = [
+  { name: "Regenbogen", h0: 0.92, spread: 1.0,  art: "lauf",  s: 0.85, l: 1100 },
+  { name: "Glut",       h0: 0.06, spread: 0.07, art: "welle", s: 0.9,  l: 500 },
+  { name: "Eis",        h0: 0.55, spread: 0.07, art: "welle", s: 0.75, l: 500 },
+  { name: "Violett",    h0: 0.80, spread: 0.07, art: "welle", s: 0.8,  l: 500 },
+  { name: "Gold",       h0: 0.12, spread: 0.04, art: "welle", s: 0.8,  l: 500 },
+];
+
+// ---------- Aufbau ----------
+const cv = document.getElementById("buehne");
+const ctx = cv.getContext("2d");
+const video = document.getElementById("kamera");
+const knopf = document.getElementById("knopf");
+const meldung = document.getElementById("meldung");
+const startBox = document.getElementById("start");
+const hinweis = document.getElementById("hinweis");
+const toast = document.getElementById("toast");
+const leiste = document.getElementById("leiste");
+
+let W = 0, H = 0, DPR = 1, SK = 1;
+let schmutzig = true;   // das Licht wird nur neu berechnet, wenn sich etwas geändert hat
+let fadenAktiv = false;
+const E = {};   // Ebenen
+function leinwand(w, h) { const c = document.createElement("canvas"); c.width = Math.max(2, Math.round(w)); c.height = Math.max(2, Math.round(h)); return c; }
+function groesse() {
+  DPR = Math.min(window.devicePixelRatio || 1, 1.5);
+  W = window.innerWidth; H = window.innerHeight; SK = Math.max(0.7, Math.min(1.5, W / 1280));
+  cv.width = Math.round(W * DPR); cv.height = Math.round(H * DPR);
+  ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
+  const LW = cv.width, LH = cv.height;
+  const alt = { pc: E.pc, pw: E.pw };
+  E.nc = leinwand(LW, LH); E.gc = leinwand(LW, LH);
+  E.pc = leinwand(LW, LH); E.pw = leinwand(LW, LH);   // bleibende Linie, Farbe und weißer Kern
+  E.fc = leinwand(LW, LH); E.fw = leinwand(LW, LH);   // verblassende Linie
+  for (const k of ["pc", "pw"]) if (alt[k]) E[k].getContext("2d").drawImage(alt[k], 0, 0, LW, LH);   // Zeichnung bleibt beim Drehen des Geräts erhalten
+  E.d2 = leinwand(LW / 2, LH / 2); E.d4 = leinwand(LW / 4, LH / 4); E.d8 = leinwand(LW / 8, LH / 8); E.d16 = leinwand(LW / 16, LH / 16);
+  E.u8 = leinwand(LW / 8, LH / 8); E.u4 = leinwand(LW / 4, LH / 4);
+  schmutzig = true;
+}
+groesse();
+window.addEventListener("resize", groesse);
+
+function sagen(text, fehler) { meldung.textContent = text; meldung.classList.toggle("fehler", !!fehler); }
+let toastTimer = 0;
+function zeigeToast(t) { toast.textContent = t; toast.classList.add("da"); clearTimeout(toastTimer); toastTimer = setTimeout(() => toast.classList.remove("da"), 1400); }
+
+async function modellLaden() {
+  const fileset = await FilesetResolver.forVisionTasks("./vendor/wasm");
+  const basis = { modelAssetPath: "./vendor/hand_landmarker.task" };
+  const optionen = { runningMode: "VIDEO", numHands: 2, minHandDetectionConfidence: 0.5, minHandPresenceConfidence: 0.5, minTrackingConfidence: 0.5 };
+  try { return await HandLandmarker.createFromOptions(fileset, { baseOptions: { ...basis, delegate: "GPU" }, ...optionen }); }
+  catch (e) { return await HandLandmarker.createFromOptions(fileset, { baseOptions: { ...basis, delegate: "CPU" }, ...optionen }); }
+}
+
+// ---------- Farbe ----------
+function hsv2rgb(h, s, v) {
+  h = ((h % 1) + 1) % 1;
+  const i = Math.floor(h * 6), f = h * 6 - i, p = v * (1 - s), q = v * (1 - f * s), t = v * (1 - (1 - f) * s);
+  switch (i % 6) { case 0: return [v, t, p]; case 1: return [q, v, p]; case 2: return [p, v, t]; case 3: return [p, q, v]; case 4: return [t, p, v]; default: return [v, p, q]; }
+}
+function rgba(c, a) { return "rgba(" + Math.round(c[0] * 255) + "," + Math.round(c[1] * 255) + "," + Math.round(c[2] * 255) + "," + a + ")"; }
+let farbwelt = 0, zeit = 0;
+function farbeBei(laenge) {
+  const f = FARBEN[farbwelt], u = laenge / (f.l * SK);
+  const h = f.art === "lauf" ? f.h0 + f.spread * u + zeit * 0.02 : f.h0 + f.spread * Math.sin(u * 6.2832) + zeit * 0.004;
+  return hsv2rgb(h, f.s, 1);
+}
+function naechsteFarbe() { farbwelt = (farbwelt + 1) % FARBEN.length; zeigeToast(FARBEN[farbwelt].name); }
+
+// ---------- Linien ----------
+let verblassen = false, pa = 1;      // pa, wie sichtbar die bleibende Ebene ist
+const faden = [];                    // Segmente im Modus Verblassen mit Zeitstempel
+
+function segmentZeichnen(cc, cw, s, alpha) {
+  cc.lineCap = "round"; cw.lineCap = "round";
+  cc.strokeStyle = rgba(s.col, 0.9 * alpha); cc.lineWidth = s.w * HOF;
+  cc.beginPath(); cc.moveTo(s.x0, s.y0); cc.quadraticCurveTo(s.cx, s.cy, s.x1, s.y1); cc.stroke();
+  cw.strokeStyle = "rgba(255,250,240," + alpha + ")"; cw.lineWidth = s.w;
+  cw.beginPath(); cw.moveTo(s.x0, s.y0); cw.quadraticCurveTo(s.cx, s.cy, s.x1, s.y1); cw.stroke();
+}
+function segmentHinzu(s) {
+  schmutzig = true;
+  if (verblassen) { s.t = zeit; faden.push(s); }
+  else {
+    const cc = E.pc.getContext("2d"), cw = E.pw.getContext("2d");
+    cc.setTransform(DPR, 0, 0, DPR, 0, 0); cw.setTransform(DPR, 0, 0, DPR, 0, 0);
+    segmentZeichnen(cc, cw, s, 1);
+  }
+}
+function fadenNeuZeichnen() {
+  const cc = E.fc.getContext("2d"), cw = E.fw.getContext("2d");
+  for (const c of [cc, cw]) { c.setTransform(1, 0, 0, 1, 0, 0); c.clearRect(0, 0, E.fc.width, E.fc.height); c.setTransform(DPR, 0, 0, DPR, 0, 0); }
+  while (faden.length && zeit - faden[0].t > VERBLASSEN_SEK) faden.shift();
+  for (const s of faden) {
+    const a = Math.pow(1 - (zeit - s.t) / VERBLASSEN_SEK, 1.6);
+    if (a > 0.01) segmentZeichnen(cc, cw, s, a);
+  }
+}
+function loeschen() {
+  for (const k of ["pc", "pw", "fc", "fw"]) { const c = E[k].getContext("2d"); c.setTransform(1, 0, 0, 1, 0, 0); c.clearRect(0, 0, E[k].width, E[k].height); }
+  faden.length = 0; pa = verblassen ? 0 : 1; schmutzig = true;
+}
+
+// ---------- Stift ----------
+const stift = { an: false, handId: -1, px: 0, py: 0, mx: 0, my: 0, laenge: 0, w: 2, sx: 0, sy: 0, uhr: 0, q: [], fx: null, fy: null, rx: 0, ry: 0, sprung: 0 };
+let hatGezeichnet = false;
+// One-Euro-Filter. Langsam geführt wird stark geglättet, schnelle Striche folgen trotzdem ohne Verzögerung.
+function euro(f, x, dt) {
+  const al = c => 1 / (1 + 1 / (2 * Math.PI * c) / dt);
+  if (f.x === undefined) { f.x = x; f.dx = 0; return x; }
+  const dx = (x - f.x) / dt;
+  f.dx += (dx - f.dx) * al(1.0);
+  const c = EURO_MIN + EURO_BETA * Math.abs(f.dx) / W;
+  f.x += (x - f.x) * al(c);
+  return f.x;
+}
+function stiftSetzen(tx, ty, dt) {
+  dt = Math.min(Math.max(dt, 0.001), 0.1);
+  // einzelne Ausreißer der Handerkennung werden übersprungen
+  if (stift.an && Math.hypot(tx - stift.rx, ty - stift.ry) > W * SPRUNG) {
+    if (++stift.sprung <= 3) return;
+    stiftAbsetzen(); return;
+  }
+  stift.sprung = 0; stift.rx = tx; stift.ry = ty;
+  if (!stift.an) {
+    stift.an = true; stift.q = []; stift.uhr = 0;
+    stift.fx = {}; stift.fy = {};
+    euro(stift.fx, tx, dt); euro(stift.fy, ty, dt);
+    stift.sx = tx; stift.sy = ty; stift.px = tx; stift.py = ty; stift.mx = tx; stift.my = ty; stift.laenge = 0; stift.w = KERN_MAX * SK;
+    segmentHinzu({ x0: tx, y0: ty, cx: tx, cy: ty, x1: tx + 0.01, y1: ty, w: stift.w, col: farbeBei(0) });
+    if (!hatGezeichnet) { hatGezeichnet = true; hinweis.classList.add("weg"); }
+    return;
+  }
+  stift.uhr += dt;
+  stift.q.push({ x: euro(stift.fx, tx, dt), y: euro(stift.fy, ty, dt), t: stift.uhr, dt });
+  // Gezeichnet wird mit kleiner Verzögerung. Beim Loslassen fällt das letzte Stück weg, dort macht der Finger den Haken.
+  while (stift.q.length && stift.q[0].t <= stift.uhr - VERZOEGERUNG) { const p = stift.q.shift(); strichPunkt(p.x, p.y, p.dt); }
+}
+function strichPunkt(tx, ty, dt) {
+  const nx = tx, ny = ty;
+  const d = Math.hypot(nx - stift.sx, ny - stift.sy);
+  if (d < TOTZONE * SK) return;
+  const v = d / Math.max(dt, 0.001) / W;                 // Bildbreiten pro Sekunde
+  const wZiel = (KERN_MIN + (KERN_MAX - KERN_MIN) * Math.exp(-v / TEMPO_REF)) * SK;
+  stift.w += (wZiel - stift.w) * 0.25;
+  const mx = (stift.px + nx) / 2, my = (stift.py + ny) / 2;
+  stift.laenge += d;
+  segmentHinzu({ x0: stift.mx, y0: stift.my, cx: stift.px, cy: stift.py, x1: mx, y1: my, w: stift.w, col: farbeBei(stift.laenge) });
+  stift.mx = mx; stift.my = my; stift.px = nx; stift.py = ny; stift.sx = nx; stift.sy = ny;
+}
+function stiftAbsetzen() {
+  if (!stift.an) return;
+  stift.q = [];
+  segmentHinzu({ x0: stift.mx, y0: stift.my, cx: stift.px, cy: stift.py, x1: stift.px, y1: stift.py, w: stift.w, col: farbeBei(stift.laenge) });
+  stift.an = false; stift.handId = -1;
+}
+
+// ---------- Hände ----------
+const rahmen = { dx: 0, dy: 0, dw: 1, dh: 1 };
+let haende = [];       // [{ id, pts, alter, pinch, haltePalme, halteFaust, gefeuert }]
+let naechsteId = 1;
+function aufnehmen(neu) {
+  if (!neu.length) {
+    for (let i = haende.length - 1; i >= 0; i--) { haende[i].alter++; if (haende[i].alter > 6) haende.splice(i, 1); }
+    return;
+  }
+  const liste = neu.map(h => h.map(p => [W - (rahmen.dx + p.x * rahmen.dw), rahmen.dy + p.y * rahmen.dh, p.z * rahmen.dw]));
+  zuordnen(liste);
+}
+function zuordnen(liste) {
+  const frei = haende.slice(), neu = [];
+  for (const pts of liste) {
+    let best = -1, bd = 1e9;
+    frei.forEach((h, i) => { const d = Math.hypot(h.pts[0][0] - pts[0][0], h.pts[0][1] - pts[0][1]); if (d < bd) { bd = d; best = i; } });
+    if (best >= 0 && bd < W * 0.4) { const h = frei.splice(best, 1)[0]; h.pts = pts; h.alter = 0; neu.push(h); }
+    else neu.push({ id: naechsteId++, pts, alter: 0, pinch: false, haltePalme: 0, halteFaust: 0, gefeuert: false });
+  }
+  haende = neu;
+}
+const dist = (a, b) => Math.hypot(a[0] - b[0], a[1] - b[1]);
+function pinchWert(p) { return dist(p[4], p[8]) / Math.max(1, dist(p[0], p[9])); }
+function gestenart(p) {
+  const w = p[0];
+  const finger = [[8, 6, 5], [12, 10, 9], [16, 14, 13], [20, 18, 17]];
+  let offen = 0, zu = 0;
+  for (const [tip, pip] of finger) {
+    const dt = dist(p[tip], w), dp = dist(p[pip], w);
+    if (dt > dp * 1.12) offen++; else if (dt < dp * 0.95) zu++;
+  }
+  return offen === 4 ? "palme" : zu === 4 ? "faust" : "";
+}
+
+function handlungen(dt, dtZ) {
+  // Pinch mit Hysterese
+  for (const h of haende) {
+    const r = pinchWert(h.pts);
+    h.pinch = h.pinch ? r < PINCH_AUS : r < PINCH_AN;
+    h.pz = h.pinch ? (h.alter === 0 ? (h.pz || 0) + 1 : h.pz || 0) : 0;
+  }
+  // Wer zeichnet?
+  let zeichner = haende.find(h => h.id === stift.handId && h.pinch) || null;
+  if (!zeichner && stift.an) stiftAbsetzen();
+  if (!zeichner) zeichner = haende.find(h => h.pinch && h.alter === 0 && h.pz >= PINCH_FRAMES) || null;
+  if (zeichner) {
+    stift.handId = zeichner.id;
+    const p = zeichner.pts;
+    stiftSetzen((p[4][0] + p[8][0]) / 2, (p[4][1] + p[8][1]) / 2, dt);
+  }
+  // Gesten der anderen Hand, nur wenn zwei Hände im Bild sind
+  for (const h of haende) {
+    const andere = haende.length >= 2 && h !== zeichner && !h.pinch;
+    const art = andere ? gestenart(h.pts) : "";
+    if (art !== h.letzteArt) { h.gefeuert = false; h.haltePalme = 0; h.halteFaust = 0; h.letzteArt = art; }   // neue Geste, neuer Anlauf
+    h.haltePalme = art === "palme" ? h.haltePalme + dtZ : 0;
+    h.halteFaust = art === "faust" ? h.halteFaust + dtZ : 0;
+    if (!h.gefeuert && h.haltePalme >= PALME_SEK) { h.gefeuert = true; naechsteFarbe(); }
+    if (!h.gefeuert && h.halteFaust >= FAUST_SEK) { h.gefeuert = true; loeschen(); zeigeToast("Gelöscht"); }
+  }
+}
+
+// ---------- Leuchten ----------
+function lichtZusammensetzen() {
+  const n = E.nc.getContext("2d");
+  n.setTransform(1, 0, 0, 1, 0, 0);
+  n.globalCompositeOperation = "source-over"; n.globalAlpha = 1;
+  n.fillStyle = "#000"; n.fillRect(0, 0, E.nc.width, E.nc.height);
+  n.globalAlpha = pa; n.drawImage(E.pc, 0, 0);
+  n.globalAlpha = 1;  n.drawImage(E.fc, 0, 0);
+  n.globalAlpha = pa; n.drawImage(E.pw, 0, 0);
+  n.globalAlpha = 1;  n.drawImage(E.fw, 0, 0);
+}
+function leuchten() {
+  const nc = E.nc;
+  const stufe = (von, nach) => { const c = nach.getContext("2d"); c.imageSmoothingEnabled = true; c.imageSmoothingQuality = "high"; c.globalCompositeOperation = "copy"; c.drawImage(von, 0, 0, nach.width, nach.height); c.globalCompositeOperation = "source-over"; };
+  stufe(nc, E.d2); stufe(E.d2, E.d4); stufe(E.d4, E.d8); stufe(E.d8, E.d16);
+  stufe(E.d16, E.u8); stufe(E.u8, E.u4);
+  const g = E.gc.getContext("2d");
+  g.setTransform(1, 0, 0, 1, 0, 0);
+  g.imageSmoothingEnabled = true; g.imageSmoothingQuality = "high";
+  g.globalCompositeOperation = "copy"; g.drawImage(nc, 0, 0);
+  g.globalCompositeOperation = "lighter"; g.globalAlpha = BLUR_FAKTOR / 2;
+  for (let k = 0; k < 2; k++) {
+    g.drawImage(E.d4, 0, 0, E.gc.width, E.gc.height);
+    g.drawImage(E.u4, 0, 0, E.gc.width, E.gc.height);
+  }
+  g.globalAlpha = 1; g.globalCompositeOperation = "source-over";
+}
+
+// ---------- Kamerabild ----------
+function kameraRahmen() {
+  const vw = video.videoWidth, vh = video.videoHeight;
+  if (!vw) return false;
+  const s = Math.max(W / vw, H / vh);
+  rahmen.dw = vw * s; rahmen.dh = vh * s; rahmen.dx = (W - rahmen.dw) / 2; rahmen.dy = (H - rahmen.dh) / 2;
+  return true;
+}
+function kameraZeichnen(c, breite, hoehe, skala) {
+  c.save(); c.setTransform(skala, 0, 0, skala, 0, 0);
+  c.translate(W, 0); c.scale(-1, 1);
+  c.drawImage(video, rahmen.dx, rahmen.dy, rahmen.dw, rahmen.dh);
+  c.restore();
+  c.fillStyle = "rgba(7,8,26," + VIDEO_DUNKEL + ")"; c.fillRect(0, 0, breite, hoehe);
+}
+
+// ---------- Cursor und Anzeigen, nur auf dem Bildschirm, nie im gespeicherten Bild ----------
+function anzeigen() {
+  ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
+  ctx.globalCompositeOperation = "lighter";
+  for (const h of haende) {
+    const p = h.pts, mx = (p[4][0] + p[8][0]) / 2, my = (p[4][1] + p[8][1]) / 2;
+    const r = (h.pinch ? 5 : 9) * SK;
+    ctx.lineWidth = 1.6; ctx.strokeStyle = h.pinch ? "rgba(255,255,255,.95)" : "rgba(255,255,255,.5)";
+    ctx.beginPath(); ctx.arc(mx, my, r, 0, 6.2832); ctx.stroke();
+    // Fortschritt der Gesten
+    const pf = h.haltePalme > 0 ? h.haltePalme / PALME_SEK : h.halteFaust > 0 ? h.halteFaust / FAUST_SEK : 0;
+    if (pf > 0 && !h.gefeuert) {
+      const c = p[9], rr = 34 * SK;
+      ctx.lineWidth = 4; ctx.strokeStyle = h.halteFaust > 0 ? "rgba(255,120,150,.95)" : "rgba(160,220,255,.95)";
+      ctx.beginPath(); ctx.arc(c[0], c[1], rr, -1.5708, -1.5708 + 6.2832 * Math.min(1, pf)); ctx.stroke();
+    }
+  }
+  ctx.globalCompositeOperation = "source-over";
+}
+
+// ---------- Hauptschleife ----------
+let landmarker = null, letzteZeit = -1, letztesFrame = performance.now(), laeuft = false;
+function schleife(now) {
+  const dtZ = Math.min((now - letztesFrame) / 1000, 0.25), dt = Math.min(dtZ, 0.066);
+  letztesFrame = now; zeit += dtZ;
+  const hatVideo = kameraRahmen();
+
+  ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
+  ctx.globalCompositeOperation = "source-over";
+  ctx.fillStyle = "#07081a"; ctx.fillRect(0, 0, W, H);
+  if (hatVideo && !window.__nurLicht) kameraZeichnen(ctx, W, H, DPR);
+
+  if (landmarker && !window.__hande && video.readyState >= 2 && video.currentTime !== letzteZeit) {
+    letzteZeit = video.currentTime;
+    const erg = landmarker.detectForVideo(video, now);
+    aufnehmen(erg.landmarks || []);
+  }
+  if (window.__hande) zuordnen(window.__hande);      // Testhaken, Punkte in Bildschirmkoordinaten
+  handlungen(dt, dtZ);
+
+  // Sichtbarkeit der bleibenden Ebene
+  const ziel = verblassen ? 0 : 1, vorher = pa;
+  pa += (ziel - pa) * Math.min(1, dtZ * (verblassen ? 0.9 : 6));
+  if (Math.abs(ziel - pa) < 0.002) pa = ziel;
+  if (pa !== vorher) schmutzig = true;
+  if (verblassen && pa < 0.02 && pa !== 0) {
+    pa = 0; schmutzig = true;
+  }
+  if (verblassen && pa === 0) {
+    for (const k of ["pc", "pw"]) { const c = E[k].getContext("2d"); c.setTransform(1, 0, 0, 1, 0, 0); c.clearRect(0, 0, E[k].width, E[k].height); }
+  }
+  if (faden.length || fadenAktiv) { fadenNeuZeichnen(); fadenAktiv = faden.length > 0; schmutzig = true; }
+  if (schmutzig) { lichtZusammensetzen(); leuchten(); schmutzig = false; }
+
+  ctx.setTransform(1, 0, 0, 1, 0, 0);
+  ctx.globalCompositeOperation = "screen";
+  ctx.drawImage(E.gc, 0, 0, cv.width, cv.height);
+  ctx.globalCompositeOperation = "source-over";
+  anzeigen();
+  requestAnimationFrame(schleife);
+}
+
+// ---------- Bild speichern ----------
+function bildBauen(mitKamera) {
+  const c = leinwand(E.gc.width, E.gc.height), g = c.getContext("2d");
+  g.fillStyle = "#000"; g.fillRect(0, 0, c.width, c.height);
+  if (mitKamera && video.videoWidth) { kameraZeichnen(g, c.width / DPR, c.height / DPR, DPR); g.setTransform(1, 0, 0, 1, 0, 0); g.globalCompositeOperation = "screen"; }
+  g.drawImage(E.gc, 0, 0);
+  g.globalCompositeOperation = "source-over";
+  return c;
+}
+async function speichern(mitKamera) {
+  const c = bildBauen(mitKamera);
+  const blob = await new Promise(res => c.toBlob(res, "image/png"));
+  if (!blob) { zeigeToast("Das Bild konnte nicht erzeugt werden"); return; }
+  const name = mitKamera ? "lichtzeichnung-mit-kamera.png" : "lichtzeichnung.png";
+  const datei = new File([blob], name, { type: "image/png" });
+  const mobil = matchMedia("(pointer: coarse)").matches;
+  if (mobil && navigator.canShare && navigator.canShare({ files: [datei] })) {
+    try { await navigator.share({ files: [datei] }); return; } catch (e) { if (e && e.name === "AbortError") return; }
+  }
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a"); a.href = url; a.download = name;
+  document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 4000);
+  zeigeToast("Gespeichert");
+}
+
+document.getElementById("bLoeschen").addEventListener("click", () => { loeschen(); zeigeToast("Gelöscht"); });
+document.getElementById("bVerblassen").addEventListener("click", e => {
+  verblassen = !verblassen; e.currentTarget.setAttribute("aria-pressed", verblassen);
+  zeigeToast(verblassen ? "Linien verblassen" : "Linien bleiben");
+});
+document.getElementById("bFarbe").addEventListener("click", naechsteFarbe);
+document.getElementById("bSpeichern").addEventListener("click", () => speichern(false));
+document.getElementById("bMitKamera").addEventListener("click", () => speichern(true));
+
+// ---------- Start ----------
+knopf.addEventListener("click", async () => {
+  knopf.disabled = true;
+  sagen("Handerkennung wird geladen, das dauert einen Moment.");
+  try { landmarker = await modellLaden(); }
+  catch (e) { console.error(e); sagen("Die Handerkennung konnte nicht geladen werden. Versuche es mit einem aktuellen Browser.", true); knopf.disabled = false; return; }
+  sagen("Kamera wird gestartet.");
+  try {
+    const strom = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "user", width: { ideal: 1280 }, height: { ideal: 720 } }, audio: false });
+    video.srcObject = strom; await video.play();
+  } catch (e) {
+    console.error(e);
+    sagen("Kein Zugriff auf die Kamera. Erlaube die Kamera im Browser und lade die Seite neu.", true);
+    knopf.disabled = false; return;
+  }
+  startBox.hidden = true; hinweis.hidden = false; leiste.hidden = false;
+  if (!laeuft) { laeuft = true; requestAnimationFrame(schleife); }
+});
+
+window.__licht = {
+  get hell() {   // Anzahl heller Pixel im Licht, zum Testen
+    const c = E.nc.getContext("2d"), d = c.getImageData(0, 0, E.nc.width, E.nc.height).data; let n = 0;
+    for (let i = 0; i < d.length; i += 16) if (d[i] > 60 || d[i + 1] > 60 || d[i + 2] > 60) n++;
+    return n;
+  },
+  get farbwelt() { return farbwelt; }, get verblassen() { return verblassen; }, get an() { return stift.an; },
+  get faden() { return faden.length; }, get pa() { return pa; },
+  starten() { if (!laeuft) { laeuft = true; startBox.hidden = true; leiste.hidden = false; requestAnimationFrame(schleife); } },
+  stift: { setzen: stiftSetzen, absetzen: stiftAbsetzen, get pos() { return [stift.mx, stift.my]; } },
+  segmente: faden, loeschen, W: () => W, H: () => H, schritt: dt => { zeit += dt; },
+};
+</script>
+</body>
+</html>

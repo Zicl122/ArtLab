@@ -1,0 +1,28 @@
+@font-face {
+  font-family: 'Atkinson Hyperlegible';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url(atkinsonhyperlegible-9Bt23C1K.ttf) format('truetype');
+}
+@font-face {
+  font-family: 'Atkinson Hyperlegible';
+  font-style: normal;
+  font-weight: 700;
+  font-display: swap;
+  src: url(atkinsonhyperlegible-9Bt73C1K.ttf) format('truetype');
+}
+@font-face {
+  font-family: 'IM Fell English';
+  font-style: italic;
+  font-weight: 400;
+  font-display: swap;
+  src: url(imfellenglish-Ktk3ALSL.ttf) format('truetype');
+}
+@font-face {
+  font-family: 'IM Fell English';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url(imfellenglish-Ktk1ALSL.ttf) format('truetype');
+}

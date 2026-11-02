@@ -1,0 +1,177 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Aus Kritzel wird Bild</title>
+<meta name="description" content="Zeichne eine kleine Skizze, beschreibe sie, und eine KI macht daraus ein Bild, zum Beispiel im Stil von Van Gogh.">
+<style>
+:root{color-scheme:dark;--bg:#07081a;--panel:#12142b;--panel2:#191c3a;--text:#f3efe2;--muted:rgba(243,239,226,.68);--line:rgba(255,255,255,.16);--gold:#f0c24b;--focus:#8fd3ff;--bad:#ff9fb4;--ok:#6fe3a0}
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+body{margin:0;background:var(--bg);color:var(--text);font:400 18px/1.55 Georgia,"Times New Roman",serif;-webkit-text-size-adjust:100%}
+a{color:#8fb4ff}
+:focus-visible{outline:3px solid var(--focus);outline-offset:2px;border-radius:6px}
+.zurueck{position:fixed;top:max(12px,env(safe-area-inset-top));left:max(12px,env(safe-area-inset-left));z-index:20;font:400 14px/1 Georgia,serif;color:#f1f0f7;background:rgba(9,10,28,.7);border:1px solid rgba(255,255,255,.22);border-radius:999px;padding:9px 14px;text-decoration:none;-webkit-backdrop-filter:blur(6px);backdrop-filter:blur(6px)}
+main{max-width:1080px;margin:0 auto;padding:68px 20px 64px}
+h1{font-weight:400;font-size:clamp(1.9rem,6vw,2.8rem);line-height:1.1;margin:0 0 .35em}
+.lead{color:var(--muted);max-width:38em;margin:0 0 22px}
+.klein{font:400 14px/1.45 system-ui,sans-serif;color:var(--muted)}
+.hinweis{display:none;margin:0 0 18px;padding:12px 14px;border-radius:10px;font:500 15px/1.45 system-ui,sans-serif;background:rgba(255,159,180,.12);border:1px solid var(--bad)}
+.hinweis.an{display:block}
+.hinweis.info{background:rgba(143,180,255,.12);border-color:#8fb4ff}
+.zwei{display:grid;grid-template-columns:1fr 1fr;gap:20px;align-items:start}
+@media(max-width:820px){.zwei{grid-template-columns:1fr}}
+.karte{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:16px}
+.karte h2{font:700 13px/1 system-ui,sans-serif;letter-spacing:.07em;text-transform:uppercase;color:var(--gold);margin:0 0 12px}
+.blatt{position:relative;width:100%;aspect-ratio:1;background:#fff;border-radius:10px;overflow:hidden;touch-action:none;line-height:0}
+#zeichnung{width:100%;height:100%;display:block;cursor:crosshair;touch-action:none}
+.werkzeuge{display:flex;flex-wrap:wrap;gap:8px;margin:12px 0 0}
+button,.knopf{font:600 15px/1.2 system-ui,-apple-system,sans-serif;color:var(--text);background:var(--panel2);border:1px solid var(--line);border-radius:999px;padding:10px 16px;cursor:pointer;min-height:44px;text-decoration:none;display:inline-flex;align-items:center}
+button:hover:not([disabled]){border-color:var(--gold)}
+button[aria-pressed="true"]{background:rgba(240,194,75,.22);border-color:var(--gold)}
+button.haupt{background:var(--gold);color:#1a1530;border-color:var(--gold)}
+button[disabled]{opacity:.5;cursor:default}
+label.feld{display:block;font:600 14px/1.3 system-ui,sans-serif;margin:16px 0 6px}
+input[type=text],input[type=password]{width:100%;font:400 17px/1.4 system-ui,sans-serif;color:var(--text);background:var(--panel2);border:1px solid var(--line);border-radius:10px;padding:12px}
+.chips{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px}
+.chips button{font-weight:500;font-size:14px;min-height:40px;padding:8px 13px}
+.ergebnis{aspect-ratio:1;border-radius:10px;border:1px dashed var(--line);display:grid;place-items:center;text-align:center;padding:16px;color:var(--muted);font:400 16px/1.5 system-ui,sans-serif;overflow:hidden;background:rgba(255,255,255,.02)}
+.ergebnis img{width:100%;height:100%;object-fit:cover;display:block;border-radius:8px}
+.drehen{width:42px;height:42px;border-radius:50%;border:4px solid var(--line);border-top-color:var(--gold);animation:dreh 1s linear infinite;margin:0 auto 12px}
+@keyframes dreh{to{transform:rotate(360deg)}}
+@media(prefers-reduced-motion:reduce){.drehen{animation-duration:3s}}
+.rueck{min-height:1.4em;font:500 15px/1.45 system-ui,sans-serif;margin:10px 0 0}
+.rueck.nein{color:var(--bad)}
+details{margin:26px 0 0;background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:12px 18px}
+summary{cursor:pointer;font:600 17px/1.4 system-ui,sans-serif}
+details ol{padding-left:1.2em;margin:.8em 0 .4em}
+details li{margin:.4em 0}
+.nebeneinander{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:12px}
+.nebeneinander figure{margin:0}
+.nebeneinander img{width:100%;aspect-ratio:1;object-fit:cover;border-radius:8px;border:1px solid var(--line);background:#fff}
+.nebeneinander figcaption{font:400 13px/1.3 system-ui,sans-serif;color:var(--muted);margin-top:4px}
+.aktionen{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px}
+</style>
+</head>
+<body>
+<a class="zurueck" href="../index.html" aria-label="Zurück zur Übersicht">← Übersicht</a>
+<main>
+<h1>Aus Kritzel wird Bild</h1>
+<p class="lead">Zeichne eine kleine Skizze und beschreibe, was daraus werden soll. Eine KI baut aus deinen Linien ein Bild, zum Beispiel ein Porträt im Stil von Van Gogh.</p>
+<p class="hinweis" id="meldung" role="status"></p>
+
+<div class="zwei">
+  <section class="karte" aria-labelledby="h-zeichnen">
+    <h2 id="h-zeichnen">1 Zeichnen</h2>
+    <div class="blatt"><canvas id="zeichnung" width="512" height="512" role="img" aria-label="Zeichenfläche. Mit Maus oder Finger zeichnen."></canvas></div>
+    <div class="werkzeuge" role="group" aria-label="Zeichenwerkzeuge">
+      <button type="button" id="dick" aria-pressed="false">Dicker Stift</button>
+      <button type="button" id="radierer" aria-pressed="false">Radierer</button>
+      <button type="button" id="zurueck">Rückgängig</button>
+      <button type="button" id="leeren">Alles löschen</button>
+    </div>
+    <label class="feld" for="prompt">2 Beschreiben</label>
+    <input type="text" id="prompt" maxlength="200" placeholder="zum Beispiel a portrait of a boy" autocomplete="off">
+    <p class="klein" style="margin:6px 0 0">Englisch klappt meist besser als Deutsch. Mit den Knöpfen hängst du einen Stil an.</p>
+    <div class="chips" role="group" aria-label="Stil anhängen">
+      <button type="button" data-stil="photo, realistic, natural light">Als Foto</button>
+      <button type="button" data-stil="in the style of Vincent van Gogh, thick swirling brush strokes">Van Gogh</button>
+      <button type="button" data-stil="in the style of Claude Monet, impressionist painting">Monet</button>
+      <button type="button" data-stil="in the style of Pablo Picasso, cubism">Picasso</button>
+      <button type="button" data-stil="in the style of Frida Kahlo">Frida Kahlo</button>
+      <button type="button" data-stil="futuristic, neon, science fiction">Futuristisch</button>
+    </div>
+    <div id="codezeile" style="display:none"><label class="feld" for="code">Klassencode</label><input type="password" id="code" autocomplete="off"></div>
+    <div class="aktionen"><button type="button" class="haupt" id="los">3 Bild erzeugen</button></div>
+    <p class="rueck" id="rueck" aria-live="polite"></p>
+  </section>
+
+  <section class="karte" aria-labelledby="h-bild">
+    <h2 id="h-bild">Das Bild der KI</h2>
+    <div class="ergebnis" id="ergebnis" aria-live="polite">Hier erscheint das Bild, sobald es fertig ist. Das dauert etwa eine halbe Minute.</div>
+    <div class="aktionen" id="nachher" hidden>
+      <a class="knopf" id="speichern" href="#" download="kritzel-bild.png">Bild speichern</a>
+      <button type="button" id="vergleich">Skizze und Bild nebeneinander</button>
+    </div>
+    <div id="vergleichBox"></div>
+  </section>
+</div>
+
+<details>
+  <summary>Fragen zum Nachdenken, Rezeption</summary>
+  <ol>
+    <li>Welche Merkmale des Künstlerstils erkennst du im Bild der KI?</li>
+    <li>Wie hat die KI diese Merkmale umgesetzt, und wo hat sie deine Skizze verändert?</li>
+    <li>Welche Unterschiede und Ähnlichkeiten gibt es zwischen dem Originalstil und der KI-Interpretation?</li>
+    <li>Suche Originalbilder der Künstlerin oder des Künstlers heraus. Woher könnte die KI ihre Vorbilder haben?</li>
+    <li>Wem gehört das Bild, das aus deiner Skizze und dem Wissen der KI entstanden ist?</li>
+  </ol>
+</details>
+<p class="klein" style="margin-top:22px">Deine Zeichnung und deine Beschreibung werden zur Erzeugung an einen Bilddienst gesendet. Schreibe deshalb keine Namen oder persönlichen Angaben hinein und zeichne keine Menschen, die du kennst. Das Ergebnis ist ein KI-Bild und kein Foto.</p>
+</main>
+
+<script>
+(function(){
+  var cv=document.getElementById('zeichnung'), cx=cv.getContext('2d'), SZ=512;
+  var demo=/[?&]demo=1/.test(location.search), API='api/erzeugen.php';
+  var dick=false, rad=false, malt=false, letzte=null, undo=[];
+  function weiss(){cx.fillStyle='#fff';cx.fillRect(0,0,SZ,SZ);}
+  weiss(); cx.lineCap='round'; cx.lineJoin='round';
+  function merken(){try{undo.push(cx.getImageData(0,0,SZ,SZ));if(undo.length>25)undo.shift();}catch(e){}}
+  function pos(e){var r=cv.getBoundingClientRect();return [(e.clientX-r.left)/r.width*SZ,(e.clientY-r.top)/r.height*SZ];}
+  function stift(){cx.strokeStyle=rad?'#fff':'#000';cx.fillStyle=cx.strokeStyle;cx.lineWidth=rad?34:(dick?14:6);}
+  cv.addEventListener('pointerdown',function(e){e.preventDefault();cv.setPointerCapture(e.pointerId);merken();malt=true;letzte=pos(e);stift();cx.beginPath();cx.arc(letzte[0],letzte[1],cx.lineWidth/2,0,6.283);cx.fill();});
+  cv.addEventListener('pointermove',function(e){if(!malt)return;e.preventDefault();var p=pos(e);stift();cx.beginPath();cx.moveTo(letzte[0],letzte[1]);cx.lineTo(p[0],p[1]);cx.stroke();letzte=p;});
+  function ende(){malt=false;}
+  cv.addEventListener('pointerup',ende);cv.addEventListener('pointercancel',ende);cv.addEventListener('lostpointercapture',ende);
+  document.getElementById('dick').onclick=function(){dick=!dick;this.setAttribute('aria-pressed',dick);if(dick){rad=false;document.getElementById('radierer').setAttribute('aria-pressed',false);}};
+  document.getElementById('radierer').onclick=function(){rad=!rad;this.setAttribute('aria-pressed',rad);if(rad){dick=false;document.getElementById('dick').setAttribute('aria-pressed',false);}};
+  document.getElementById('zurueck').onclick=function(){var d=undo.pop();if(d)cx.putImageData(d,0,0);};
+  document.getElementById('leeren').onclick=function(){merken();weiss();};
+  var prompt=document.getElementById('prompt');
+  Array.prototype.forEach.call(document.querySelectorAll('[data-stil]'),function(b){b.onclick=function(){var s=b.getAttribute('data-stil');var t=prompt.value.trim().replace(/[,\s]+$/,'');prompt.value=(t?t+', ':'')+s;prompt.focus();};});
+
+  var meldung=document.getElementById('meldung'),rueck=document.getElementById('rueck'),erg=document.getElementById('ergebnis'),los=document.getElementById('los'),nachher=document.getElementById('nachher'),sp=document.getElementById('speichern'),vb=document.getElementById('vergleichBox');
+  var braucheCode=false, skizzeUrl=null, bildUrl=null;
+  function sag(t,nein){rueck.textContent=t;rueck.className='rueck'+(nein?' nein':'');}
+  function hinweis(t,info){meldung.textContent=t;meldung.className='hinweis an'+(info?' info':'');}
+  if(demo){hinweis('Testmodus. Hier entsteht kein KI-Bild. Es zeigt nur, wie die Seite aussieht und funktioniert.',true);}
+  else{
+    fetch(API+'?status=1',{cache:'no-store'}).then(function(r){return r.ok?r.json():Promise.reject();}).then(function(s){
+      if(!s.bereit){hinweis('Der Bilddienst ist noch nicht eingerichtet. Zeichnen geht schon, ein Bild entsteht aber erst nach der Einrichtung.');los.disabled=true;}
+      else{braucheCode=!!s.code;document.getElementById('codezeile').style.display=braucheCode?'block':'none';if(s.heuteFrei===false){hinweis('Für heute oder diese Stunde sind alle Bilder aufgebraucht.');los.disabled=true;}}
+    }).catch(function(){hinweis('Der Bilddienst ist hier nicht erreichbar. Zeichnen geht schon, ein Bild entsteht aber nur, wenn die Seite auf dem eigenen Webspace mit dem Ordner api liegt.');los.disabled=true;});
+  }
+  function leer(){var d=cx.getImageData(0,0,SZ,SZ).data;for(var i=0;i<d.length;i+=4*37){if(d[i]<200)return false;}return true;}
+  var timer=null,t0=0;
+  function warten(an){clearInterval(timer);if(an){t0=Date.now();erg.innerHTML='<div><div class="drehen"></div><span id="sek">Die KI arbeitet. 0 Sekunden</span><br><span class="klein">Das dauert meist 20 bis 60 Sekunden.</span></div>';timer=setInterval(function(){var s=document.getElementById('sek');if(s)s.textContent='Die KI arbeitet. '+Math.round((Date.now()-t0)/1000)+' Sekunden';},1000);}}
+  function zeigen(url){bildUrl=url;erg.innerHTML='';var im=new Image();im.alt='Von der KI erzeugtes Bild zu deiner Skizze';im.onload=function(){erg.appendChild(im);nachher.hidden=false;sp.href=url;};im.onerror=function(){erg.textContent='Das Bild konnte nicht angezeigt werden.';};im.src=url;}
+  function fertig(){los.disabled=false;warten(false);}
+  los.onclick=function(){
+    var p=prompt.value.trim(); vb.innerHTML=''; nachher.hidden=true;
+    if(!p){sag('Bitte schreibe zuerst eine kurze Beschreibung.',true);prompt.focus();return;}
+    if(leer()){sag('Bitte zeichne zuerst etwas.',true);return;}
+    skizzeUrl=cv.toDataURL('image/png'); los.disabled=true; sag(''); warten(true);
+    if(demo){setTimeout(function(){var c=document.createElement('canvas');c.width=c.height=512;var g=c.getContext('2d');var gr=g.createLinearGradient(0,0,512,512);gr.addColorStop(0,'#1c2f7a');gr.addColorStop(.5,'#f0c24b');gr.addColorStop(1,'#a3376b');g.fillStyle=gr;g.fillRect(0,0,512,512);g.globalCompositeOperation='multiply';g.drawImage(cv,0,0);fertig();zeigen(c.toDataURL('image/png'));},1500);return;}
+    var body={prompt:p,bild:skizzeUrl,code:document.getElementById('code').value};
+    fetch(API,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)}).then(function(r){return r.json().then(function(j){return [r.ok,j];});}).then(function(a){
+      if(!a[0]||!a[1].id){throw new Error(a[1].fehler||'Das hat nicht geklappt.');}
+      abfragen(a[1].id,0);
+    }).catch(function(e){fertig();erg.textContent='Hier erscheint das Bild, sobald es fertig ist.';sag(e.message||'Das hat nicht geklappt.',true);});
+  };
+  function abfragen(id,n){
+    if(n>70){fertig();erg.textContent='Das dauert zu lange. Versuche es noch einmal.';sag('Zeitüberschreitung.',true);return;}
+    setTimeout(function(){fetch(API+'?id='+encodeURIComponent(id),{cache:'no-store'}).then(function(r){return r.json();}).then(function(j){
+      if(j.fehler&&(j.status==='failed'||j.status==='canceled')){fertig();erg.textContent='Hier erscheint das Bild, sobald es fertig ist.';sag(j.fehler,true);return;}
+      if(j.status==='succeeded'){fertig();zeigen(API+'?id='+encodeURIComponent(id)+'&bild=1');return;}
+      abfragen(id,n+1);
+    }).catch(function(){abfragen(id,n+1);});},n===0?2500:1800);
+  }
+  document.getElementById('vergleich').onclick=function(){
+    vb.innerHTML='<div class="nebeneinander"><figure><img alt="Deine Skizze" src="'+skizzeUrl+'"><figcaption>Deine Skizze</figcaption></figure><figure><img alt="Das Bild der KI" src="'+bildUrl+'"><figcaption>Das Bild der KI</figcaption></figure></div>';
+  };
+})();
+</script>
+</body>
+</html>

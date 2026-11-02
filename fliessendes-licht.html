@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
+<title>Fließendes Licht</title>
+<style>
+  :root { color-scheme: dark; --bg: #090a1c; --hint: rgba(255,255,255,.62); }
+  @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) { --bg: #090a1c; --hint: rgba(255,255,255,.62); } }
+  :root[data-theme="dark"] { --bg: #090a1c; --hint: rgba(255,255,255,.62); }
+  html, body { margin: 0; height: 100%; background: var(--bg); overflow: hidden; overscroll-behavior: none; }
+  canvas { display: block; touch-action: none; }
+  #hint {
+    position: fixed; left: 0; right: 0; bottom: 0; text-align: center;
+    padding: 0 24px calc(28px + env(safe-area-inset-bottom, 0px));
+    font: 300 17px/1.4 Georgia, "Times New Roman", serif; letter-spacing: .02em;
+    color: var(--hint); pointer-events: none; transition: opacity 1.6s ease;
+  }
+  #hint.weg { opacity: 0; }
+</style>
+<style>.zurueck{position:fixed;top:max(12px,env(safe-area-inset-top));left:max(12px,env(safe-area-inset-left));z-index:9999;font:400 14px/1 Georgia,serif;color:#f1f0f7;background:rgba(9,10,28,.55);border:1px solid rgba(255,255,255,.22);border-radius:999px;padding:9px 14px;text-decoration:none;-webkit-backdrop-filter:blur(6px);backdrop-filter:blur(6px);touch-action:manipulation}.zurueck:focus-visible{outline:2px solid #8fd3ff;outline-offset:3px}</style>
+</head>
+<body>
+<a class="zurueck" href="index.html" aria-label="Zurück zur Übersicht">← Übersicht</a>
+
+<div id="hint">Streiche mit dem Finger über das Bild</div>
+<script src="p5.min.js"></script>
+<script>
+let teilchen = [];
+let zeit = 0;
+let farbe = 200;
+let letzteEingabe = 0;
+
+function setup() {
+  pixelDensity(1.5);
+  createCanvas(windowWidth, windowHeight);
+  colorMode(HSB, 360, 100, 100, 1);
+  noStroke();
+  background(235, 70, 10);
+}
+
+function windowResized() {
+  resizeCanvas(windowWidth, windowHeight);
+  background(235, 70, 10);
+}
+
+function ausstoss(x, y, menge) {
+  for (let i = 0; i < menge; i++) {
+    teilchen.push({
+      x: x + random(-6, 6),
+      y: y + random(-6, 6),
+      vx: random(-0.6, 0.6),
+      vy: random(-0.6, 0.6),
+      leben: 1,
+      tempo: random(0.004, 0.012),
+      groesse: random(1.5, 5),
+      farbton: (farbe + random(-25, 25) + 360) % 360
+    });
+  }
+  if (teilchen.length > 2200) teilchen.splice(0, teilchen.length - 2200);
+}
+
+function draw() {
+  zeit += 0.004;
+  farbe = (farbe + 0.35) % 360;
+
+  // Spur langsam verblassen lassen
+  blendMode(BLEND);
+  fill(235, 70, 10, 0.09);
+  rect(0, 0, width, height);
+
+  // Eingabe durch Finger oder Maus
+  let beruehrt = false;
+  if (touches.length > 0) {
+    for (const t of touches) ausstoss(t.x, t.y, 5);
+    beruehrt = true;
+  } else if (mouseIsPressed) {
+    ausstoss(mouseX, mouseY, 5);
+    beruehrt = true;
+  }
+  if (beruehrt) {
+    letzteEingabe = millis();
+    document.getElementById('hint').classList.add('weg');
+  } else if (millis() - letzteEingabe > 4000) {
+    // ruhige Eigenbewegung, damit das Bild nie leer wirkt
+    const px = width * (0.5 + 0.32 * sin(zeit * 3.1));
+    const py = height * (0.5 + 0.28 * sin(zeit * 2.3 + 1.2));
+    ausstoss(px, py, 1);
+  }
+
+  // Teilchen folgen einem Strömungsfeld
+  blendMode(ADD);
+  for (let i = teilchen.length - 1; i >= 0; i--) {
+    const p = teilchen[i];
+    const winkel = noise(p.x * 0.0035, p.y * 0.0035, zeit) * TWO_PI * 2.2;
+    p.vx += cos(winkel) * 0.16;
+    p.vy += sin(winkel) * 0.16;
+    p.vx *= 0.965;
+    p.vy *= 0.965;
+    p.x += p.vx;
+    p.y += p.vy;
+    p.leben -= p.tempo;
+    if (p.leben <= 0) { teilchen.splice(i, 1); continue; }
+    const a = p.leben * 0.55;
+    fill(p.farbton, 70, 100, a * 0.22);
+    circle(p.x, p.y, p.groesse * 3.2);
+    fill(p.farbton, 62, 100, a * 0.8);
+    circle(p.x, p.y, p.groesse);
+  }
+}
+
+// Scrollen und Zoomen beim Zeichnen verhindern
+function touchStarted() { return false; }
+function touchMoved() { return false; }
+function touchEnded() { return false; }
+</script>
+</body>
+</html>

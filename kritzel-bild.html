@@ -1,0 +1,100 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Aus Kritzel wird Bild</title>
+<meta name="description" content="Zeichne eine kleine Skizze, beschreibe sie, und eine KI macht daraus ein Bild, zum Beispiel im Stil von Van Gogh.">
+<style>
+:root{color-scheme:dark;--bg:#07081a;--panel:#12142b;--panel2:#191c3a;--text:#f3efe2;--muted:rgba(243,239,226,.7);--line:rgba(255,255,255,.16);--gold:#f0c24b;--focus:#8fd3ff}
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+body{margin:0;background:var(--bg);color:var(--text);font:400 18px/1.55 Georgia,"Times New Roman",serif;-webkit-text-size-adjust:100%}
+a{color:#8fb4ff}
+:focus-visible{outline:3px solid var(--focus);outline-offset:2px;border-radius:6px}
+.zurueck{position:fixed;top:max(12px,env(safe-area-inset-top));left:max(12px,env(safe-area-inset-left));z-index:20;font:400 14px/1 Georgia,serif;color:#f1f0f7;background:rgba(9,10,28,.7);border:1px solid rgba(255,255,255,.22);border-radius:999px;padding:9px 14px;text-decoration:none;-webkit-backdrop-filter:blur(6px);backdrop-filter:blur(6px)}
+main{max-width:1080px;margin:0 auto;padding:68px 20px 64px}
+h1{font-weight:400;font-size:clamp(1.9rem,6vw,2.8rem);line-height:1.1;margin:0 0 .35em}
+h2{font-weight:400;font-size:1.4rem;margin:1.8em 0 .4em}
+.lead{color:var(--muted);max-width:38em;margin:0 0 22px}
+.klein{font:400 14px/1.5 system-ui,sans-serif;color:var(--muted);max-width:60em}
+.reiter{display:flex;flex-wrap:wrap;gap:8px;margin:0 0 12px}
+button,.knopf{font:600 15px/1.2 system-ui,-apple-system,sans-serif;color:var(--text);background:var(--panel2);border:1px solid var(--line);border-radius:999px;padding:11px 18px;cursor:pointer;min-height:44px;text-decoration:none;display:inline-flex;align-items:center}
+button[aria-pressed="true"]{background:rgba(240,194,75,.22);border-color:var(--gold)}
+button.haupt{background:var(--gold);color:#1a1530;border-color:var(--gold)}
+.buehne{background:var(--panel);border:1px solid var(--line);border-radius:14px;overflow:hidden}
+.start{padding:28px 22px;display:flex;flex-direction:column;gap:14px;align-items:flex-start;min-height:260px;justify-content:center}
+.start p{margin:0;max-width:40em}
+iframe{display:block;width:100%;height:min(86vh,780px);min-height:560px;border:0;background:#111}
+.fuss{display:flex;flex-wrap:wrap;gap:10px 18px;align-items:center;padding:10px 14px;border-top:1px solid var(--line);font:400 14px/1.4 system-ui,sans-serif;color:var(--muted)}
+.tipps{display:grid;gap:14px;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));margin:8px 0 0}
+.tipp{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:14px 16px}
+.tipp h3{font:700 13px/1.2 system-ui,sans-serif;letter-spacing:.06em;text-transform:uppercase;color:var(--gold);margin:0 0 8px}
+.tipp p{margin:0;font:400 15px/1.5 system-ui,sans-serif;color:var(--muted)}
+code{font:500 14px/1.4 ui-monospace,Menlo,monospace;background:var(--panel2);padding:2px 6px;border-radius:6px;color:var(--text)}
+details{margin:22px 0 0;background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:12px 18px}
+summary{cursor:pointer;font:600 17px/1.4 system-ui,sans-serif}
+details ol{padding-left:1.2em;margin:.8em 0 .4em}
+details li{margin:.4em 0}
+</style>
+</head>
+<body>
+<a class="zurueck" href="index.html" aria-label="Zurück zur Übersicht">← Übersicht</a>
+<main>
+<h1>Aus Kritzel wird Bild</h1>
+<p class="lead">Zeichne eine kleine Skizze, beschreibe, was daraus werden soll, und eine KI baut daraus ein Bild. Zum Beispiel ein Porträt im Stil von Van Gogh.</p>
+
+<div class="reiter" role="group" aria-label="Dienst wählen">
+  <button type="button" id="r1" aria-pressed="true">Sketch Board, schnell und modern</button>
+  <button type="button" id="r2" aria-pressed="false">Klassisch, ControlNet Scribble</button>
+</div>
+
+<div class="buehne">
+  <div class="start" id="start">
+    <p id="startText"></p>
+    <button type="button" class="haupt" id="laden">Zeichenbrett laden</button>
+    <p class="klein">Beim Laden verbindet sich dein Browser mit Hugging Face (USA). Vorher wird nichts übertragen.</p>
+  </div>
+  <iframe id="rahmen" title="Zeichenbrett mit KI-Bilderzeugung" hidden allow="clipboard-write" referrerpolicy="no-referrer"></iframe>
+  <div class="fuss" id="fuss" hidden>
+    <a href="#" id="neu" target="_blank" rel="noopener">In neuem Tab öffnen</a>
+    <span>Meldet das Brett ein Limit (ZeroGPU quota), hilft ein neuer Tab und eine kostenlose Anmeldung bei huggingface.co.</span>
+  </div>
+</div>
+
+<h2>So gehst du vor</h2>
+<div class="tipps">
+  <div class="tipp"><h3>1 Zeichnen</h3><p>Male eine einfache Skizze mit wenigen klaren Linien, zum Beispiel ein Gesicht, ein Haus oder zwei Gegenstände, die nicht zusammengehören.</p></div>
+  <div class="tipp"><h3>2 Beschreiben</h3><p>Schreibe kurz, was zu sehen sein soll. Englisch klappt meist besser, zum Beispiel <code>a portrait of a boy, in the style of Vincent van Gogh, thick swirling brush strokes</code>.</p></div>
+  <div class="tipp"><h3>3 Vergleichen</h3><p>Probiere denselben Text mit anderen Stilen aus, zum Beispiel Monet, Picasso, Frida Kahlo oder als Foto. Was ändert sich, wenn nur der Stil wechselt?</p></div>
+</div>
+
+<details>
+  <summary>Fragen zum Nachdenken, Rezeption</summary>
+  <ol>
+    <li>Welche Merkmale des Künstlerstils erkennst du im Bild der KI?</li>
+    <li>Wie hat die KI diese Merkmale umgesetzt, und was hat sie an deiner Skizze verändert?</li>
+    <li>Welche Unterschiede und Ähnlichkeiten gibt es zwischen dem Originalstil und der KI-Interpretation?</li>
+    <li>Suche Originalbilder der Künstlerin oder des Künstlers heraus. Woher könnte die KI ihre Vorbilder haben?</li>
+    <li>Wem gehört ein Bild, das aus deiner Skizze und dem Wissen der KI entsteht?</li>
+  </ol>
+</details>
+
+<h2>Gut zu wissen</h2>
+<p class="klein">Die Zeichenbretter laufen kostenlos als Demo bei Hugging Face und gehören nicht zu dieser Seite. Ohne Anmeldung gibt es nur wenige Bilder pro Tag und Netzwerk. In einer Klasse mit gemeinsamem Schulnetz ist das Kontingent schnell aufgebraucht. Die Dienste können sich ändern oder verschwinden. Zeichnung und Beschreibung gehen an Hugging Face. Schreibe deshalb keine Namen oder persönlichen Angaben hinein. Das Ergebnis ist ein KI-Bild und kein Foto.</p>
+</main>
+<script>
+(function(){
+  var D=[
+    {url:'https://prithivmlmods-scribble-board-fast.hf.space',text:'Das Sketch Board ist ein modernes Zeichenbrett mit schneller Bilderzeugung. Du zeichnest links, schreibst rechts deine Beschreibung und drückst auf Generate Image. Schnellwahl für Stile wie Oil Painting gibt es dort auch.'},
+    {url:'https://bytedance-hyper-sd15-scribble.hf.space',text:'Das klassische Verfahren, das auch hinter dem alten Scribble Diffusion steckte. Du lädst oder zeichnest eine Skizze, schreibst deine Beschreibung und startest mit run. Die Oberfläche ist technischer, das Ergebnis liegt dichter an deiner Linie.'}
+  ];
+  var akt=0,r=document.getElementById('rahmen'),st=document.getElementById('start'),ft=document.getElementById('fuss'),neu=document.getElementById('neu'),b=[document.getElementById('r1'),document.getElementById('r2')];
+  function zeige(i){akt=i;b.forEach(function(x,k){x.setAttribute('aria-pressed',k===i);});document.getElementById('startText').textContent=D[i].text;neu.href=D[i].url;r.hidden=true;ft.hidden=true;r.removeAttribute('src');st.hidden=false;}
+  b[0].onclick=function(){zeige(0);};b[1].onclick=function(){zeige(1);};
+  document.getElementById('laden').onclick=function(){r.src=D[akt].url;r.hidden=false;st.hidden=true;ft.hidden=false;};
+  zeige(0);
+})();
+</script>
+</body>
+</html>

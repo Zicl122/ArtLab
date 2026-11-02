@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>KI im Kunstunterricht</title>
+<style>
+  :root {
+    color-scheme: dark;
+    --bg: #090a1c;
+    --panel: #12142b;
+    --text: #f1f0f7;
+    --muted: rgba(241,240,247,.62);
+    --line: rgba(255,255,255,.14);
+    --focus: #8fd3ff;
+  }
+  @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) { color-scheme: dark; } }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; background: var(--bg); color: var(--text); }
+  body { font: 300 18px/1.5 Georgia, "Times New Roman", serif; -webkit-text-size-adjust: 100%; }
+  main { max-width: 1040px; margin: 0 auto; padding: clamp(40px, 9vh, 96px) 20px 64px; }
+
+  header { max-width: 640px; margin: 0 0 clamp(32px, 6vh, 56px); }
+  h1 { font-weight: 400; font-size: clamp(2rem, 6vw, 3.1rem); line-height: 1.1; letter-spacing: -.01em; margin: 0 0 .5em; }
+  header p { margin: 0; color: var(--muted); max-width: 34em; }
+
+  .raster { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 440px), 1fr)); gap: 20px; }
+
+  .kachel { background: var(--panel); border: 1px solid var(--line); border-radius: 14px; overflow: hidden; display: flex; flex-direction: column; }
+  .bild { display: block; aspect-ratio: 8 / 5; background: #05060f; overflow: hidden; }
+  .bild img { width: 100%; height: 100%; object-fit: cover; display: block; transition: transform .5s ease; }
+  .bild:hover img, .bild:focus-visible img { transform: scale(1.025); }
+  .unten { display: flex; gap: 18px; align-items: center; justify-content: space-between; padding: 18px 20px 20px; }
+  .text { min-width: 0; }
+  .text h2 { font-weight: 400; font-size: 1.35rem; line-height: 1.2; margin: 0 0 .3em; }
+  .text h2 a { color: inherit; text-decoration: none; }
+  .text p { margin: 0 0 .7em; color: var(--muted); font-size: .92rem; line-height: 1.45; }
+  .oeffnen { font-size: .92rem; color: var(--text); text-decoration: underline; text-underline-offset: 4px; text-decoration-color: rgba(255,255,255,.4); }
+
+  .qr { flex: none; width: 112px; text-align: center; }
+  .qr .platte { background: #fff; border-radius: 8px; padding: 6px; line-height: 0; }
+  .qr svg { width: 100%; height: auto; display: block; }
+  .qr small { display: block; margin-top: 6px; font-size: .72rem; line-height: 1.25; color: var(--muted); }
+  .qr .leer { background: transparent; border: 1px dashed var(--line); color: var(--muted); font-size: .72rem; line-height: 1.3; padding: 10px 6px; border-radius: 8px; }
+
+  a:focus-visible { outline: 2px solid var(--focus); outline-offset: 3px; border-radius: 4px; }
+  @media (max-width: 420px) { .unten { flex-direction: column; align-items: flex-start; } .qr { width: 132px; } }
+  @media (prefers-reduced-motion: reduce) { .bild img { transition: none; } }
+</style>
+</head>
+<body>
+<main>
+  <header>
+    <h1>KI im Kunstunterricht</h1>
+    <p>Bilder, die auf Berührung reagieren. Scanne den QR-Code mit dem Handy und streiche mit dem Finger über das Bild.</p>
+  </header>
+  <section class="raster" id="raster" aria-label="Projekte"></section>
+</main>
+
+<script src="qrcode.js"></script>
+<script>
+// Neue Projekte: einfach einen weiteren Eintrag ergänzen.
+const PROJEKTE = [
+  {
+    titel: "Fließendes Licht",
+    text: "Leuchtende Spuren folgen dem Finger und ziehen in weichen Strömungen davon.",
+    seite: "fliessendes-licht.html",
+    bild: "vorschau/fliessendes-licht.jpg",
+    alt: "Leuchtende blau-violette Lichtspuren auf dunklem Grund"
+  },
+  {
+    titel: "Datenpigment",
+    text: "Eine Strömung aus feinen Farblinien, die sich mit dem Finger verwirbeln lässt.",
+    seite: "datenpigment.html",
+    bild: "vorschau/datenpigment.jpg",
+    alt: "Dichte Strömung aus feinen violetten, blauen und goldenen Linien"
+  },
+  {
+    titel: "Sternennacht fließt",
+    text: "Van Goghs Gemälde als Strömung aus Farblinien, die den Pinselstrichen folgen und sich verwirbeln lassen.",
+    seite: "sternennacht-fliessend.html",
+    bild: "vorschau/sternennacht-fliessend.jpg",
+    alt: "Van Goghs Sternennacht, aus feinen blauen und gelben Linien gezeichnet"
+  },
+  {
+    titel: "Pigmentfäden",
+    text: "Spreize die Finger vor der Kamera, und zwischen den Fingerspitzen ziehen sich leuchtende Fäden aus Farbe wie Kaugummi. Braucht die Kamera.",
+    seite: "pigmentfaeden.html",
+    bild: "vorschau/pigmentfaeden.jpg",
+    alt: "Leuchtende bunte Fäden zwischen den Fingerspitzen zweier Hände auf dunklem Grund"
+  },
+  {
+    titel: "Handnetz",
+    text: "Halte eine oder beide Hände vor die Kamera. Kleine leuchtende Punkte sitzen auf den Fingern, und zwischen beiden Händen spannen sich bunte feine Linien. Braucht die Kamera.",
+    seite: "handnetz.html",
+    bild: "vorschau/handnetz.jpg",
+    alt: "Leuchtendes buntes Bündel feiner Linien zwischen den Fingern zweier Hände, dazu kleine leuchtende Punkte auf dunklem Grund"
+  },
+  {
+    titel: "Van Gogh und die Bildanalyse",
+    text: "Unterrichtseinheit für Klasse 10 in zwei Doppelstunden. Mit Arbeitsblättern als PDF, Übungen, Spiel, Quiz und Lehrkraftbereich.",
+    seite: "van-gogh-einheit/index.html",
+    bild: "vorschau/van-gogh-einheit.jpg",
+    alt: "Vincent van Goghs Sternennacht mit blauem Wirbelhimmel, gelbem Mond und Zypresse"
+  },
+  {
+    titel: "Aus Kritzel wird Bild",
+    text: "Zeichne eine kleine Skizze, beschreibe sie, und eine KI macht daraus ein Bild, zum Beispiel im Stil von Van Gogh. Kostenloser Demo-Dienst bei Hugging Face, eingebettet.",
+    seite: "kritzel-bild.html",
+    bild: "vorschau/kritzel-bild.jpg",
+    alt: "Ein eingebettetes Zeichenbrett mit weißer Fläche, Werkzeugen und Eingabefeld für die Bildbeschreibung"
+  },
+  {
+    titel: "Gesichter klappen und du",
+    text: "Wie Gesichter klappen, aber mit Kamera. Dein eigenes Foto klappt als dreizehntes Gesicht mit und bleibt auf deinem Gerät.",
+    seite: "gesichter-klappen-kamera.html",
+    bild: "vorschau/gesichter-klappen.jpg",
+    alt: "Ein Brett aus zwölf Klappfeldern, das ein aus Teilen verschiedener Menschen gemischtes Gesicht zeigt"
+  },
+  {
+    titel: "Lichtzeichnung",
+    text: "Zeichne mit dem Finger in die Luft. Daumen und Zeigefinger zusammenkneifen, dann leuchtet der Stift. Mit Verblassen, Farbwechsel und Bild speichern.",
+    seite: "lichtzeichnung.html",
+    bild: "vorschau/lichtzeichnung.jpg",
+    alt: "Eine leuchtende, bunte Linie schwingt in Schleifen über einen dunklen Grund"
+  },
+  {
+    titel: "Blickwechsel",
+    text: "Ein Kaleidoskop aus Kristall und Glut dreht sich um deinen Standpunkt. Mit der Hand vom Frosch zum Vogel, auf Wunsch mit deinem Kamerabild in den Facetten.",
+    seite: "blickwechsel.html",
+    bild: "vorschau/blickwechsel.jpg",
+    alt: "Ein symmetrisches Kaleidoskop aus glühenden orange-roten Kristallfacetten mit hellen Kanten"
+  },
+  {
+    titel: "Die Gesandten, Escape Room",
+    text: "Ein Escape-Room-Lernspiel zu Holbeins Gemälde. Rätsel öffnen sich als Blätter über dem Bild, bis das Geheimnis des verzerrten Schädels gelöst ist.",
+    seite: "gesandten-escape-room.html",
+    bild: "vorschau/gesandten-escape-room.jpg",
+    alt: "Holbeins Gemälde Die Gesandten in goldenem Rahmen vor einer dunkelroten Galeriewand"
+  }
+];
+
+function qrSvg(adresse) {
+  const q = qrcode(0, "M");
+  q.addData(adresse);
+  q.make();
+  return q.createSvgTag({ scalable: true, margin: 0 });
+}
+
+const imNetz = location.protocol === "http:" || location.protocol === "https:";
+const raster = document.getElementById("raster");
+
+for (const p of PROJEKTE) {
+  const adresse = new URL(p.seite, location.href).href;
+  const k = document.createElement("article");
+  k.className = "kachel";
+  k.innerHTML = `
+    <a class="bild" href="${p.seite}" aria-label="${p.titel} öffnen"><img src="${p.bild}" alt="${p.alt}" loading="lazy"></a>
+    <div class="unten">
+      <div class="text">
+        <h2><a href="${p.seite}">${p.titel}</a></h2>
+        <p>${p.text}</p>
+        <a class="oeffnen" href="${p.seite}">Hier öffnen</a>
+      </div>
+      <div class="qr">
+        ${imNetz
+          ? `<div class="platte" role="img" aria-label="QR-Code zu ${p.titel}">${qrSvg(adresse)}</div><small>Mit dem Handy scannen</small>`
+          : `<div class="leer">QR-Code erscheint, sobald die Seite online liegt</div>`}
+      </div>
+    </div>`;
+  raster.appendChild(k);
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,384 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Handnetz</title>
+<style>
+  :root {
+    color-scheme: dark;
+    --bg: #07081a;
+    --fg: #f3efe2;
+    --muted: rgba(243, 239, 226, .66);
+  }
+  html, body { height: 100%; margin: 0; background: var(--bg); color: var(--fg); }
+  body { font: 300 18px/1.5 Georgia, "Times New Roman", serif; overflow: hidden; -webkit-text-size-adjust: 100%; }
+  canvas#buehne { position: fixed; inset: 0; width: 100%; height: 100%; display: block; }
+
+  #start {
+    position: fixed; inset: 0; display: flex; flex-direction: column; justify-content: center; align-items: flex-start;
+    padding: 24px max(24px, env(safe-area-inset-left)) 24px max(24px, env(safe-area-inset-left));
+    max-width: 560px; margin: 0 auto; box-sizing: border-box; gap: 18px;
+  }
+  #start h1 { font-weight: 400; font-size: clamp(2rem, 7vw, 3rem); line-height: 1.1; margin: 0; letter-spacing: -.01em; }
+  #start p { margin: 0; color: var(--muted); }
+  #start .klein { font-size: .85rem; }
+  button { font: inherit; color: var(--bg); background: var(--fg); border: 0; border-radius: 999px; padding: .7em 1.6em; cursor: pointer; }
+  button:focus-visible { outline: 2px solid var(--fg); outline-offset: 4px; }
+  button[disabled] { opacity: .5; cursor: default; }
+  #meldung { color: var(--muted); min-height: 1.5em; }
+  #meldung.fehler { color: #ff9fc4; }
+
+  .fuss { position: fixed; left: 0; right: 0; bottom: 0; text-align: center; pointer-events: none;
+          padding: 0 16px calc(22px + env(safe-area-inset-bottom)); }
+  #hinweis { margin: 0; color: var(--muted); text-shadow: 0 0 12px #000, 0 0 4px #000; transition: opacity 1.6s ease; }
+  #hinweis.weg { opacity: 0; }
+  [hidden] { display: none !important; }
+</style>
+<style>.zurueck{position:fixed;top:max(12px,env(safe-area-inset-top));left:max(12px,env(safe-area-inset-left));z-index:9999;font:400 14px/1 Georgia,serif;color:#f1f0f7;background:rgba(9,10,28,.55);border:1px solid rgba(255,255,255,.22);border-radius:999px;padding:9px 14px;text-decoration:none;-webkit-backdrop-filter:blur(6px);backdrop-filter:blur(6px);touch-action:manipulation}.zurueck:focus-visible{outline:2px solid #8fd3ff;outline-offset:3px}</style>
+</head>
+<body>
+<a class="zurueck" href="index.html" aria-label="Zurück zur Übersicht">← Übersicht</a>
+
+<canvas id="buehne" aria-label="Kamerabild mit einem leuchtenden Netz aus Linien und Punkten über den Händen"></canvas>
+<video id="kamera" playsinline muted hidden></video>
+
+<section id="start">
+  <h1>Handnetz</h1>
+  <p>Halte eine Hand oder beide Hände vor die Kamera. Ein leuchtendes Netz aus Linien und Punkten legt sich über die Finger und folgt jeder Bewegung weich nach.</p>
+  <p class="klein">Das Kamerabild bleibt auf diesem Gerät und wird nirgendwohin gesendet.</p>
+  <button id="knopf" type="button">Kamera starten</button>
+  <p id="meldung" role="status"></p>
+</section>
+
+<div class="fuss"><p id="hinweis" hidden>Halte eine Hand ins Bild</p></div>
+
+<script type="module">
+import { FilesetResolver, HandLandmarker } from "./vendor/vision_bundle.mjs";
+
+// ---------- Werte aus dem TouchDesigner-Netzwerk ----------
+const RADIUS = 0.15;            // Proximity POP, Radius in Bildbreiten
+const MAX_NACHBARN = 42;        // Proximity POP, Max
+const FEDER = 65;               // Spring POP, Constant
+const DAEMPFUNG = 15;           // Spring POP, Damping
+const NACHBAR_ZUG = 5;          // Rest 0: leichter Zug der Punkte zueinander, Rest ist die Feder zur Hand
+const LINIE_BREITE = 2;         // Linien, Width
+const LINIE_MULT = 2.5;         // Linien, Multiply
+const PUNKT_GROESSE = 5;        // Sprites, Pixel
+const PUNKT_FARBE = [1, 0.85, 0.6];
+const PUNKT_MULT = 3.0;
+const RAUSCH = [0.9, 0.3, 0.6]; // Noise CHOP, Amplitude für r g b
+const BLUR_KLEIN = 4;           // Blur 6, als Teiler der Auflösung
+const BLUR_GROSS = 16;          // Blur 20
+const HELLIGKEIT = 1.8;         // Level Bright
+const HUE = 340;                // Color Correct, Hue in Grad
+const SATTIGUNG = 1.4;          // Color Correct, Saturation
+const VIDEO_DUNKEL = 0.3;       // einzige Abweichung, damit das Leuchten auch vor hellen Wänden sichtbar bleibt
+const QUER_RADIUS = 0.5;        // Verbindungen zwischen den Händen, in Bildbreiten
+const QUER_PUNKTE = [3, 4, 7, 8, 11, 12, 15, 16, 19, 20]; // Fingerglieder und Spitzen
+const INNEN_LINIEN = false;     // Linien innerhalb einer Hand, im Beispiel nicht vorhanden
+const ANZ = 21;                 // Landmarken je Hand
+
+// ---------- Aufbau ----------
+const cv = document.getElementById("buehne");
+const ctx = cv.getContext("2d");
+const video = document.getElementById("kamera");
+const knopf = document.getElementById("knopf");
+const meldung = document.getElementById("meldung");
+const startBox = document.getElementById("start");
+const hinweis = document.getElementById("hinweis");
+
+let W = 0, H = 0, DPR = 1;
+const ebenen = {}; // nc: Netz, gc: Leuchten, dann die kleineren Stufen
+function leinwand(w, h) { const c = document.createElement("canvas"); c.width = Math.max(2, Math.round(w)); c.height = Math.max(2, Math.round(h)); return c; }
+function groesse() {
+  DPR = Math.min(window.devicePixelRatio || 1, 1.5);
+  W = window.innerWidth; H = window.innerHeight;
+  cv.width = Math.round(W * DPR); cv.height = Math.round(H * DPR);
+  ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
+  ebenen.nc = leinwand(W, H);
+  ebenen.gc = leinwand(W, H);
+  ebenen.d2 = leinwand(W / 2, H / 2);
+  ebenen.d4 = leinwand(W / 4, H / 4);
+  ebenen.d8 = leinwand(W / 8, H / 8);
+  ebenen.d16 = leinwand(W / 16, H / 16);
+  ebenen.u8 = leinwand(W / 8, H / 8);
+  ebenen.u4 = leinwand(W / 4, H / 4);
+}
+groesse();
+window.addEventListener("resize", groesse);
+
+function sagen(text, fehler) { meldung.textContent = text; meldung.classList.toggle("fehler", !!fehler); }
+
+async function modellLaden() {
+  const fileset = await FilesetResolver.forVisionTasks("./vendor/wasm");
+  const basis = { modelAssetPath: "./vendor/hand_landmarker.task" };
+  const optionen = { runningMode: "VIDEO", numHands: 2, minHandDetectionConfidence: 0.5, minHandPresenceConfidence: 0.5, minTrackingConfidence: 0.5 };
+  try {
+    return await HandLandmarker.createFromOptions(fileset, { baseOptions: { ...basis, delegate: "GPU" }, ...optionen });
+  } catch (e) {
+    return await HandLandmarker.createFromOptions(fileset, { baseOptions: { ...basis, delegate: "CPU" }, ...optionen });
+  }
+}
+
+// ---------- Farbe ----------
+// Aus Noise CHOP (r g b mit eigener Amplitude) wird für jeden Punkt eine Farbe, die langsam wandert.
+function rauschen(i, t, kanal) {
+  return 0.5 * (Math.sin(i * 1.71 + t * 0.55 + kanal * 2.1) + Math.sin(i * 0.93 - t * 0.37 + kanal * 5.3));
+}
+function rgb2hsv(r, g, b) {
+  const mx = Math.max(r, g, b), mn = Math.min(r, g, b), d = mx - mn;
+  let h = 0;
+  if (d > 0) {
+    if (mx === r) h = ((g - b) / d) % 6; else if (mx === g) h = (b - r) / d + 2; else h = (r - g) / d + 4;
+    h /= 6; if (h < 0) h += 1;
+  }
+  return [h, mx === 0 ? 0 : d / mx, mx];
+}
+function hsv2rgb(h, s, v) {
+  const i = Math.floor(h * 6), f = h * 6 - i, p = v * (1 - s), q = v * (1 - f * s), t = v * (1 - (1 - f) * s);
+  switch (i % 6) { case 0: return [v, t, p]; case 1: return [q, v, p]; case 2: return [p, v, t]; case 3: return [p, q, v]; case 4: return [t, p, v]; default: return [v, p, q]; }
+}
+// Color Correct: Hue und Saturation. Wir wenden es auf die Farben an, bevor sie gezeichnet werden.
+function korrigieren(r, g, b) {
+  const [h, s, v] = rgb2hsv(Math.min(1, r), Math.min(1, g), Math.min(1, b));
+  return hsv2rgb((h + HUE / 360) % 1, Math.min(1, s * SATTIGUNG), v);
+}
+function css(c, a) { return "rgba(" + Math.round(c[0] * 255) + "," + Math.round(c[1] * 255) + "," + Math.round(c[2] * 255) + "," + a + ")"; }
+
+// ---------- Punkte ----------
+// Je Handplatz 21 Punkte. Ziel ist die erkannte Handposition, die Punkte folgen ihr über eine gedämpfte Feder.
+const knoten = [];
+for (let s = 0; s < 2 * ANZ; s++) knoten.push({ qx: 0, qy: 0, qz: 0, vx: 0, vy: 0, vz: 0, tx: 0, ty: 0, tz: 0, sicht: 0, aktiv: false, neu: true, farbe: [1, 0.4, 0.8] });
+
+const rahmen = { dx: 0, dy: 0, dw: 1, dh: 1 };
+let haende = []; // [{ pts: [[x,y,z]...], alter }]
+function aufnehmen(neu) {
+  if (!neu.length) {
+    // Verliert die Erkennung die Hand kurz, halten wir sie ein paar Bilder fest.
+    for (let i = haende.length - 1; i >= 0; i--) { haende[i].alter++; if (haende[i].alter > 6) haende.splice(i, 1); }
+    return;
+  }
+  const liste = neu.map(h => h.map(p => [W - (rahmen.dx + p.x * rahmen.dw), rahmen.dy + p.y * rahmen.dh, p.z * rahmen.dw]));
+  liste.sort((a, b) => a[0][0] - b[0][0]); // linke Hand zuerst, damit die Plätze stabil bleiben
+  haende = liste.map(pts => ({ pts, alter: 0 }));
+}
+
+function zielSetzen() {
+  for (let s = 0; s < knoten.length; s++) knoten[s].aktiv = false;
+  for (let h = 0; h < haende.length && h < 2; h++) {
+    for (let k = 0; k < ANZ; k++) {
+      const n = knoten[h * ANZ + k], p = haende[h].pts[k];
+      n.tx = p[0]; n.ty = p[1]; n.tz = p[2] || 0;
+      n.aktiv = true;
+      if (n.neu || n.sicht < 0.02) { n.qx = n.tx; n.qy = n.ty; n.qz = n.tz; n.vx = n.vy = n.vz = 0; n.neu = false; }
+    }
+  }
+}
+
+// ---------- Verbindungen und Feder ----------
+const verb = [], quer = []; // Paare i, j innerhalb des Radius
+function verbinden() {
+  verb.length = 0;
+  const r = RADIUS * rahmen.dw, r2 = r * r;
+  const zaehl = new Int16Array(knoten.length);
+  for (let i = 0; i < knoten.length; i++) {
+    const a = knoten[i];
+    if (a.sicht < 0.02) continue;
+    for (let j = i + 1; j < knoten.length; j++) {
+      const b = knoten[j];
+      if (b.sicht < 0.02) continue;
+      const dx = a.qx - b.qx, dy = a.qy - b.qy, dz = a.qz - b.qz;
+      if (dx * dx + dy * dy + dz * dz <= r2 && zaehl[i] < MAX_NACHBARN && zaehl[j] < MAX_NACHBARN) {
+        verb.push(i, j); zaehl[i]++; zaehl[j]++;
+      }
+    }
+  }
+  // Zwischen den beiden Händen spannen sich Linien von Finger zu Finger
+  quer.length = 0;
+  const rq = QUER_RADIUS * rahmen.dw;
+  for (const ka of QUER_PUNKTE) for (const kb of QUER_PUNKTE) {
+    const a = knoten[ka], b = knoten[ANZ + kb];
+    if (a.sicht < 0.02 || b.sicht < 0.02) continue;
+    const d = Math.hypot(a.qx - b.qx, a.qy - b.qy);
+    if (d < rq) quer.push(ka, ANZ + kb, d / rq);
+  }
+}
+function feder(dt) {
+  const teil = 2, d = dt / teil;
+  for (let st = 0; st < teil; st++) {
+    // Mittelpunkt der Nachbarn für den leichten Zug (Rest 0)
+    const mx = new Float32Array(knoten.length), my = new Float32Array(knoten.length), mz = new Float32Array(knoten.length), mn = new Int16Array(knoten.length);
+    for (let e = 0; e < verb.length; e += 2) {
+      const i = verb[e], j = verb[e + 1], a = knoten[i], b = knoten[j];
+      mx[i] += b.qx; my[i] += b.qy; mz[i] += b.qz; mn[i]++;
+      mx[j] += a.qx; my[j] += a.qy; mz[j] += a.qz; mn[j]++;
+    }
+    for (let i = 0; i < knoten.length; i++) {
+      const n = knoten[i];
+      if (!n.aktiv && n.sicht < 0.02) continue;
+      let ax = FEDER * (n.tx - n.qx) - DAEMPFUNG * n.vx;
+      let ay = FEDER * (n.ty - n.qy) - DAEMPFUNG * n.vy;
+      let az = FEDER * (n.tz - n.qz) - DAEMPFUNG * n.vz;
+      if (mn[i]) { ax += NACHBAR_ZUG * (mx[i] / mn[i] - n.qx); ay += NACHBAR_ZUG * (my[i] / mn[i] - n.qy); az += NACHBAR_ZUG * (mz[i] / mn[i] - n.qz); }
+      n.vx += ax * d; n.vy += ay * d; n.vz += az * d;
+      n.qx += n.vx * d; n.qy += n.vy * d; n.qz += n.vz * d;
+    }
+  }
+}
+
+// ---------- Netz zeichnen ----------
+function netzZeichnen(zeit) {
+  const nctx = ebenen.nc.getContext("2d");
+  nctx.setTransform(1, 0, 0, 1, 0, 0);
+  nctx.globalCompositeOperation = "source-over";
+  nctx.fillStyle = "#000";
+  nctx.fillRect(0, 0, ebenen.nc.width, ebenen.nc.height);
+  const sk = Math.max(0.7, Math.min(1.4, rahmen.dw / 1280));
+  // Farben
+  for (let i = 0; i < knoten.length; i++) {
+    const n = knoten[i];
+    // Jeder Punkt wandert langsam durch das ganze Farbspektrum, der Farbton kommt aus dem Rauschen.
+    const hue = ((rauschen(i, zeit * 0.5, 0) * 0.5 + 0.5) * 1.3 + i * 0.037 + zeit * 0.03) % 1;
+    const c = hsv2rgb(hue, 0.85, 1);
+    n.farbe = [c[0], c[1], c[2]];
+  }
+  nctx.lineCap = "round";
+  nctx.lineWidth = Math.max(1.5, LINIE_BREITE * sk);
+  for (let e = 0; e < (INNEN_LINIEN ? verb.length : 0); e += 2) {
+    const a = knoten[verb[e]], b = knoten[verb[e + 1]];
+    const al = Math.min(a.sicht, b.sicht);
+    const c = [(a.farbe[0] + b.farbe[0]) / 2, (a.farbe[1] + b.farbe[1]) / 2, (a.farbe[2] + b.farbe[2]) / 2];
+    nctx.strokeStyle = css(c, al);
+    nctx.beginPath(); nctx.moveTo(a.qx, a.qy); nctx.lineTo(b.qx, b.qy); nctx.stroke();
+  }
+  nctx.lineWidth = Math.max(1, 1.5 * sk);
+  for (let e = 0; e < quer.length; e += 3) {
+    const a = knoten[quer[e]], b = knoten[quer[e + 1]], t = quer[e + 2];
+    const al = Math.min(a.sicht, b.sicht) * (1 - t) * 1.0;
+    if (al < 0.03) continue;
+    const mx = (a.qx + b.qx) / 2, my = (a.qy + b.qy) / 2 + 14 * sk * t * Math.sin(quer[e] * 1.3 + quer[e + 1] * 0.7 + zeit * 2);
+    const g = nctx.createLinearGradient(a.qx, a.qy, b.qx, b.qy);
+    g.addColorStop(0, css(a.farbe, al)); g.addColorStop(1, css(b.farbe, al));
+    nctx.strokeStyle = g;
+    nctx.beginPath(); nctx.moveTo(a.qx, a.qy); nctx.quadraticCurveTo(mx, my, b.qx, b.qy); nctx.stroke();
+  }
+  nctx.lineWidth = Math.max(1.5, LINIE_BREITE * sk);
+  const rp = PUNKT_GROESSE * sk * 0.5;
+  const pk = korrigieren(Math.min(1, PUNKT_FARBE[0] * PUNKT_MULT), Math.min(1, PUNKT_FARBE[1] * PUNKT_MULT), Math.min(1, PUNKT_FARBE[2] * PUNKT_MULT));
+  for (let i = 0; i < knoten.length; i++) {
+    const n = knoten[i];
+    if (n.sicht < 0.02) continue;
+    // Der Kern ist weiß, die warme Tönung der Sprites liegt als Hof darunter.
+    nctx.fillStyle = css([1, 0.78, 0.45], 0.25 * n.sicht);
+    nctx.beginPath(); nctx.arc(n.qx, n.qy, rp * 2.4, 0, 6.2832); nctx.fill();
+    nctx.fillStyle = css([Math.min(1, pk[0] + 0.5), Math.min(1, pk[1] + 0.5), Math.min(1, pk[2] + 0.5)], n.sicht);
+    nctx.beginPath(); nctx.arc(n.qx, n.qy, rp, 0, 6.2832); nctx.fill();
+  }
+}
+
+// ---------- Leuchten ----------
+function leuchten() {
+  const nc = ebenen.nc;
+  const stufe = (von, nach) => { const c = nach.getContext("2d"); c.imageSmoothingEnabled = true; c.imageSmoothingQuality = "high"; c.globalCompositeOperation = "copy"; c.drawImage(von, 0, 0, nach.width, nach.height); c.globalCompositeOperation = "source-over"; };
+  stufe(nc, ebenen.d2); stufe(ebenen.d2, ebenen.d4); stufe(ebenen.d4, ebenen.d8); stufe(ebenen.d8, ebenen.d16);
+  // Blur 20 steigt stufenweise wieder auf, das gibt einen weichen Verlauf
+  stufe(ebenen.d16, ebenen.u8); stufe(ebenen.u8, ebenen.u4);
+  const g = ebenen.gc.getContext("2d");
+  g.setTransform(1, 0, 0, 1, 0, 0);
+  g.imageSmoothingEnabled = true; g.imageSmoothingQuality = "high";
+  g.globalCompositeOperation = "copy";
+  g.drawImage(nc, 0, 0);
+  g.globalCompositeOperation = "lighter";
+  g.globalAlpha = HELLIGKEIT / 2;
+  for (let k = 0; k < 2; k++) {
+    g.drawImage(ebenen.d4, 0, 0, ebenen.gc.width, ebenen.gc.height);   // Blur 6
+    g.drawImage(ebenen.u4, 0, 0, ebenen.gc.width, ebenen.gc.height);   // Blur 20
+  }
+  g.globalAlpha = 1;
+  g.globalCompositeOperation = "source-over";
+}
+
+// ---------- Kamerabild ----------
+function kameraZeichnen() {
+  const vw = video.videoWidth, vh = video.videoHeight;
+  if (!vw) return;
+  const s = Math.max(W / vw, H / vh);
+  rahmen.dw = vw * s; rahmen.dh = vh * s;
+  rahmen.dx = (W - rahmen.dw) / 2; rahmen.dy = (H - rahmen.dh) / 2;
+  if (window.__nurEffekt) return;
+  ctx.save();
+  ctx.translate(W, 0); ctx.scale(-1, 1);
+  ctx.drawImage(video, rahmen.dx, rahmen.dy, rahmen.dw, rahmen.dh);
+  ctx.restore();
+  ctx.fillStyle = "rgba(7,8,26," + VIDEO_DUNKEL + ")";
+  ctx.fillRect(0, 0, W, H);
+}
+
+// ---------- Hauptschleife ----------
+let landmarker = null, letzteZeit = -1, zeit = 0, letztesFrame = performance.now(), ersteHand = false;
+function schleife(now) {
+  const dt = Math.min((now - letztesFrame) / 1000, 0.05);
+  letztesFrame = now; zeit += dt;
+
+  ctx.globalCompositeOperation = "source-over";
+  ctx.fillStyle = "#07081a";
+  ctx.fillRect(0, 0, W, H);
+  kameraZeichnen();
+
+  if (landmarker && video.readyState >= 2 && video.currentTime !== letzteZeit) {
+    letzteZeit = video.currentTime;
+    const erg = landmarker.detectForVideo(video, now);
+    aufnehmen(erg.landmarks || []);
+  }
+  if (window.__hande) haende = window.__hande;
+
+  zielSetzen();
+  for (let i = 0; i < knoten.length; i++) {
+    const n = knoten[i];
+    n.sicht += ((n.aktiv ? 1 : 0) - n.sicht) * Math.min(1, dt * (n.aktiv ? 14 : 8));
+  }
+  verbinden();
+  feder(dt);
+  netzZeichnen(zeit);
+  leuchten();
+
+  // Composite Screen: Kamerabild und Leuchten
+  ctx.globalCompositeOperation = "screen";
+  ctx.drawImage(ebenen.gc, 0, 0, W, H);
+  ctx.globalCompositeOperation = "source-over";
+
+  if (haende.length && !ersteHand) { ersteHand = true; hinweis.classList.add("weg"); }
+  requestAnimationFrame(schleife);
+}
+
+// ---------- Start ----------
+knopf.addEventListener("click", async () => {
+  knopf.disabled = true;
+  sagen("Handerkennung wird geladen, das dauert einen Moment.");
+  try {
+    landmarker = await modellLaden();
+  } catch (e) {
+    console.error(e);
+    sagen("Die Handerkennung konnte nicht geladen werden. Versuche es mit einem aktuellen Browser.", true);
+    knopf.disabled = false; return;
+  }
+  sagen("Kamera wird gestartet.");
+  try {
+    const strom = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "user", width: { ideal: 1280 }, height: { ideal: 720 } }, audio: false });
+    video.srcObject = strom;
+    await video.play();
+  } catch (e) {
+    console.error(e);
+    sagen("Kein Zugriff auf die Kamera. Erlaube die Kamera im Browser und lade die Seite neu.", true);
+    knopf.disabled = false; return;
+  }
+  startBox.hidden = true;
+  hinweis.hidden = false;
+  requestAnimationFrame(schleife);
+});
+
+window.__debug = { knoten, verb, rahmen };
+</script>
+</body>
+</html>

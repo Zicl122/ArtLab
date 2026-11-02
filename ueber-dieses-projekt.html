@@ -1,0 +1,87 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Worum es hier geht</title>
+<style>
+  :root { color-scheme: dark; --bg:#090a1c; --panel:#12142b; --text:#f1f0f7; --muted:rgba(241,240,247,.72); --line:rgba(255,255,255,.16); --gold:#e8c27a; --focus:#8fd3ff; }
+  * { box-sizing: border-box; }
+  html, body { margin:0; background:var(--bg); color:var(--text); }
+  body { font: 300 18px/1.6 Georgia, "Times New Roman", serif; -webkit-text-size-adjust:100%; }
+  main { max-width: 760px; margin: 0 auto; padding: clamp(64px, 11vh, 110px) 20px 72px; }
+  h1 { font-weight:400; font-size:clamp(2rem,6vw,3rem); line-height:1.1; letter-spacing:-.01em; margin:0 0 .4em; }
+  .lead { font-size:1.15rem; color:var(--muted); margin:0 0 1.6em; max-width:34em; }
+  h2 { font-weight:400; font-size:1.35rem; line-height:1.25; margin:1.8em 0 .4em; color:var(--gold); }
+  p, li { color:var(--muted); }
+  p { margin:.4em 0 .8em; }
+  ol, ul { padding-left:1.25em; margin:.4em 0 1em; }
+  li { margin:.4em 0; }
+  strong { color:var(--text); font-weight:400; }
+  .vergleich { display:grid; grid-template-columns:repeat(auto-fit,minmax(min(100%,290px),1fr)); gap:14px; margin:.8em 0 1em; }
+  .box { background:var(--panel); border:1px solid var(--line); border-radius:12px; padding:14px 18px 6px; }
+  .box h3 { font-weight:400; font-size:1.1rem; margin:0 0 .3em; color:var(--text); }
+  .box p { font-size:.95rem; }
+  pre { white-space:pre-wrap; word-wrap:break-word; margin:.6em 0 1em; background:var(--panel); border:1px solid var(--line); border-left:3px solid var(--gold); border-radius:8px; padding:14px 16px; font:400 .95rem/1.5 ui-monospace, Menlo, Consolas, monospace; color:var(--text); }
+  .hinweis { border:1px solid var(--line); border-radius:12px; padding:12px 18px; margin:1.6em 0 0; background:rgba(255,255,255,.03); }
+  .hinweis p { margin:.3em 0; font-size:.95rem; }
+  .leiste { display:flex; flex-wrap:wrap; gap:10px; margin:2em 0 0; }
+  button.pdf { font:inherit; font-size:.95rem; color:#090a1c; background:#f1f0f7; border:0; border-radius:999px; padding:.65em 1.3em; cursor:pointer; touch-action:manipulation; }
+  button.pdf:focus-visible, a:focus-visible { outline:2px solid var(--focus); outline-offset:3px; }
+  .kleinschrift { font-size:.85rem; color:var(--muted); margin-top:.6em; }
+  a { color:var(--text); text-underline-offset:4px; text-decoration-color:rgba(255,255,255,.45); }
+  .zurueck{position:fixed;top:max(12px,env(safe-area-inset-top));left:max(12px,env(safe-area-inset-left));z-index:9999;font:400 14px/1 Georgia,serif;color:#f1f0f7;background:rgba(9,10,28,.7);border:1px solid rgba(255,255,255,.22);border-radius:999px;padding:9px 14px;text-decoration:none;touch-action:manipulation}
+  @media print {
+    :root { color-scheme: light; }
+    html, body { background:#fff !important; color:#000 !important; }
+    body { font-size:11.5pt; line-height:1.45; }
+    main { max-width:none; padding:0; }
+    h1, h2, h3, strong, p, li, .lead, .kleinschrift { color:#000 !important; }
+    h2 { margin-top:1.2em; } strong { font-weight:700 !important; }
+    .box, pre, .hinweis { background:#fff !important; border-color:#999 !important; color:#000 !important; break-inside:avoid; }
+    pre { border-left:3px solid #555 !important; }
+    .zurueck, .leiste, .nurbildschirm { display:none !important; }
+    a { color:#000; text-decoration:none; }
+    .druckfuss { display:block !important; }
+    @page { margin: 18mm; }
+  }
+  .druckfuss { display:none; margin-top:2em; font-size:9.5pt; color:#444; border-top:1px solid #999; padding-top:.6em; }
+</style>
+</head>
+<body>
+<a class="zurueck" href="index.html" aria-label="Zurück zur Übersicht">← Übersicht</a>
+<main>
+<h1>Worum es hier geht</h1>
+<p class="lead">Eine Sammlung kleiner Seiten für den Kunstunterricht. Sie laufen im Browser und reagieren auf Finger, Hand oder Kamera. Das Ganze ist noch im Entstehen.</p>
+
+<h2>Wozu dieses Projekt dient</h2>
+<p>Hier probiere ich aus, was im Kunstunterricht möglich wird, wenn man mit KI nicht nur Bilder erzeugt, sondern kleine Werkzeuge und Experimente baut. Die Seiten sollen zum Staunen, Ausprobieren und Nachdenken über Bilder und Wahrnehmung anregen.</p>
+
+<h2>Im Zusammenhang mit meinem Seminar</h2>
+<p>Das Projekt entsteht begleitend zu meinem Seminar „KI im Kunstunterricht“ im Wintersemester 2026/27 am Institut für Kunst und Kunsttheorie der Universität zu Köln. Dort geht es auch um Vibe Coding. Wir wollen von Nutzenden zu Gestaltenden von Unterrichtsmedien, Programmen und Material werden. Die Seiten hier sind mein Anschauungsmaterial, und sie wachsen mit dem Seminar. Es kommen Kacheln dazu, andere verändern sich.</p>
+
+<h2>Wie die Kacheln geordnet sind</h2>
+<ul>
+<li><strong>Produktion</strong> für alles, womit man selbst gestaltet.</li>
+<li><strong>Rezeption</strong> für Bilder untersuchen und deuten.</li>
+<li><strong>Reflexion</strong> für Kacheln, die zum Nachdenken über Sehen, Bild und KI anregen.</li>
+<li><strong>Organisatorisches</strong> für Hintergründe und Anleitungen wie diese Seite.</li>
+</ul>
+<p>Die Ordnung folgt den Kompetenzbereichen des Kernlehrplans Kunst. Manche Kacheln gehören in mehrere Bereiche und erscheinen dann auch mehrfach.</p>
+
+<h2>Was du wissen solltest</h2>
+<ul>
+<li>Das Kamerabild bleibt auf deinem Gerät. Es wird nirgendwohin gesendet.</li>
+<li>Die Seiten brauchen einen aktuellen Browser und für die Kamera eine https-Adresse.</li>
+<li>Nicht alles ist auf jedem Gerät getestet. Wenn etwas hakt, probiere ein anderes Gerät oder einen anderen Browser.</li>
+<li>Die Seiten sind Experimente und keine fertigen Produkte.</li>
+</ul>
+
+<div class="hinweis"><p><strong>Rückmeldungen</strong> sind willkommen, im Seminar oder über den Instagram-Kanal „KI im Kunstunterricht“.</p></div>
+<div class="leiste"><button class="pdf" id="pdf" type="button">Als PDF speichern oder drucken</button></div>
+<p class="kleinschrift nurbildschirm">Im Druckfenster wählst du als Drucker „Als PDF speichern“, wenn du eine Datei möchtest.</p>
+<p class="druckfuss">KI im Kunstunterricht, Seminar WS 2026/27, Universität zu Köln. Dieses Blatt kann frei im Unterricht verwendet werden.</p>
+<script>document.getElementById("pdf").addEventListener("click",function(){window.print();});</script>
+</main>
+</body>
+</html>

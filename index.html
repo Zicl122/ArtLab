@@ -43,6 +43,12 @@
   .qr small { display: block; margin-top: 6px; font-size: .72rem; line-height: 1.25; color: var(--muted); }
   .qr .leer { background: transparent; border: 1px dashed var(--line); color: var(--muted); font-size: .72rem; line-height: 1.3; padding: 10px 6px; border-radius: 8px; }
 
+  .reiter { display: flex; flex-wrap: wrap; gap: 8px; margin: 0 0 24px; }
+  .reiter button { font: inherit; font-size: .95rem; color: var(--text); background: transparent; border: 1px solid var(--line); border-radius: 999px; padding: .5em 1.1em; cursor: pointer; touch-action: manipulation; }
+  .reiter button[aria-pressed="true"] { background: var(--text); color: var(--bg); border-color: transparent; }
+  .reiter button:focus-visible { outline: 2px solid var(--focus); outline-offset: 3px; }
+  header a { color: var(--text); text-underline-offset: 4px; text-decoration-color: rgba(255,255,255,.4); }
+  .kachel[hidden] { display: none; }
   a:focus-visible { outline: 2px solid var(--focus); outline-offset: 3px; border-radius: 4px; }
   @media (max-width: 420px) { .unten { flex-direction: column; align-items: flex-start; } .qr { width: 132px; } }
   @media (prefers-reduced-motion: reduce) { .bild img { transition: none; } }
@@ -52,8 +58,9 @@
 <main>
   <header>
     <h1>KI im Kunstunterricht</h1>
-    <p>Bilder, die auf Berührung reagieren. Scanne den QR-Code mit dem Handy und streiche mit dem Finger über das Bild.</p>
+    <p>Bilder, die auf Berührung reagieren. Scanne den QR-Code mit dem Handy und streiche mit dem Finger über das Bild. Eine Einführung findest du unter <a href="ueber-dieses-projekt.html">Worum es hier geht</a>.</p>
   </header>
+  <nav class="reiter" id="reiter" aria-label="Bereiche"></nav>
   <section class="raster" id="raster" aria-label="Projekte"></section>
 </main>
 
@@ -62,9 +69,26 @@
 // Neue Projekte: einfach einen weiteren Eintrag ergänzen.
 const PROJEKTE = [
   {
+    titel: "Worum es hier geht",
+    text: "Wozu dieses Projekt dient und wie es mit meinem Seminar an der Uni Köln zusammenhängt. Mit Druck- und PDF-Funktion.",
+    seite: "ueber-dieses-projekt.html",
+    bereiche: "organisatorisches",
+    bild: "vorschau/ueber-dieses-projekt.jpg",
+    alt: "Seite mit der Überschrift Worum es hier geht auf dunklem Grund"
+  },
+  {
+    titel: "Vibe Coding, so fängst du an",
+    text: "Eine kurze Anleitung mit Claude und ChatGPT, vom ersten Satz bis zur Seite mit QR-Code. Mit Druck- und PDF-Funktion.",
+    seite: "vibe-coding.html",
+    bereiche: "organisatorisches",
+    bild: "vorschau/vibe-coding.jpg",
+    alt: "Seite mit der Überschrift Vibe Coding, so fängst du an auf dunklem Grund"
+  },
+  {
     titel: "Fließendes Licht",
     text: "Leuchtende Spuren folgen dem Finger und ziehen in weichen Strömungen davon.",
     seite: "fliessendes-licht.html",
+    bereiche: "produktion",
     bild: "vorschau/fliessendes-licht.jpg",
     alt: "Leuchtende blau-violette Lichtspuren auf dunklem Grund"
   },
@@ -72,6 +96,7 @@ const PROJEKTE = [
     titel: "Datenpigment",
     text: "Eine Strömung aus feinen Farblinien, die sich mit dem Finger verwirbeln lässt.",
     seite: "datenpigment.html",
+    bereiche: "produktion",
     bild: "vorschau/datenpigment.jpg",
     alt: "Dichte Strömung aus feinen violetten, blauen und goldenen Linien"
   },
@@ -79,6 +104,7 @@ const PROJEKTE = [
     titel: "Sternennacht fließt",
     text: "Van Goghs Gemälde als Strömung aus Farblinien, die den Pinselstrichen folgen und sich verwirbeln lassen.",
     seite: "sternennacht-fliessend.html",
+    bereiche: "rezeption",
     bild: "vorschau/sternennacht-fliessend.jpg",
     alt: "Van Goghs Sternennacht, aus feinen blauen und gelben Linien gezeichnet"
   },
@@ -86,6 +112,7 @@ const PROJEKTE = [
     titel: "Pigmentfäden",
     text: "Spreize die Finger vor der Kamera, und zwischen den Fingerspitzen ziehen sich leuchtende Fäden aus Farbe wie Kaugummi. Braucht die Kamera.",
     seite: "pigmentfaeden.html",
+    bereiche: "produktion",
     bild: "vorschau/pigmentfaeden.jpg",
     alt: "Leuchtende bunte Fäden zwischen den Fingerspitzen zweier Hände auf dunklem Grund"
   },
@@ -93,6 +120,7 @@ const PROJEKTE = [
     titel: "Handnetz",
     text: "Halte eine oder beide Hände vor die Kamera. Kleine leuchtende Punkte sitzen auf den Fingern, und zwischen beiden Händen spannen sich bunte feine Linien. Braucht die Kamera.",
     seite: "handnetz.html",
+    bereiche: "produktion",
     bild: "vorschau/handnetz.jpg",
     alt: "Leuchtendes buntes Bündel feiner Linien zwischen den Fingern zweier Hände, dazu kleine leuchtende Punkte auf dunklem Grund"
   },
@@ -100,6 +128,7 @@ const PROJEKTE = [
     titel: "Van Gogh und die Bildanalyse",
     text: "Unterrichtseinheit für Klasse 10 in zwei Doppelstunden. Mit Arbeitsblättern als PDF, Übungen, Spiel, Quiz und Lehrkraftbereich.",
     seite: "van-gogh-einheit/index.html",
+    bereiche: "rezeption",
     bild: "vorschau/van-gogh-einheit.jpg",
     alt: "Vincent van Goghs Sternennacht mit blauem Wirbelhimmel, gelbem Mond und Zypresse"
   },
@@ -107,6 +136,7 @@ const PROJEKTE = [
     titel: "Aus Kritzel wird Bild",
     text: "Zeichne eine kleine Skizze, beschreibe sie, und eine KI macht daraus ein Bild, zum Beispiel im Stil von Van Gogh. Kostenloser Demo-Dienst bei Hugging Face, eingebettet.",
     seite: "kritzel-bild.html",
+    bereiche: "produktion,reflexion",
     bild: "vorschau/kritzel-bild.jpg",
     alt: "Ein eingebettetes Zeichenbrett mit weißer Fläche, Werkzeugen und Eingabefeld für die Bildbeschreibung"
   },
@@ -114,6 +144,7 @@ const PROJEKTE = [
     titel: "Gesichter klappen und du",
     text: "Wie Gesichter klappen, aber mit Kamera. Dein eigenes Foto klappt als dreizehntes Gesicht mit und bleibt auf deinem Gerät.",
     seite: "gesichter-klappen-kamera.html",
+    bereiche: "reflexion",
     bild: "vorschau/gesichter-klappen.jpg",
     alt: "Ein Brett aus zwölf Klappfeldern, das ein aus Teilen verschiedener Menschen gemischtes Gesicht zeigt"
   },
@@ -121,6 +152,7 @@ const PROJEKTE = [
     titel: "Lichtzeichnung",
     text: "Zeichne mit dem Finger in die Luft. Daumen und Zeigefinger zusammenkneifen, dann leuchtet der Stift. Mit Verblassen, Farbwechsel und Bild speichern.",
     seite: "lichtzeichnung.html",
+    bereiche: "produktion",
     bild: "vorschau/lichtzeichnung.jpg",
     alt: "Eine leuchtende, bunte Linie schwingt in Schleifen über einen dunklen Grund"
   },
@@ -128,6 +160,7 @@ const PROJEKTE = [
     titel: "Blickwechsel",
     text: "Ein Kaleidoskop aus Kristall und Glut dreht sich um deinen Standpunkt. Mit der Hand vom Frosch zum Vogel, auf Wunsch mit deinem Kamerabild in den Facetten.",
     seite: "blickwechsel.html",
+    bereiche: "produktion,reflexion",
     bild: "vorschau/blickwechsel.jpg",
     alt: "Ein symmetrisches Kaleidoskop aus glühenden orange-roten Kristallfacetten mit hellen Kanten"
   },
@@ -135,6 +168,7 @@ const PROJEKTE = [
     titel: "Die Gesandten, Escape Room",
     text: "Ein Escape-Room-Lernspiel zu Holbeins Gemälde. Rätsel öffnen sich als Blätter über dem Bild, bis das Geheimnis des verzerrten Schädels gelöst ist.",
     seite: "gesandten-escape-room.html",
+    bereiche: "rezeption",
     bild: "vorschau/gesandten-escape-room.jpg",
     alt: "Holbeins Gemälde Die Gesandten in goldenem Rahmen vor einer dunkelroten Galeriewand"
   }
@@ -154,6 +188,7 @@ for (const p of PROJEKTE) {
   const adresse = new URL(p.seite, location.href).href;
   const k = document.createElement("article");
   k.className = "kachel";
+  k.dataset.bereiche = p.bereiche;
   k.innerHTML = `
     <a class="bild" href="${p.seite}" aria-label="${p.titel} öffnen"><img src="${p.bild}" alt="${p.alt}" loading="lazy"></a>
     <div class="unten">
@@ -170,6 +205,20 @@ for (const p of PROJEKTE) {
     </div>`;
   raster.appendChild(k);
 }
+
+// Reiter nach Kompetenzbereichen
+const BEREICHE = [["alle", "Alle"], ["organisatorisches", "Organisatorisches"], ["produktion", "Produktion"], ["rezeption", "Rezeption"], ["reflexion", "Reflexion"]];
+function zeige(b) {
+  if (!BEREICHE.some(x => x[0] === b)) b = "alle";
+  document.querySelectorAll(".kachel").forEach(k => { k.hidden = b !== "alle" && !k.dataset.bereiche.split(",").includes(b); });
+  document.querySelectorAll("#reiter button").forEach(x => x.setAttribute("aria-pressed", x.dataset.b === b));
+  try { history.replaceState(null, "", b === "alle" ? location.pathname : "#" + b); } catch (e) {}
+}
+for (const [id, name] of BEREICHE) {
+  const b = document.createElement("button"); b.type = "button"; b.textContent = name; b.dataset.b = id;
+  b.addEventListener("click", () => zeige(id)); reiter.appendChild(b);
+}
+zeige(location.hash.slice(1));
 </script>
 </body>
 </html>

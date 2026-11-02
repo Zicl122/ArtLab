@@ -1,0 +1,100 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Vibe Coding, so fängst du an</title>
+<style>
+  :root { color-scheme: dark; --bg:#090a1c; --panel:#12142b; --text:#f1f0f7; --muted:rgba(241,240,247,.72); --line:rgba(255,255,255,.16); --gold:#e8c27a; --focus:#8fd3ff; }
+  * { box-sizing: border-box; }
+  html, body { margin:0; background:var(--bg); color:var(--text); }
+  body { font: 300 18px/1.6 Georgia, "Times New Roman", serif; -webkit-text-size-adjust:100%; }
+  main { max-width: 760px; margin: 0 auto; padding: clamp(64px, 11vh, 110px) 20px 72px; }
+  h1 { font-weight:400; font-size:clamp(2rem,6vw,3rem); line-height:1.1; letter-spacing:-.01em; margin:0 0 .4em; }
+  .lead { font-size:1.15rem; color:var(--muted); margin:0 0 1.6em; max-width:34em; }
+  h2 { font-weight:400; font-size:1.35rem; line-height:1.25; margin:1.8em 0 .4em; color:var(--gold); }
+  p, li { color:var(--muted); }
+  p { margin:.4em 0 .8em; }
+  ol, ul { padding-left:1.25em; margin:.4em 0 1em; }
+  li { margin:.4em 0; }
+  strong { color:var(--text); font-weight:400; }
+  .vergleich { display:grid; grid-template-columns:repeat(auto-fit,minmax(min(100%,290px),1fr)); gap:14px; margin:.8em 0 1em; }
+  .box { background:var(--panel); border:1px solid var(--line); border-radius:12px; padding:14px 18px 6px; }
+  .box h3 { font-weight:400; font-size:1.1rem; margin:0 0 .3em; color:var(--text); }
+  .box p { font-size:.95rem; }
+  pre { white-space:pre-wrap; word-wrap:break-word; margin:.6em 0 1em; background:var(--panel); border:1px solid var(--line); border-left:3px solid var(--gold); border-radius:8px; padding:14px 16px; font:400 .95rem/1.5 ui-monospace, Menlo, Consolas, monospace; color:var(--text); }
+  .hinweis { border:1px solid var(--line); border-radius:12px; padding:12px 18px; margin:1.6em 0 0; background:rgba(255,255,255,.03); }
+  .hinweis p { margin:.3em 0; font-size:.95rem; }
+  .leiste { display:flex; flex-wrap:wrap; gap:10px; margin:2em 0 0; }
+  button.pdf { font:inherit; font-size:.95rem; color:#090a1c; background:#f1f0f7; border:0; border-radius:999px; padding:.65em 1.3em; cursor:pointer; touch-action:manipulation; }
+  button.pdf:focus-visible, a:focus-visible { outline:2px solid var(--focus); outline-offset:3px; }
+  .kleinschrift { font-size:.85rem; color:var(--muted); margin-top:.6em; }
+  a { color:var(--text); text-underline-offset:4px; text-decoration-color:rgba(255,255,255,.45); }
+  .zurueck{position:fixed;top:max(12px,env(safe-area-inset-top));left:max(12px,env(safe-area-inset-left));z-index:9999;font:400 14px/1 Georgia,serif;color:#f1f0f7;background:rgba(9,10,28,.7);border:1px solid rgba(255,255,255,.22);border-radius:999px;padding:9px 14px;text-decoration:none;touch-action:manipulation}
+  @media print {
+    :root { color-scheme: light; }
+    html, body { background:#fff !important; color:#000 !important; }
+    body { font-size:11.5pt; line-height:1.45; }
+    main { max-width:none; padding:0; }
+    h1, h2, h3, strong, p, li, .lead, .kleinschrift { color:#000 !important; }
+    h2 { margin-top:1.2em; } strong { font-weight:700 !important; }
+    .box, pre, .hinweis { background:#fff !important; border-color:#999 !important; color:#000 !important; break-inside:avoid; }
+    pre { border-left:3px solid #555 !important; }
+    .zurueck, .leiste, .nurbildschirm { display:none !important; }
+    a { color:#000; text-decoration:none; }
+    .druckfuss { display:block !important; }
+    @page { margin: 18mm; }
+  }
+  .druckfuss { display:none; margin-top:2em; font-size:9.5pt; color:#444; border-top:1px solid #999; padding-top:.6em; }
+</style>
+</head>
+<body>
+<a class="zurueck" href="index.html" aria-label="Zurück zur Übersicht">← Übersicht</a>
+<main>
+<h1>Vibe Coding, so fängst du an</h1>
+<p class="lead">Du beschreibst in normaler Sprache, was du brauchst, und eine KI schreibt das Programm. Du musst dafür nicht programmieren können.</p>
+
+<h2>Was dazu nötig ist</h2>
+<p>Ein Zugang zu einer KI wie <strong>Claude</strong> oder <strong>ChatGPT</strong>, ein Browser und eine Idee. Beide funktionieren für den Einstieg, auch mit kostenlosem Konto, dann allerdings mit Begrenzungen.</p>
+<div class="vergleich">
+<div class="box"><h3>Claude</h3><p>Zu finden unter claude.ai. Fertige Seiten kann Claude oft direkt im Chat als „Artifact“ anzeigen, du siehst das Ergebnis also sofort neben dem Gespräch.</p></div>
+<div class="box"><h3>ChatGPT</h3><p>Zu finden unter chatgpt.com. Je nach Version zeigt es Seiten in einem Arbeitsfenster („Canvas“) mit Vorschau. Sonst kopierst du den Code selbst in eine Datei.</p></div>
+</div>
+
+<h2>In sechs Schritten</h2>
+<ol>
+<li><strong>Idee in einem Satz.</strong> Zum Beispiel „Ein Flipboard mit Gesichtern, das beim Antippen umklappt“.</li>
+<li><strong>Bitte um eine einzelne HTML-Seite.</strong> So lässt sie sich leicht speichern und weitergeben. Beispiel unten.</li>
+<li><strong>Ausprobieren.</strong> Schau dir das Ergebnis an und beschreibe, was dir nicht gefällt.</li>
+<li><strong>In kleinen Schritten verbessern.</strong> Immer nur eine Änderung pro Nachricht, zum Beispiel „Die Linie zittert, bitte glätte sie“.</li>
+<li><strong>Speichern.</strong> Den Code in eine Textdatei kopieren und als <em>name.html</em> ablegen. Ein Doppelklick öffnet sie im Browser.</li>
+<li><strong>Online stellen und teilen.</strong> Zum Beispiel mit GitHub Pages oder Netlify. Dann gibt es eine Adresse und einen QR-Code. Die Kamera funktioniert nur über eine https-Adresse.</li>
+</ol>
+
+<h2>Ein Beispiel für den ersten Auftrag</h2>
+<pre>Baue mir eine einzelne HTML-Datei für den Kunstunterricht.
+Sie soll im Browser ohne Installation laufen, auf dem Handy
+funktionieren und deutsche Beschriftungen haben.
+Idee: Ein Raster aus zwölf Feldern, die beim Antippen
+umklappen und ein anderes Bild zeigen.
+Frage mich bitte zuerst, wenn dir etwas fehlt.</pre>
+
+<h2>Tipps, die viel Zeit sparen</h2>
+<ul>
+<li>Lass dir Rückfragen stellen. Die KI fragt oft das, was du selbst noch nicht bedacht hast.</li>
+<li>Bei Fehlern den Fehler beschreiben oder einen Screenshot hochladen.</li>
+<li>Frage nach, was ein Teil des Codes macht. So lernst du nebenbei.</li>
+<li>Teste auf dem Gerät, auf dem es später laufen soll.</li>
+<li>Prüfe das Ergebnis selbst. KI baut manchmal Fehler ein oder behauptet, es funktioniere, obwohl es nicht läuft.</li>
+</ul>
+
+<div class="hinweis">
+<p><strong>Datenschutz und Einsatz mit Klassen.</strong> Gib keine Namen, Fotos oder andere Daten von Schülerinnen und Schülern in eine KI ein. Die Anbieter haben Altersgrenzen, die du vor dem Einsatz mit Lernenden prüfen solltest. Im Unterricht kannst du die fertige Seite zeigen und das Bauen als Lehrkraft vorführen.</p>
+</div>
+<div class="leiste"><button class="pdf" id="pdf" type="button">Als PDF speichern oder drucken</button></div>
+<p class="kleinschrift nurbildschirm">Im Druckfenster wählst du als Drucker „Als PDF speichern“, wenn du eine Datei möchtest.</p>
+<p class="druckfuss">KI im Kunstunterricht, Seminar WS 2026/27, Universität zu Köln. Dieses Blatt kann frei im Unterricht verwendet werden.</p>
+<script>document.getElementById("pdf").addEventListener("click",function(){window.print();});</script>
+</main>
+</body>
+</html>

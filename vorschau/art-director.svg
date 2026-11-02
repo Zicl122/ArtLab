@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 600">
+<rect width="960" height="600" fill="#12142b"/>
+<g font-family="Georgia, 'Times New Roman', serif" font-size="30" fill="#ffd36e">
+<text x="64" y="215">Oben groß der Titel,</text>
+<text x="64" y="262">dahinter ein roter Kreis,</text>
+<text x="64" y="309">unten das Datum.</text>
+</g>
+<g transform="rotate(3 650 300)">
+<rect x="462" y="52" width="380" height="506" fill="#000000" opacity=".35"/>
+<rect x="450" y="40" width="380" height="506" fill="#1b2a6b"/>
+<circle cx="640" cy="310" r="120" fill="#e0242b"/>
+<text x="640" y="135" text-anchor="middle" font-family="Impact, 'Arial Black', Arial, sans-serif" font-weight="bold" font-size="76" fill="#ffd21f">JAZZ</text>
+<rect x="520" y="165" width="240" height="6" fill="#ffffff"/>
+<text x="640" y="505" text-anchor="middle" font-family="Georgia, serif" font-size="26" fill="#ffffff">Samstag, 19 Uhr</text>
+</g>
+</svg>

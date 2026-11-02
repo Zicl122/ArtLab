@@ -307,7 +307,7 @@ function teil(t, n, q) {
       if (d.length) return d.join(" und ") + " geändert";
     }
   }
-  var kw = /(untertitel|titel|überschrift|ueberschrift|slogan|datum|beschrift\w*|schreib\w*|text|schrift)/.exec(tl);
+  var kw = /(untertitel|titel|überschrift|ueberschrift|slogan|datum|beschrift\w*|schreib\w*|text|schrift|steht|stehen|lautet)/.exec(tl) || (/§\d+§/.test(t) && !/(kreis|ellipse|oval|rechteck|quadrat|balken|streifen|band|dreieck|linie|strich)/.test(tl) ? ["text"] : null);
   if (kw) {
     var mm = /§(\d+)§/.exec(t), inhalt = "", rest2;
     if (mm) inhalt = q[+mm[1]];

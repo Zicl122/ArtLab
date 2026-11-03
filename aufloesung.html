@@ -9,6 +9,7 @@
   html, body { height: 100%; margin: 0; background: var(--bg); color: var(--fg); }
   body { font: 300 18px/1.5 Georgia, "Times New Roman", serif; overflow: hidden; -webkit-text-size-adjust: 100%; }
   canvas#buehne { position: fixed; inset: 0; width: 100%; height: 100%; display: block; touch-action: none; cursor: crosshair; }
+  canvas#faeden { position: fixed; inset: 0; width: 100%; height: 100%; display: block; pointer-events: none; }
   video, img.quelle { display: none; }
 
   #start { position: fixed; inset: 0; display: flex; justify-content: center; align-items: center; padding: 24px; box-sizing: border-box; overflow-y: auto;
@@ -52,6 +53,7 @@
 <body>
 <a class="zurueck" href="index.html" aria-label="Zurück zur Übersicht">← Übersicht</a>
 <canvas id="buehne" aria-label="Ein Bild aus tausenden kleinen Farbtupfern, die sich mit Finger oder Maus auflösen lassen"></canvas>
+<canvas id="faeden" aria-hidden="true"></canvas>
 <video id="kamera" playsinline muted></video>
 <img class="quelle" id="bildQuelle" alt="">
 
@@ -60,7 +62,7 @@
     <h1>Auflösung</h1>
     <p>Dein Bild besteht aus tausenden kleinen Farbtupfern. Fahre mit dem Finger oder der Maus darüber, dann lösen sie sich ab, verlaufen oder tropfen davon. Lässt du los, setzt sich das Bild langsam wieder zusammen.</p>
     <ul>
-      <li>Vier Wirkungen zum Umschalten, Abtragen, Verlaufen, Schmelzen und Zerfallen.</li>
+      <li>Fünf Wirkungen zum Umschalten, Abtragen, Verlaufen, Schmelzen, Zerfallen und Fäden aus Pigment. Im Modus Automatisch wechseln sie von selbst.</li>
       <li>Mit Kamera kannst du auch mit der eigenen Hand vor dem Bild wischen.</li>
       <li>Du kannst auch ein eigenes Foto oder ein Beispielgesicht auflösen.</li>
     </ul>
@@ -91,11 +93,12 @@
     </div>
   </div>
   <div class="zeile" id="modi" role="group" aria-label="Wirkung">
-    <button type="button" data-m="0" aria-pressed="true">Abtragen</button>
+    <button type="button" data-m="0" aria-pressed="false">Abtragen</button>
     <button type="button" data-m="1" aria-pressed="false">Verlaufen</button>
     <button type="button" data-m="2" aria-pressed="false">Schmelzen</button>
     <button type="button" data-m="3" aria-pressed="false">Zerfallen</button>
-    <button type="button" data-m="4" aria-pressed="false">Automatisch</button>
+    <button type="button" data-m="5" aria-pressed="false">Fäden</button>
+    <button type="button" data-m="4" aria-pressed="true">Automatisch</button>
   </div>
   <div class="zeile">
     <button id="bReset" type="button">Zusammensetzen</button>
@@ -118,7 +121,7 @@ function toast(t) { const e = $("toast"); e.textContent = t; e.classList.add("da
 const gl = cv.getContext("webgl", { antialias: false, alpha: false, preserveDrawingBuffer: false, powerPreference: "high-performance" }) || cv.getContext("experimental-webgl");
 if (!gl) { sagen("Dein Browser kann diese Seite leider nicht darstellen (WebGL fehlt).", true); for (const id of ["knopfKamera", "knopfBeispiel"]) $(id).disabled = true; }
 const VS = `
-attribute vec4 aPos; attribute vec4 aHome; attribute vec2 aS;
+attribute vec4 aPos; attribute vec4 aHome; attribute vec2 aS; attribute float aV;
 uniform vec2 uRes; uniform float uSize; uniform float uDpr; uniform vec4 uMask; uniform vec2 uMaskR; uniform float uMaskOn;
 varying vec2 vUv; varying float vSh; varying float vAng; varying float vSt; varying float vSeed;
 void main(){
@@ -126,7 +129,7 @@ void main(){
   float sp = length(aPos.zw);
   float st = 1. + min(max(sp - 15., 0.) / 130., 3.2);
   vAng = atan(aPos.w, aPos.z); vSt = st;
-  float sz = aS.x * uSize * uDpr;
+  float sz = aS.x * uSize * uDpr * aV;
   if (uMaskOn > .5) {
     vec2 d = aHome.xy - uMask.xy;
     float c = cos(uMask.z), s = sin(uMask.z);
@@ -174,7 +177,7 @@ if (gl) {
   } catch (e) { console.error(e); sagen("Die Grafik konnte nicht aufgebaut werden.", true); }
   gl.useProgram(prog);
   for (const n of ["uRes", "uSize", "uDpr", "uMask", "uMaskR", "uMaskOn", "uTex"]) loc[n] = gl.getUniformLocation(prog, n);
-  loc.aPos = gl.getAttribLocation(prog, "aPos"); loc.aHome = gl.getAttribLocation(prog, "aHome"); loc.aS = gl.getAttribLocation(prog, "aS");
+  loc.aPos = gl.getAttribLocation(prog, "aPos"); loc.aHome = gl.getAttribLocation(prog, "aHome"); loc.aS = gl.getAttribLocation(prog, "aS"); loc.aV = gl.getAttribLocation(prog, "aV");
   bufDyn = gl.createBuffer(); bufSta = gl.createBuffer();
   tex = gl.createTexture(); gl.activeTexture(gl.TEXTURE0); gl.bindTexture(gl.TEXTURE_2D, tex);
   gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, 1, 1, 0, gl.RGBA, gl.UNSIGNED_BYTE, new Uint8Array([40, 20, 20, 255]));
@@ -187,7 +190,7 @@ if (gl) {
 
 // ---------- Größe und Teilchen ----------
 let W = 0, H = 0, DPR = 1, N = 0, spacing = 10;
-let hx, hy, px, py, vx, vy, fr, mf, ph, dyn, sta;
+let hx, hy, px, py, vx, vy, fr, mf, ph, dyn, sta, sk;
 let gz = 1, gb = 1, gh = 1, gA = null, gB = null, freiAnteil = 0, bew = 0;   // grobes Gitter, in dem die gelösten Tupfer aneinander kleben
 let zielAnzahl = Math.min(34000, Math.round(window.innerWidth * window.innerHeight / 32));
 if (matchMedia("(pointer: coarse)").matches) zielAnzahl = Math.min(zielAnzahl, 22000);
@@ -204,7 +207,7 @@ function bildZuSchirm(u, v) { return [fit.ox + (quelle.spiegel ? 1 - u : u) * fi
 
 function aufbauen() {
   W = window.innerWidth; H = window.innerHeight; DPR = Math.min(window.devicePixelRatio || 1, 2);
-  cv.width = Math.round(W * DPR); cv.height = Math.round(H * DPR);
+  cv.width = Math.round(W * DPR); cv.height = Math.round(H * DPR); fc.width = cv.width; fc.height = cv.height;
   if (gl) gl.viewport(0, 0, cv.width, cv.height);
   passung();
   spacing = Math.sqrt(W * H / zielAnzahl);
@@ -212,7 +215,7 @@ function aufbauen() {
   N = cols * rows;
   hx = new Float32Array(N); hy = new Float32Array(N); px = new Float32Array(N); py = new Float32Array(N);
   vx = new Float32Array(N); vy = new Float32Array(N); fr = new Float32Array(N); mf = new Uint8Array(N); ph = new Float32Array(N);
-  dyn = new Float32Array(N * 4); sta = new Float32Array(N * 6);
+  dyn = new Float32Array(N * 5); sk = new Float32Array(N).fill(1); sta = new Float32Array(N * 6);
   gz = spacing * 3.4; gb = Math.ceil(W / gz) + 2; gh = Math.ceil(H / gz) + 2;
   gA = new Float32Array(gb * gh * 5); gB = new Float32Array(gb * gh * 5);
   let i = 0;
@@ -228,6 +231,93 @@ function aufbauen() {
     const o = i * 6; sta[o] = x; sta[o + 1] = y; sta[o + 2] = u; sta[o + 3] = 1 - v; sta[o + 4] = gr * spacing * 1.8; sta[o + 5] = .5 + Math.random() * .5;
   }
   if (gl) { gl.bindBuffer(gl.ARRAY_BUFFER, bufSta); gl.bufferData(gl.ARRAY_BUFFER, sta, gl.STATIC_DRAW); gl.bindBuffer(gl.ARRAY_BUFFER, bufDyn); gl.bufferData(gl.ARRAY_BUFFER, dyn, gl.DYNAMIC_DRAW); }
+}
+
+// ---------- Pigmentfäden ----------
+const fc = $("faeden"), fx = fc.getContext("2d");
+const faeden = [];                 // { ax, ay, bx, by, id, t0, leben, col, w, L0, frei, s }
+const spawnZ = new Map();          // id -> { x, y, t }
+const farbK = document.createElement("canvas"), farbX = farbK.getContext("2d", { willReadFrequently: true });
+let farbDaten = null, farbT = 0, FKW = 56, FKH = 56;
+function farbenAktualisieren(jetzt) {
+  if (!quelle || jetzt - farbT < 300) return; farbT = jetzt;
+  if (quelle.art === "kamera" && video.readyState < 2) return;
+  const src = quelle.art === "kamera" ? video : bildQuelle;
+  FKW = 56; FKH = Math.max(8, Math.round(56 * H / W)); farbK.width = FKW; farbK.height = FKH;
+  const sc = FKW / W;
+  try {
+    if (quelle.spiegel) { farbX.save(); farbX.translate(FKW, 0); farbX.scale(-1, 1); farbX.drawImage(src, (W - fit.ox - fit.dw) * sc, fit.oy * sc, fit.dw * sc, fit.dh * sc); farbX.restore(); }
+    else farbX.drawImage(src, fit.ox * sc, fit.oy * sc, fit.dw * sc, fit.dh * sc);
+    farbDaten = farbX.getImageData(0, 0, FKW, FKH).data;
+  } catch (e) { farbDaten = null; }
+}
+function farbeAn(x, y) {
+  if (!farbDaten) return [235, 150, 120];
+  const ix = Math.max(0, Math.min(FKW - 1, Math.round(x * FKW / W))), iy = Math.max(0, Math.min(FKH - 1, Math.round(y * FKH / H))), k = (iy * FKW + ix) * 4;
+  const d = farbDaten; let r = d[k], g = d[k + 1], b = d[k + 2];
+  const m = (r + g + b) / 3; r = m + (r - m) * 1.5; g = m + (g - m) * 1.5; b = m + (b - m) * 1.5;    // satter, wie Pigment
+  return [Math.max(0, Math.min(255, r * 1.1 + 18)), Math.max(0, Math.min(255, g * 1.1 + 12)), Math.max(0, Math.min(255, b * 1.1 + 12))];
+}
+function faden(id, ax, ay, bx, by, L0, w, leben) {
+  if (faeden.length > 150) faeden.shift();
+  faeden.push({ id, ax, ay, bx, by, t0: zeit, leben, col: farbeAn(ax, ay), w, L0, frei: false, s: Math.random() * 6.28 });
+}
+function faedenSchritt(dt) {
+  // Quellen sind Finger oder Maus und die Fingerspitzen der Hand
+  const qs = new Map();
+  for (const [id, z] of zeiger) qs.set("p" + id, { x: z.x, y: z.y, r: z.r || R0() });
+  haende.forEach((b, i) => { if (b.f <= .6) qs.set("h" + i, { x: b.x, y: b.y, r: b.r || R0() * b.f }); });
+  for (const id of [...spawnZ.keys()]) if (!qs.has(id)) spawnZ.delete(id);
+  if (modus === 5) {
+    for (const [id, q] of qs) {
+      let sp = spawnZ.get(id);
+      if (!sp) {   // neu aufgesetzt, Fäden strecken sich zum Rand des entstehenden Lochs
+        sp = { x: q.x, y: q.y, t: zeit }; spawnZ.set(id, sp);
+        const n = 7;
+        for (let k = 0; k < n; k++) { const a = (k + Math.random() * .8) / n * 6.283, d = q.r * (.8 + Math.random() * .9); faden(id, q.x + Math.cos(a) * d, q.y + Math.sin(a) * d, q.x, q.y, d, 3 + Math.random() * 2.6, 1.5 + Math.random() * 1.1); }
+      } else if (Math.hypot(q.x - sp.x, q.y - sp.y) > 15) {      // Bewegung, der Faden bleibt hinten haften und wird gezogen
+        faden(id, sp.x, sp.y, q.x, q.y, 14, 3.4 + Math.random() * 2.4, 1.3 + Math.random() * 1.1);
+        if (Math.random() < .5) { const a = Math.random() * 6.283, d = q.r * (.7 + Math.random() * .8); faden(id, q.x + Math.cos(a) * d, q.y + Math.sin(a) * d, q.x, q.y, d, 2.6 + Math.random() * 2, 1.2 + Math.random()); }
+        sp.x = q.x; sp.y = q.y; sp.t = zeit;
+      } else if (zeit - sp.t > .5) {   // stillgehalten, es wachsen weiter Fäden nach
+        sp.t = zeit; const a = Math.random() * 6.283, d = q.r * (.7 + Math.random() * .9);
+        faden(id, q.x + Math.cos(a) * d, q.y + Math.sin(a) * d, q.x, q.y, d, 3 + Math.random() * 2.4, 1.4 + Math.random());
+      }
+    }
+  } else spawnZ.clear();
+  // Fäden bewegen
+  for (let i = faeden.length - 1; i >= 0; i--) {
+    const f = faeden[i], alter = zeit - f.t0;
+    if (alter > f.leben) { faeden.splice(i, 1); continue; }
+    const q = f.frei ? null : qs.get(f.id);
+    if (!f.frei && !q) f.frei = true;
+    if (!f.frei) {
+      f.bx += (q.x - f.bx) * Math.min(1, dt * 22); f.by += (q.y - f.by) * Math.min(1, dt * 22);
+      if (Math.hypot(f.bx - f.ax, f.by - f.ay) > Math.max(110, f.L0 * 3.2) || alter > f.leben * .72) f.frei = true;      // reißt
+    } else { f.bx += (f.ax - f.bx) * Math.min(1, dt * 6); f.by += (f.ay - f.by) * Math.min(1, dt * 6); }
+  }
+  // zeichnen
+  const brauchtZeichnen = faeden.length > 0 || fc.dataset.voll === "1";
+  if (!brauchtZeichnen) return;
+  fx.setTransform(DPR, 0, 0, DPR, 0, 0); fx.clearRect(0, 0, W, H); fc.dataset.voll = faeden.length ? "1" : "0";
+  fx.lineCap = "round"; fx.lineJoin = "round";
+  for (const f of faeden) {
+    const alter = zeit - f.t0, L = Math.hypot(f.bx - f.ax, f.by - f.ay), Lmax = Math.max(110, f.L0 * 3.2);
+    const a = Math.pow(1 - alter / f.leben, f.frei ? 1.8 : 1.1) * Math.min(1, alter * 9);
+    const w = f.w * 1.8 * Math.max(.2, Math.min(1, 1.25 - L / Lmax));
+    const mx = (f.ax + f.bx) / 2, my = (f.ay + f.by) / 2;
+    const nx = -(f.by - f.ay), ny = f.bx - f.ax, nl = Math.hypot(nx, ny) + .001;
+    const sw = Math.sin(zeit * 3.2 + f.s) * Math.min(L * .16, 20), hang = Math.min(L * .22, 26) * (1 - Math.min(1, L / Lmax));
+    const cx = mx + nx / nl * sw, cy = my + ny / nl * sw + hang;
+    const [r, g, b] = f.col, hr = Math.min(255, r + 70), hg = Math.min(255, g + 70), hb = Math.min(255, b + 70);
+    fx.beginPath(); fx.moveTo(f.ax, f.ay); fx.quadraticCurveTo(cx, cy, f.bx, f.by);
+    fx.strokeStyle = `rgba(${r | 0},${g | 0},${b | 0},${.22 * a})`; fx.lineWidth = w * 2.8; fx.stroke();
+    fx.strokeStyle = `rgba(${r | 0},${g | 0},${b | 0},${.92 * a})`; fx.lineWidth = w; fx.stroke();
+    fx.strokeStyle = `rgba(${hr | 0},${hg | 0},${hb | 0},${.85 * a})`; fx.lineWidth = Math.max(.8, w * .32); fx.stroke();
+    fx.fillStyle = `rgba(${r | 0},${g | 0},${b | 0},${.95 * a})`;
+    fx.beginPath(); fx.arc(f.ax, f.ay, w * .95, 0, 6.283); fx.fill();
+    fx.beginPath(); fx.arc(f.bx, f.by, w * .7, 0, 6.283); fx.fill();
+  }
 }
 let resizeT = 0;
 window.addEventListener("resize", () => { clearTimeout(resizeT); resizeT = setTimeout(aufbauen, 150); });
@@ -323,15 +413,17 @@ async function bildStarten(url) {
 }
 
 // ---------- Physik ----------
-let tAnschlag = 0, auto = false, wechselT = 0, modus = 0, zeit = 0, groesse = 1, heilung = .35, laeuft = false, letztes = performance.now(), msMittel = 16, langsam = 0;
-const R0 = () => Math.max(40, Math.min(W, H) * .072);
+let tAnschlag = 0, auto = true, wechselT = 5, modus = 0, zeit = 0, groesse = 1, heilung = .35, laeuft = false, letztes = performance.now(), msMittel = 16, langsam = 0;
+const R0 = () => Math.max(46, Math.min(W, H) * .068);
 function schritt(dt) {
   zeit += dt;
-  if (auto && zeit > wechselT) { modus = (modus + 1 + ((Math.random() * 3) | 0)) % 4; wechselT = zeit + 4.5 + Math.random() * 3; toast(NAMEN[modus]); }
+  if (auto && zeit > wechselT) { { const liste = [0, 1, 2, 3, 5].filter(m => m !== modus); modus = liste[(Math.random() * liste.length) | 0]; } wechselT = zeit + 4.5 + Math.random() * 3; toast(NAMEN[modus]); }
   const pinsel = [];
   const r = R0();
-  for (const z of zeiger.values()) pinsel.push({ x: z.x, y: z.y, vx: z.vx, vy: z.vy, r });
-  for (const b of haende) pinsel.push({ x: b.x, y: b.y, vx: b.vx, vy: b.vy, r: r * b.f });
+  // Langsam bewegt wirkt der Pinsel klein, schnell bewegt wird er größer
+  const tempoR = v => .45 + 1.0 * Math.min(1, v / 1200);
+  for (const z of zeiger.values()) { const zt = tempoR(Math.hypot(z.vx, z.vy)); z.rs = (z.rs === undefined ? zt : z.rs) + (zt - (z.rs === undefined ? zt : z.rs)) * Math.min(1, dt * 7); z.r = r * z.rs; pinsel.push({ x: z.x, y: z.y, vx: z.vx, vy: z.vy, r: z.r }); }
+  for (const b of haende) { b.r = r * b.f * tempoR(Math.hypot(b.vx, b.vy)); pinsel.push({ x: b.x, y: b.y, vx: b.vx, vy: b.vy, r: b.r }); }
   let pv = 0; for (const z of zeiger.values()) pv = Math.max(pv, Math.hypot(z.vx, z.vy)); for (const b of haende) pv = Math.max(pv, Math.hypot(b.vx, b.vy));
   if (pv > 30 && klang) {
     wegStrecke += pv * dt;
@@ -353,7 +445,7 @@ function schritt(dt) {
   const damp = Math.exp(-dt * 2.2);
   let nFrei = 0, sumV = 0; gA.fill(0);
   for (let i = 0; i < N; i++) {
-    let x = px[i], y = py[i], ux = vx[i], uy = vy[i], f = fr[i];
+    let x = px[i], y = py[i], ux = vx[i], uy = vy[i], f = fr[i], treffer = 0;
     // Pinsel
     for (let b = 0; b < nB; b++) {
       const B = pinsel[b], dx = x - B.x, dy = y - B.y, d2 = dx * dx + dy * dy;
@@ -362,6 +454,8 @@ function schritt(dt) {
       if (modus === 1) {
         x += B.vx * dt * w; y += B.vy * dt * w; ux *= .9; uy *= .9;
         if (f < 1.2) f = 1.2 * frSkala;
+      } else if (modus === 5) {
+        treffer = 1;
       } else if (modus === 2) {
         mf[i] = 1; if (f < 2.5) f = (2.5 + Math.random() * 3) * frSkala;
         uy += 800 * w * dt * (.4 + Math.random());
@@ -372,6 +466,8 @@ function schritt(dt) {
         if (f < 1.2) f = (1.2 + Math.random() * 3.5) * frSkala;
       }
     }
+    if (treffer) sk[i] += (0 - sk[i]) * Math.min(1, dt * 10);
+    else if (sk[i] < 1) sk[i] = Math.min(1, sk[i] + dt * (.22 + heilung * 1.1));
     // Zerfallen von selbst
     if (wind) {
       const e = .5 + .3 * Math.sin(hx[i] * .011 + zeit * .2) * Math.cos(hy[i] * .009 - zeit * .17) + .2 * Math.sin((hx[i] + hy[i]) * .006 + zeit * .31);
@@ -401,13 +497,13 @@ function schritt(dt) {
     const dd = Math.exp(-dm * dt); ux *= dd; uy *= dd;
     x += ux * dt; y += uy * dt;
     px[i] = x; py[i] = y; vx[i] = ux; vy[i] = uy; fr[i] = f;
-    dyn[i * 4] = x; dyn[i * 4 + 1] = y; dyn[i * 4 + 2] = ux; dyn[i * 4 + 3] = uy;
+    dyn[i * 5] = x; dyn[i * 5 + 1] = y; dyn[i * 5 + 2] = ux; dyn[i * 5 + 3] = uy; dyn[i * 5 + 4] = sk[i];
   }
   const t = gA; gA = gB; gB = t; freiAnteil = nFrei / Math.max(1, N);
   const ziel = Math.min(1, Math.max(pv / 1100, (sumV / Math.max(1, nFrei)) / 260 * Math.min(1, nFrei / 250)));
   bew += (ziel - bew) * Math.min(1, dt * (ziel > bew ? 9 : 2.2));
 }
-function zusammensetzen() { for (let i = 0; i < N; i++) { px[i] = hx[i]; py[i] = hy[i]; vx[i] = vy[i] = 0; fr[i] = 0; mf[i] = 0; } }
+function zusammensetzen() { for (let i = 0; i < N; i++) { px[i] = hx[i]; py[i] = hy[i]; vx[i] = vy[i] = 0; fr[i] = 0; mf[i] = 0; sk[i] = 1; } faeden.length = 0; }
 
 // ---------- Zeichnen ----------
 function zeichnen() {
@@ -418,7 +514,8 @@ function zeichnen() {
   gl.uniform4f(loc.uMask, maske.x, maske.y, maske.a, 0); gl.uniform2f(loc.uMaskR, Math.max(1, maske.rx), Math.max(1, maske.ry));
   gl.uniform1f(loc.uMaskOn, gesichtAn && maske.an ? 1 : 0);
   gl.bindBuffer(gl.ARRAY_BUFFER, bufDyn); gl.bufferSubData(gl.ARRAY_BUFFER, 0, dyn);
-  gl.enableVertexAttribArray(loc.aPos); gl.vertexAttribPointer(loc.aPos, 4, gl.FLOAT, false, 0, 0);
+  gl.enableVertexAttribArray(loc.aPos); gl.vertexAttribPointer(loc.aPos, 4, gl.FLOAT, false, 20, 0);
+  gl.enableVertexAttribArray(loc.aV); gl.vertexAttribPointer(loc.aV, 1, gl.FLOAT, false, 20, 16);
   gl.bindBuffer(gl.ARRAY_BUFFER, bufSta);
   gl.enableVertexAttribArray(loc.aHome); gl.vertexAttribPointer(loc.aHome, 4, gl.FLOAT, false, 24, 0);
   gl.enableVertexAttribArray(loc.aS); gl.vertexAttribPointer(loc.aS, 2, gl.FLOAT, false, 24, 16);
@@ -445,6 +542,7 @@ function schleife(now) {
   }
   if (window.__hand) handAuswerten([window.__hand], now);    // Testhaken
   schritt(Math.min(dtZ, .05));
+  farbenAktualisieren(now); faedenSchritt(Math.min(dtZ, .05));
   klangAnpassen();
   zeichnen();
   requestAnimationFrame(schleife);
@@ -571,9 +669,9 @@ document.querySelectorAll("#klaenge button").forEach(b => b.addEventListener("cl
 $("bKlang").addEventListener("click", () => klangWaehlen(klang === 0 ? 1 : (klang % 3) + 1 === klang ? 0 : (klang % 3) + 1, true));
 
 // ---------- Bedienung ----------
-const NAMEN = ["Abtragen", "Verlaufen", "Schmelzen", "Zerfallen", "Automatisch"];
+const NAMEN = ["Abtragen", "Verlaufen", "Schmelzen", "Zerfallen", "Automatisch", "Fäden"];
 document.querySelectorAll("#modi button").forEach(b => b.addEventListener("click", () => {
-  const m = +b.dataset.m; auto = m === 4; if (!auto) modus = m; wechselT = zeit + 5; document.querySelectorAll("#modi button").forEach(x => x.setAttribute("aria-pressed", x === b)); toast(NAMEN[modus]);
+  const m = +b.dataset.m; auto = m === 4; if (!auto) modus = m; wechselT = zeit + 5; document.querySelectorAll("#modi button").forEach(x => x.setAttribute("aria-pressed", x === b)); toast(NAMEN[m]);
 }));
 $("rGroesse").addEventListener("input", e => { groesse = +e.target.value; });
 $("rHeilung").addEventListener("input", e => { heilung = +e.target.value; });
@@ -588,7 +686,8 @@ $("bHand").addEventListener("click", () => handSchalten(!handAn));
 $("bGesicht").addEventListener("click", () => gesichtSchalten(!gesichtAn));
 $("bSpeichern").addEventListener("click", async () => {
   zeichnen();
-  const blob = await new Promise(res => cv.toBlob(res, "image/png"));
+  const aus = document.createElement("canvas"); aus.width = cv.width; aus.height = cv.height; const ax2 = aus.getContext("2d"); ax2.drawImage(cv, 0, 0); ax2.drawImage(fc, 0, 0);
+  const blob = await new Promise(res => aus.toBlob(res, "image/png"));
   if (!blob) { toast("Das Bild konnte nicht erzeugt werden"); return; }
   const datei = new File([blob], "aufloesung.png", { type: "image/png" });
   if (matchMedia("(pointer: coarse)").matches && navigator.canShare && navigator.canShare({ files: [datei] })) {
@@ -618,7 +717,7 @@ $("datei").addEventListener("change", async e => {
 window.__au = {
   starten: async () => { await bildStarten("gesichter/gesicht-04.jpg"); los(); },
   zustand: () => { let g = 0, s = 0; for (let i = 0; i < N; i++) { if (sta[i * 6 + 4] > 0) { s++; if (Math.hypot(px[i] - hx[i], py[i] - hy[i]) > 8) g++; } } return { N, sichtbar: s, geloest: g, W, H, modus, zielAnzahl }; },
-  modus: m => { auto = m === 4; if (!auto) modus = m; }, klang: k => klangWaehlen(k, false), audio: () => ac && { zustand: ac.state, filter: filt.frequency.value, aktiv: !!modusBus, bew, weg: Math.round(wegStrecke), anschlaege: letzterAnschlag }, heilung: h => { heilung = h; }, schritt, zusammensetzen,
+  modus: m => { auto = m === 4; if (!auto) modus = m; }, faeden: () => faeden.length, klang: k => klangWaehlen(k, false), audio: () => ac && { zustand: ac.state, filter: filt.frequency.value, aktiv: !!modusBus, bew, weg: Math.round(wegStrecke), anschlaege: letzterAnschlag }, heilung: h => { heilung = h; }, schritt, zusammensetzen,
 };
 aufbauen();
 </script>

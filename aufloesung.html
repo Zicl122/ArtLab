@@ -1,0 +1,447 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Auflösung</title>
+<style>
+  :root { color-scheme: dark; --bg: #050303; --fg: #f4ece6; --muted: rgba(244, 236, 230, .72); }
+  html, body { height: 100%; margin: 0; background: var(--bg); color: var(--fg); }
+  body { font: 300 18px/1.5 Georgia, "Times New Roman", serif; overflow: hidden; -webkit-text-size-adjust: 100%; }
+  canvas#buehne { position: fixed; inset: 0; width: 100%; height: 100%; display: block; touch-action: none; cursor: crosshair; }
+  video, img.quelle { display: none; }
+
+  #start { position: fixed; inset: 0; display: flex; justify-content: center; align-items: center; padding: 24px; box-sizing: border-box; overflow-y: auto;
+           background: radial-gradient(ellipse at 30% 40%, rgba(5,3,3,.5), rgba(5,3,3,.9) 72%); }
+  #start .inhalt { max-width: 540px; display: flex; flex-direction: column; gap: 16px; }
+  #start h1 { font-weight: 400; font-size: clamp(2.2rem, 8vw, 3.4rem); line-height: 1.05; margin: 0; letter-spacing: -.01em; }
+  #start p { margin: 0; color: var(--muted); }
+  #start .klein { font-size: .85rem; }
+  #start ul { margin: 0; padding-left: 1.1em; color: var(--muted); font-size: 1rem; }
+  #start li { margin: .25em 0; }
+  .knoepfe { display: flex; flex-wrap: wrap; gap: 10px; }
+  button, label.knopf { font: inherit; color: var(--bg); background: var(--fg); border: 0; border-radius: 999px; padding: .7em 1.4em; cursor: pointer; touch-action: manipulation; }
+  button.leise, label.leise { background: transparent; color: var(--fg); border: 1px solid rgba(244,236,230,.4); }
+  button:focus-visible, label.knopf:focus-within { outline: 2px solid var(--fg); outline-offset: 4px; }
+  button[disabled] { opacity: .5; cursor: default; }
+  #meldung { color: var(--muted); min-height: 1.5em; }
+  #meldung.fehler { color: #ffab8f; }
+  input[type=file] { position: absolute; width: 1px; height: 1px; opacity: 0; pointer-events: none; }
+
+  .leiste { position: fixed; left: 0; right: 0; bottom: 0; display: flex; flex-direction: column; align-items: center; gap: 8px;
+            padding: 0 12px calc(12px + env(safe-area-inset-bottom)); pointer-events: none; }
+  .zeile { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; }
+  .leiste button, .leiste .regler { pointer-events: auto; font-size: 15px; line-height: 1; color: #f4ece6; background: rgba(12, 6, 6, .66);
+            border: 1px solid rgba(255,255,255,.24); -webkit-backdrop-filter: blur(6px); backdrop-filter: blur(6px); }
+  .leiste button { padding: 11px 15px; border-radius: 999px; }
+  .leiste button[aria-pressed="true"] { background: rgba(244, 236, 230, .94); color: #050303; border-color: transparent; }
+  .leiste button:focus-visible, .leiste input:focus-visible { outline: 2px solid #ffc27a; outline-offset: 3px; }
+  #mehr { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; align-items: center; }
+  .regler { display: flex; align-items: center; gap: 8px; padding: 8px 14px; border-radius: 999px; font-size: 14px; }
+  .regler input { width: 110px; accent-color: #f4ece6; }
+
+  .oben { position: fixed; left: 0; right: 0; top: max(62px, calc(env(safe-area-inset-top) + 50px)); text-align: center; pointer-events: none; padding: 0 16px; }
+  #hinweis { margin: 0 auto; max-width: 28em; color: var(--muted); text-shadow: 0 0 12px #000, 0 0 4px #000; transition: opacity 1.6s ease; font-size: 1rem; }
+  #hinweis.weg { opacity: 0; }
+  #toast { margin: 8px 0 0; color: var(--fg); text-shadow: 0 0 12px #000; opacity: 0; transition: opacity .35s ease; font-size: 1.15rem; font-style: italic; }
+  #toast.da { opacity: 1; }
+  [hidden] { display: none !important; }
+</style>
+<style>.zurueck{position:fixed;top:max(12px,env(safe-area-inset-top));left:max(12px,env(safe-area-inset-left));z-index:9999;font:400 14px/1 Georgia,serif;color:#f1f0f7;background:rgba(9,10,28,.55);border:1px solid rgba(255,255,255,.22);border-radius:999px;padding:9px 14px;text-decoration:none;-webkit-backdrop-filter:blur(6px);backdrop-filter:blur(6px);touch-action:manipulation}.zurueck:focus-visible{outline:2px solid #8fd3ff;outline-offset:3px}</style>
+</head>
+<body>
+<a class="zurueck" href="index.html" aria-label="Zurück zur Übersicht">← Übersicht</a>
+<canvas id="buehne" aria-label="Ein Bild aus tausenden kleinen Farbtupfern, die sich mit Finger oder Maus auflösen lassen"></canvas>
+<video id="kamera" playsinline muted></video>
+<img class="quelle" id="bildQuelle" alt="">
+
+<section id="start">
+  <div class="inhalt">
+    <h1>Auflösung</h1>
+    <p>Dein Bild besteht aus tausenden kleinen Farbtupfern. Fahre mit dem Finger oder der Maus darüber, dann lösen sie sich ab, verlaufen oder tropfen davon. Lässt du los, setzt sich das Bild langsam wieder zusammen.</p>
+    <ul>
+      <li>Vier Wirkungen zum Umschalten, Abtragen, Verlaufen, Schmelzen und Zerfallen.</li>
+      <li>Mit Kamera kannst du auch mit der eigenen Hand vor dem Bild wischen.</li>
+      <li>Du kannst auch ein eigenes Foto oder ein Beispielgesicht auflösen.</li>
+    </ul>
+    <p class="klein">Kamerabild und Fotos bleiben auf diesem Gerät und werden nirgendwohin gesendet.</p>
+    <div class="knoepfe">
+      <button id="knopfKamera" type="button">Mit Kamera starten</button>
+      <button id="knopfBeispiel" type="button" class="leise">Beispielgesicht</button>
+      <label class="knopf leise">Eigenes Bild wählen<input id="datei" type="file" accept="image/*"></label>
+    </div>
+    <p id="meldung" role="status"></p>
+  </div>
+</section>
+
+<div class="oben"><p id="hinweis" hidden>Fahre mit dem Finger oder der Maus über das Bild</p><p id="toast" role="status"></p></div>
+
+<div class="leiste" id="leiste" hidden>
+  <div id="mehr" hidden>
+    <label class="regler">Größe <input id="rGroesse" type="range" min="0.6" max="2" step="0.05" value="1"></label>
+    <label class="regler">Heilung <input id="rHeilung" type="range" min="0" max="1" step="0.05" value="0.35"></label>
+    <button id="bWechsel" type="button" hidden>Vorder-/Rückkamera</button>
+    <button id="bHand" type="button" aria-pressed="false" hidden>Hand</button>
+    <button id="bGesicht" type="button" aria-pressed="false" hidden>Nur Gesicht</button>
+  </div>
+  <div class="zeile" id="modi" role="group" aria-label="Wirkung">
+    <button type="button" data-m="0" aria-pressed="true">Abtragen</button>
+    <button type="button" data-m="1" aria-pressed="false">Verlaufen</button>
+    <button type="button" data-m="2" aria-pressed="false">Schmelzen</button>
+    <button type="button" data-m="3" aria-pressed="false">Zerfallen</button>
+  </div>
+  <div class="zeile">
+    <button id="bReset" type="button">Zusammensetzen</button>
+    <button id="bSpeichern" type="button">Speichern</button>
+    <button id="bMehr" type="button" aria-pressed="false">Mehr</button>
+  </div>
+</div>
+
+<script type="module">
+import { FilesetResolver, HandLandmarker, FaceLandmarker } from "./vendor/vision_bundle.mjs";
+
+const $ = id => document.getElementById(id);
+const cv = $("buehne"), video = $("kamera"), bildQuelle = $("bildQuelle");
+function sagen(t, f) { $("meldung").textContent = t; $("meldung").classList.toggle("fehler", !!f); }
+let toastT = 0;
+function toast(t) { const e = $("toast"); e.textContent = t; e.classList.add("da"); clearTimeout(toastT); toastT = setTimeout(() => e.classList.remove("da"), 1500); }
+
+// ---------- WebGL ----------
+const gl = cv.getContext("webgl", { antialias: false, alpha: false, preserveDrawingBuffer: false, powerPreference: "high-performance" }) || cv.getContext("experimental-webgl");
+if (!gl) { sagen("Dein Browser kann diese Seite leider nicht darstellen (WebGL fehlt).", true); for (const id of ["knopfKamera", "knopfBeispiel"]) $(id).disabled = true; }
+const VS = `
+attribute vec2 aPos; attribute vec4 aHome; attribute vec2 aS;
+uniform vec2 uRes; uniform float uSize; uniform float uDpr; uniform vec4 uMask; uniform vec2 uMaskR; uniform float uMaskOn;
+varying vec2 vUv; varying float vSh;
+void main(){
+  vec2 p = aPos;
+  float sz = aS.x * uSize * uDpr;
+  if (uMaskOn > .5) {
+    vec2 d = aHome.xy - uMask.xy;
+    float c = cos(uMask.z), s = sin(uMask.z);
+    vec2 q = vec2(d.x*c + d.y*s, -d.x*s + d.y*c) / uMaskR;
+    if (dot(q, q) > 1.) sz = 0.;
+  }
+  if (aS.x < .01) sz = 0.;
+  gl_PointSize = sz;
+  gl_Position = vec4(p.x / uRes.x * 2. - 1., 1. - p.y / uRes.y * 2., 0., 1.);
+  if (sz < .5) gl_Position = vec4(3., 3., 3., 1.);
+  vUv = aHome.zw; vSh = aS.y;
+}`;
+const FS = `
+precision mediump float;
+uniform sampler2D uTex; varying vec2 vUv; varying float vSh;
+void main(){
+  vec2 c = gl_PointCoord * 2. - 1.; float r = dot(c, c);
+  if (r > 1.) discard;
+  vec3 col = texture2D(uTex, vUv).rgb;
+  float glanz = smoothstep(.6, 0., length(c + vec2(.32, .36))) * .16;
+  col = col * (.8 + .26 * (1. - r) * vSh) + glanz;
+  gl_FragColor = vec4(col, 1. - smoothstep(.78, 1., r));
+}`;
+let prog, loc = {}, tex, bufDyn, bufSta;
+if (gl) {
+  const sh = (t, s) => { const o = gl.createShader(t); gl.shaderSource(o, s); gl.compileShader(o); if (!gl.getShaderParameter(o, gl.COMPILE_STATUS)) throw new Error(gl.getShaderInfoLog(o)); return o; };
+  try {
+    prog = gl.createProgram(); gl.attachShader(prog, sh(gl.VERTEX_SHADER, VS)); gl.attachShader(prog, sh(gl.FRAGMENT_SHADER, FS)); gl.linkProgram(prog);
+    if (!gl.getProgramParameter(prog, gl.LINK_STATUS)) throw new Error(gl.getProgramInfoLog(prog));
+  } catch (e) { console.error(e); sagen("Die Grafik konnte nicht aufgebaut werden.", true); }
+  gl.useProgram(prog);
+  for (const n of ["uRes", "uSize", "uDpr", "uMask", "uMaskR", "uMaskOn", "uTex"]) loc[n] = gl.getUniformLocation(prog, n);
+  loc.aPos = gl.getAttribLocation(prog, "aPos"); loc.aHome = gl.getAttribLocation(prog, "aHome"); loc.aS = gl.getAttribLocation(prog, "aS");
+  bufDyn = gl.createBuffer(); bufSta = gl.createBuffer();
+  tex = gl.createTexture(); gl.activeTexture(gl.TEXTURE0); gl.bindTexture(gl.TEXTURE_2D, tex);
+  gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, 1, 1, 0, gl.RGBA, gl.UNSIGNED_BYTE, new Uint8Array([40, 20, 20, 255]));
+  for (const [p, v] of [[gl.TEXTURE_MIN_FILTER, gl.LINEAR], [gl.TEXTURE_MAG_FILTER, gl.LINEAR], [gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE], [gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE]]) gl.texParameteri(gl.TEXTURE_2D, p, v);
+  gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, true);
+  gl.uniform1i(loc.uTex, 0);
+  gl.enable(gl.BLEND); gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
+  gl.clearColor(.02, .012, .012, 1);
+}
+
+// ---------- Größe und Teilchen ----------
+let W = 0, H = 0, DPR = 1, N = 0, spacing = 10;
+let hx, hy, px, py, vx, vy, fr, mf, ph, dyn, sta;
+let zielAnzahl = Math.min(34000, Math.round(window.innerWidth * window.innerHeight / 32));
+if (matchMedia("(pointer: coarse)").matches) zielAnzahl = Math.min(zielAnzahl, 22000);
+let quelle = null;       // { art: "kamera" | "bild", breite, hoehe, spiegel }
+let fit = { ox: 0, oy: 0, dw: 1, dh: 1 };
+
+function passung() {
+  if (!quelle) return;
+  const sw = quelle.breite, sh = quelle.hoehe;
+  const s = quelle.art === "kamera" ? Math.max(W / sw, H / sh) : Math.min(W / sw, H / sh);
+  fit = { dw: sw * s, dh: sh * s, ox: (W - sw * s) / 2, oy: (H - sh * s) / 2 };
+}
+function bildZuSchirm(u, v) { return [fit.ox + (quelle.spiegel ? 1 - u : u) * fit.dw, fit.oy + v * fit.dh]; }
+
+function aufbauen() {
+  W = window.innerWidth; H = window.innerHeight; DPR = Math.min(window.devicePixelRatio || 1, 2);
+  cv.width = Math.round(W * DPR); cv.height = Math.round(H * DPR);
+  if (gl) gl.viewport(0, 0, cv.width, cv.height);
+  passung();
+  spacing = Math.sqrt(W * H / zielAnzahl);
+  const cols = Math.ceil(W / spacing) + 1, rows = Math.ceil(H / spacing) + 1;
+  N = cols * rows;
+  hx = new Float32Array(N); hy = new Float32Array(N); px = new Float32Array(N); py = new Float32Array(N);
+  vx = new Float32Array(N); vy = new Float32Array(N); fr = new Float32Array(N); mf = new Uint8Array(N); ph = new Float32Array(N);
+  dyn = new Float32Array(N * 2); sta = new Float32Array(N * 6);
+  let i = 0;
+  for (let r = 0; r < rows; r++) for (let c = 0; c < cols; c++, i++) {
+    const x = (c + .5 + (Math.random() - .5) * .7) * spacing, y = (r + .5 + (Math.random() - .5) * .7) * spacing;
+    hx[i] = px[i] = x; hy[i] = py[i] = y; ph[i] = Math.random() * 6.283;
+    let u = 0, v = 0, gr = 0;
+    if (quelle) {
+      u = (x - fit.ox) / fit.dw; v = (y - fit.oy) / fit.dh;
+      if (u < 0 || u > 1 || v < 0 || v > 1) gr = 0; else gr = .85 + Math.random() * .4;
+      if (quelle.spiegel) u = 1 - u;
+    }
+    const o = i * 6; sta[o] = x; sta[o + 1] = y; sta[o + 2] = u; sta[o + 3] = 1 - v; sta[o + 4] = gr * spacing * 1.55; sta[o + 5] = .5 + Math.random() * .5;
+  }
+  if (gl) { gl.bindBuffer(gl.ARRAY_BUFFER, bufSta); gl.bufferData(gl.ARRAY_BUFFER, sta, gl.STATIC_DRAW); gl.bindBuffer(gl.ARRAY_BUFFER, bufDyn); gl.bufferData(gl.ARRAY_BUFFER, dyn, gl.DYNAMIC_DRAW); }
+}
+let resizeT = 0;
+window.addEventListener("resize", () => { clearTimeout(resizeT); resizeT = setTimeout(aufbauen, 150); });
+
+// ---------- Eingabe ----------
+const zeiger = new Map();    // id -> { x, y, vx, vy, t }
+function zeigerPos(e) { const r = cv.getBoundingClientRect(); return [e.clientX - r.left, e.clientY - r.top]; }
+cv.addEventListener("pointerdown", e => { try { cv.setPointerCapture(e.pointerId); } catch (_) {} const [x, y] = zeigerPos(e); zeiger.set(e.pointerId, { x, y, vx: 0, vy: 0, t: performance.now(), druck: true }); $("hinweis").classList.add("weg"); });
+cv.addEventListener("pointermove", e => {
+  const [x, y] = zeigerPos(e); let z = zeiger.get(e.pointerId);
+  if (e.pointerType === "mouse" && !z) z = { x, y, vx: 0, vy: 0, t: performance.now(), druck: false };
+  if (!z) return;
+  const now = performance.now(), dt = Math.max(.008, (now - z.t) / 1000);
+  z.vx = z.vx * .5 + (x - z.x) / dt * .5; z.vy = z.vy * .5 + (y - z.y) / dt * .5; z.x = x; z.y = y; z.t = now; zeiger.set(e.pointerId, z);
+  $("hinweis").classList.add("weg");
+});
+const weg = e => { zeiger.delete(e.pointerId); };
+cv.addEventListener("pointerup", weg); cv.addEventListener("pointercancel", weg);
+cv.addEventListener("pointerleave", e => { if (e.pointerType === "mouse") zeiger.delete(e.pointerId); });
+
+// ---------- Kamera, Hand, Gesicht ----------
+let strom = null, facing = "user", handAn = false, gesichtAn = false, handModell = null, gesichtModell = null;
+async function kameraStarten() {
+  if (strom) strom.getTracks().forEach(t => t.stop());
+  strom = await navigator.mediaDevices.getUserMedia({ video: { facingMode: facing, width: { ideal: 1280 }, height: { ideal: 720 } }, audio: false });
+  video.srcObject = strom; await video.play();
+  await new Promise(r => { if (video.videoWidth) r(); else video.addEventListener("loadedmetadata", r, { once: true }); });
+  quelleSetzen({ art: "kamera", breite: video.videoWidth, hoehe: video.videoHeight, spiegel: facing === "user" });
+  $("bWechsel").hidden = false; $("bHand").hidden = false; $("bGesicht").hidden = false;
+}
+async function fileset() { return await FilesetResolver.forVisionTasks("./vendor/wasm"); }
+async function mitFallback(Klasse, datei, opt) {
+  const fs = await fileset(), basis = { modelAssetPath: datei };
+  try { return await Klasse.createFromOptions(fs, { baseOptions: { ...basis, delegate: "GPU" }, ...opt }); }
+  catch (e) { return await Klasse.createFromOptions(fs, { baseOptions: { ...basis, delegate: "CPU" }, ...opt }); }
+}
+async function handSchalten(an) {
+  if (an && !handModell) { toast("Handerkennung wird geladen"); try { handModell = await mitFallback(HandLandmarker, "./vendor/hand_landmarker.task", { runningMode: "VIDEO", numHands: 2, minHandDetectionConfidence: .5, minHandPresenceConfidence: .5, minTrackingConfidence: .5 }); } catch (e) { console.error(e); toast("Handerkennung nicht verfügbar"); return; } }
+  handAn = an; $("bHand").setAttribute("aria-pressed", an); if (!an) haende = [];
+}
+async function gesichtSchalten(an) {
+  if (an && !gesichtModell) { toast("Gesichtserkennung wird geladen"); try { gesichtModell = await mitFallback(FaceLandmarker, "./vendor/face_landmarker.task", { runningMode: "VIDEO", numFaces: 1 }); } catch (e) { console.error(e); toast("Gesichtserkennung nicht verfügbar"); return; } }
+  gesichtAn = an; $("bGesicht").setAttribute("aria-pressed", an); if (!an) maske.an = false;
+}
+let haende = [];   // Pinselpunkte der Hand [{ x, y, vx, vy, r }]
+let handLetzt = [], handZeit = 0;
+function handAuswerten(listen, jetzt) {
+  const dt = Math.max(.016, (jetzt - handZeit) / 1000); handZeit = jetzt;
+  const neu = [];
+  const radien = { 0: 1.0, 9: 1.35, 5: .8, 13: .8, 17: .7, 4: .6, 8: .6, 12: .6, 16: .6, 20: .55 };
+  listen.forEach((pts, hi) => {
+    for (const k in radien) {
+      const p = pts[k], [x, y] = bildZuSchirm(p.x, p.y), alt = handLetzt[hi * 100 + (+k)];
+      const b = { x, y, vx: alt ? (x - alt.x) / dt : 0, vy: alt ? (y - alt.y) / dt : 0, f: radien[k] };
+      handLetzt[hi * 100 + (+k)] = { x, y }; neu.push(b);
+    }
+  });
+  haende = neu;
+}
+const maske = { an: false, x: 0, y: 0, a: 0, rx: 1, ry: 1 };
+function gesichtAuswerten(pts) {
+  const a = Math.atan2(pts[263].y * fit.dh - pts[33].y * fit.dh, (quelle.spiegel ? -1 : 1) * (pts[263].x - pts[33].x) * fit.dw);
+  const c = Math.cos(a), s = Math.sin(a);
+  let mn1 = 1e9, mx1 = -1e9, mn2 = 1e9, mx2 = -1e9;
+  for (const p of pts) {
+    const [x, y] = bildZuSchirm(p.x, p.y), u = x * c + y * s, v = -x * s + y * c;
+    if (u < mn1) mn1 = u; if (u > mx1) mx1 = u; if (v < mn2) mn2 = v; if (v > mx2) mx2 = v;
+  }
+  const cu = (mn1 + mx1) / 2, cvv = (mn2 + mx2) / 2 - (mx2 - mn2) * .04;
+  const t = { x: cu * c - cvv * s, y: cu * s + cvv * c, a, rx: (mx1 - mn1) / 2 * 1.14, ry: (mx2 - mn2) / 2 * 1.2 };
+  if (!maske.an) Object.assign(maske, t, { an: true }); else for (const k of ["x", "y", "a", "rx", "ry"]) maske[k] += (t[k] - maske[k]) * .35;
+}
+
+// ---------- Quellen ----------
+function quelleSetzen(q) {
+  quelle = q; aufbauen();
+  if (q.art === "bild" || q.art === "kamera") $("hinweis").hidden = false;
+}
+function bildTextur(img) {
+  gl.activeTexture(gl.TEXTURE0); gl.bindTexture(gl.TEXTURE_2D, tex);
+  gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, img);
+}
+function bildLaden(url) {
+  return new Promise((res, rej) => { bildQuelle.onload = () => res(); bildQuelle.onerror = () => rej(new Error("Bild")); bildQuelle.src = url; });
+}
+async function bildStarten(url) {
+  if (strom) { strom.getTracks().forEach(t => t.stop()); strom = null; }
+  await bildLaden(url);
+  bildTextur(bildQuelle);
+  quelleSetzen({ art: "bild", breite: bildQuelle.naturalWidth, hoehe: bildQuelle.naturalHeight, spiegel: false });
+  for (const id of ["bWechsel", "bHand", "bGesicht"]) $(id).hidden = true;
+  handAn = false; gesichtAn = false; maske.an = false;
+}
+
+// ---------- Physik ----------
+let modus = 0, zeit = 0, groesse = 1, heilung = .35, laeuft = false, letztes = performance.now(), msMittel = 16, langsam = 0;
+const R0 = () => Math.max(60, Math.min(W, H) * .11);
+function schritt(dt) {
+  zeit += dt;
+  const pinsel = [];
+  const r = R0();
+  for (const z of zeiger.values()) pinsel.push({ x: z.x, y: z.y, vx: z.vx, vy: z.vy, r });
+  for (const b of haende) pinsel.push({ x: b.x, y: b.y, vx: b.vx, vy: b.vy, r: r * b.f });
+  for (const z of zeiger.values()) { z.vx *= Math.exp(-dt * 6); z.vy *= Math.exp(-dt * 6); }
+  for (const b of haende) { b.vx *= Math.exp(-dt * 5); b.vy *= Math.exp(-dt * 5); }
+  const nB = pinsel.length;
+  const kBasis = 4 + heilung * 28, daempfFrei = 1.4, frSkala = 1.7 - heilung;
+  const wind = modus === 3;
+  const thr = .55 + .4 * Math.sin(zeit * .3);
+  const damp = Math.exp(-dt * 2.2);
+  for (let i = 0; i < N; i++) {
+    let x = px[i], y = py[i], ux = vx[i], uy = vy[i], f = fr[i];
+    // Pinsel
+    for (let b = 0; b < nB; b++) {
+      const B = pinsel[b], dx = x - B.x, dy = y - B.y, d2 = dx * dx + dy * dy;
+      if (d2 >= B.r * B.r) continue;
+      const d = Math.sqrt(d2), w = 1 - d / B.r, inv = 1 / (d + 1);
+      if (modus === 1) {
+        x += B.vx * dt * w; y += B.vy * dt * w; ux *= .9; uy *= .9;
+        if (f < 1.2) f = 1.2 * frSkala;
+      } else if (modus === 2) {
+        mf[i] = 1; if (f < 2.5) f = (2.5 + Math.random() * 3) * frSkala;
+        uy += 800 * w * dt * (.4 + Math.random());
+      } else {
+        const rz = (Math.random() - .5);
+        ux += (dx * inv * 2200 * w + B.vx * 6 * w + rz * 900 * w) * dt;
+        uy += (dy * inv * 2200 * w + B.vy * 6 * w + (Math.random() - .5) * 900 * w) * dt;
+        if (f < 1.2) f = (1.2 + Math.random() * 3.5) * frSkala;
+      }
+    }
+    // Zerfallen von selbst
+    if (wind) {
+      const e = .5 + .3 * Math.sin(hx[i] * .011 + zeit * .2) * Math.cos(hy[i] * .009 - zeit * .17) + .2 * Math.sin((hx[i] + hy[i]) * .006 + zeit * .31);
+      if (e > thr) { ux += 150 * dt * (.5 + ph[i] * .1); uy -= 100 * dt * (.5 + ph[i] * .1); if (f < .35) f = .35 + Math.random() * .3; }
+    }
+    // Feder zur Ausgangsposition
+    let k = f > 0 ? kBasis * .08 : kBasis, dm = f > 0 ? daempfFrei : 1.8 * Math.sqrt(kBasis);
+    if (f > 0) {
+      f -= dt;
+      ux += Math.sin(y * .012 + zeit * 1.3 + ph[i]) * 60 * dt; uy += Math.cos(x * .012 + zeit * 1.1 + ph[i]) * 60 * dt;
+      if (mf[i]) { uy += 420 * dt; if (f <= 0) mf[i] = 0; }
+    }
+    ux += (hx[i] - x) * k * dt; uy += (hy[i] - y) * k * dt;
+    const dd = Math.exp(-dm * dt); ux *= dd; uy *= dd;
+    x += ux * dt; y += uy * dt;
+    px[i] = x; py[i] = y; vx[i] = ux; vy[i] = uy; fr[i] = f;
+    dyn[i * 2] = x; dyn[i * 2 + 1] = y;
+  }
+}
+function zusammensetzen() { for (let i = 0; i < N; i++) { px[i] = hx[i]; py[i] = hy[i]; vx[i] = vy[i] = 0; fr[i] = 0; mf[i] = 0; } }
+
+// ---------- Zeichnen ----------
+function zeichnen() {
+  if (!gl || !prog || !N) return;
+  gl.viewport(0, 0, cv.width, cv.height);
+  gl.clear(gl.COLOR_BUFFER_BIT);
+  gl.uniform2f(loc.uRes, W, H); gl.uniform1f(loc.uSize, groesse); gl.uniform1f(loc.uDpr, DPR);
+  gl.uniform4f(loc.uMask, maske.x, maske.y, maske.a, 0); gl.uniform2f(loc.uMaskR, Math.max(1, maske.rx), Math.max(1, maske.ry));
+  gl.uniform1f(loc.uMaskOn, gesichtAn && maske.an ? 1 : 0);
+  gl.bindBuffer(gl.ARRAY_BUFFER, bufDyn); gl.bufferSubData(gl.ARRAY_BUFFER, 0, dyn);
+  gl.enableVertexAttribArray(loc.aPos); gl.vertexAttribPointer(loc.aPos, 2, gl.FLOAT, false, 0, 0);
+  gl.bindBuffer(gl.ARRAY_BUFFER, bufSta);
+  gl.enableVertexAttribArray(loc.aHome); gl.vertexAttribPointer(loc.aHome, 4, gl.FLOAT, false, 24, 0);
+  gl.enableVertexAttribArray(loc.aS); gl.vertexAttribPointer(loc.aS, 2, gl.FLOAT, false, 24, 16);
+  // aHome enthält x, y, u, v (Bytes 0 bis 15), aS enthält Größe und Glanz (ab Byte 16)
+  gl.drawArrays(gl.POINTS, 0, N);
+}
+
+let letzteVideoZeit = -1, erkTakt = 0;
+function schleife(now) {
+  const dtZ = Math.min((now - letztes) / 1000, .25); letztes = now;
+  msMittel += (dtZ * 1000 - msMittel) * .05;
+  if (!window.__au.fest && msMittel > 30 && zielAnzahl > 8000) { if (++langsam > 45) { zielAnzahl = Math.max(8000, Math.round(zielAnzahl * .75)); langsam = 0; aufbauen(); } } else langsam = 0;
+
+  if (quelle && quelle.art === "kamera" && video.readyState >= 2) {
+    gl.activeTexture(gl.TEXTURE0); gl.bindTexture(gl.TEXTURE_2D, tex);
+    try { gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, video); } catch (e) { /* Bild übersprungen */ }
+    if (video.currentTime !== letzteVideoZeit) {
+      letzteVideoZeit = video.currentTime; erkTakt++;
+      try {
+        if (handAn && handModell && !window.__hand) { const e = handModell.detectForVideo(video, now); handAuswerten(e.landmarks || [], now); }
+        if (gesichtAn && gesichtModell && erkTakt % 3 === 0) { const e = gesichtModell.detectForVideo(video, now); if (e.faceLandmarks && e.faceLandmarks[0]) gesichtAuswerten(e.faceLandmarks[0]); }
+      } catch (e) { /* Bild übersprungen */ }
+    }
+  }
+  if (window.__hand) handAuswerten([window.__hand], now);    // Testhaken
+  schritt(Math.min(dtZ, .05));
+  zeichnen();
+  requestAnimationFrame(schleife);
+}
+function los() {
+  $("start").hidden = true; $("leiste").hidden = false; $("hinweis").hidden = false;
+  if (!laeuft) { laeuft = true; letztes = performance.now(); requestAnimationFrame(schleife); setTimeout(() => $("hinweis").classList.add("weg"), 9000); }
+}
+
+// ---------- Bedienung ----------
+const NAMEN = ["Abtragen", "Verlaufen", "Schmelzen", "Zerfallen"];
+document.querySelectorAll("#modi button").forEach(b => b.addEventListener("click", () => {
+  modus = +b.dataset.m; document.querySelectorAll("#modi button").forEach(x => x.setAttribute("aria-pressed", x === b)); toast(NAMEN[modus]);
+}));
+$("rGroesse").addEventListener("input", e => { groesse = +e.target.value; });
+$("rHeilung").addEventListener("input", e => { heilung = +e.target.value; });
+$("bReset").addEventListener("click", zusammensetzen);
+$("bMehr").addEventListener("click", e => { const an = $("mehr").hidden; $("mehr").hidden = !an; e.currentTarget.setAttribute("aria-pressed", an); });
+$("bWechsel").addEventListener("click", async () => {
+  facing = facing === "user" ? "environment" : "user";
+  try { await kameraStarten(); toast(facing === "user" ? "Vorderkamera" : "Rückkamera"); }
+  catch (e) { facing = facing === "user" ? "environment" : "user"; try { await kameraStarten(); } catch (_) {} toast("Diese Kamera gibt es hier nicht"); }
+});
+$("bHand").addEventListener("click", () => handSchalten(!handAn));
+$("bGesicht").addEventListener("click", () => gesichtSchalten(!gesichtAn));
+$("bSpeichern").addEventListener("click", async () => {
+  zeichnen();
+  const blob = await new Promise(res => cv.toBlob(res, "image/png"));
+  if (!blob) { toast("Das Bild konnte nicht erzeugt werden"); return; }
+  const datei = new File([blob], "aufloesung.png", { type: "image/png" });
+  if (matchMedia("(pointer: coarse)").matches && navigator.canShare && navigator.canShare({ files: [datei] })) {
+    try { await navigator.share({ files: [datei] }); return; } catch (e) { if (e && e.name === "AbortError") return; }
+  }
+  const url = URL.createObjectURL(blob), a = document.createElement("a"); a.href = url; a.download = "aufloesung.png";
+  document.body.appendChild(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(url), 4000); toast("Gespeichert");
+});
+
+$("knopfKamera").addEventListener("click", async () => {
+  $("knopfKamera").disabled = true; sagen("Kamera wird gestartet.");
+  try { await kameraStarten(); } catch (e) { console.error(e); sagen("Kein Zugriff auf die Kamera. Du kannst ein Beispielgesicht oder ein eigenes Bild nehmen.", true); $("knopfKamera").disabled = false; return; }
+  los(); handSchalten(true);
+});
+$("knopfBeispiel").addEventListener("click", async () => {
+  try { await bildStarten("gesichter/gesicht-04.jpg"); los(); } catch (e) { console.error(e); sagen("Das Bild konnte nicht geladen werden.", true); }
+});
+$("datei").addEventListener("change", async e => {
+  const f = e.target.files && e.target.files[0]; if (!f) return;
+  const url = URL.createObjectURL(f);
+  try { await bildStarten(url); los(); } catch (err) { console.error(err); sagen("Diese Datei lässt sich nicht als Bild öffnen.", true); }
+});
+
+window.__au = {
+  starten: async () => { await bildStarten("gesichter/gesicht-04.jpg"); los(); },
+  zustand: () => { let g = 0, s = 0; for (let i = 0; i < N; i++) { if (sta[i * 6 + 4] > 0) { s++; if (Math.hypot(px[i] - hx[i], py[i] - hy[i]) > 8) g++; } } return { N, sichtbar: s, geloest: g, W, H, modus, zielAnzahl }; },
+  modus: m => { modus = m; }, heilung: h => { heilung = h; }, schritt, zusammensetzen,
+};
+aufbauen();
+</script>
+</body>
+</html>

@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
+<title>Datenpigment</title>
+<style>
+  :root { color-scheme: dark; --bg: #060712; --hint: rgba(255,255,255,.6); }
+  @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) { --bg: #060712; --hint: rgba(255,255,255,.6); } }
+  :root[data-theme="dark"] { --bg: #060712; --hint: rgba(255,255,255,.6); }
+  html, body { margin: 0; height: 100%; background: var(--bg); overflow: hidden; overscroll-behavior: none; }
+  canvas { display: block; touch-action: none; }
+  #hint {
+    position: fixed; left: 0; right: 0; bottom: 0; text-align: center;
+    padding: 0 24px calc(28px + env(safe-area-inset-bottom, 0px));
+    font: 300 17px/1.4 Georgia, "Times New Roman", serif; letter-spacing: .02em;
+    color: var(--hint); pointer-events: none; transition: opacity 2s ease;
+  }
+  #hint.weg { opacity: 0; }
+  #klang { position: fixed; top: max(12px, env(safe-area-inset-top)); right: max(12px, env(safe-area-inset-right)); z-index: 9999; font: 400 14px/1 Georgia, serif;
+           color: #f1f0f7; background: rgba(9,10,28,.55); border: 1px solid rgba(255,255,255,.22); border-radius: 999px; padding: 9px 14px;
+           -webkit-backdrop-filter: blur(6px); backdrop-filter: blur(6px); touch-action: manipulation; cursor: pointer; }
+  #klang:focus-visible { outline: 2px solid #8fd3ff; outline-offset: 3px; }
+</style>
+<style>.zurueck{position:fixed;top:max(12px,env(safe-area-inset-top));left:max(12px,env(safe-area-inset-left));z-index:9999;font:400 14px/1 Georgia,serif;color:#f1f0f7;background:rgba(9,10,28,.55);border:1px solid rgba(255,255,255,.22);border-radius:999px;padding:9px 14px;text-decoration:none;-webkit-backdrop-filter:blur(6px);backdrop-filter:blur(6px);touch-action:manipulation}.zurueck:focus-visible{outline:2px solid #8fd3ff;outline-offset:3px}</style>
+</head>
+<body>
+<a class="zurueck" href="index.html" aria-label="Zurück zur Übersicht">← Übersicht</a>
+
+<button id="klang" type="button" aria-label="Klang wechseln">Klang Mystisch</button>
+<div id="hint">Fahre mit dem Finger durch die Strömung</div>
+<script src="p5.min.js"></script>
+<script>
+const FARBEN = [
+  'rgba(60,90,255,0.42)',   // tiefes Blau
+  'rgba(46,230,255,0.40)',  // Cyan
+  'rgba(125,255,208,0.36)', // Mint
+  'rgba(255,199,102,0.40)', // Gold
+  'rgba(255,79,163,0.42)',  // Magenta
+  'rgba(154,92,255,0.42)'   // Violett
+];
+const HG = 'rgba(6,7,18,0.07)';
+
+let N, X, Y, PX, PY, VX, VY, LEBEN, B, ZAEHLER, LISTEN;
+let zeit = 0;
+let vorher = {};
+let letzteEingabe = 0;
+
+function setup() {
+  pixelDensity(1.5);
+  createCanvas(windowWidth, windowHeight);
+  starten();
+}
+
+function starten() {
+  N = Math.min(5500, Math.floor(width * height / 60));
+  X = new Float32Array(N); Y = new Float32Array(N);
+  PX = new Float32Array(N); PY = new Float32Array(N);
+  VX = new Float32Array(N); VY = new Float32Array(N);
+  LEBEN = new Float32Array(N);
+  B = new Uint8Array(N);
+  ZAEHLER = new Int32Array(FARBEN.length);
+  LISTEN = FARBEN.map(() => new Int32Array(N));
+  for (let i = 0; i < N; i++) neu(i);
+  drawingContext.fillStyle = '#060712';
+  drawingContext.fillRect(0, 0, width, height);
+}
+
+function neu(i) {
+  X[i] = PX[i] = random(width);
+  Y[i] = PY[i] = random(height);
+  VX[i] = VY[i] = 0;
+  LEBEN[i] = random(180, 650);
+}
+
+function windowResized() {
+  resizeCanvas(windowWidth, windowHeight);
+  starten();
+}
+
+function eingaben() {
+  const liste = [];
+  if (touches.length > 0) {
+    const jetzt = {};
+    for (const t of touches) {
+      const alt = vorher[t.id] || { x: t.x, y: t.y };
+      liste.push({ x: t.x, y: t.y, dx: t.x - alt.x, dy: t.y - alt.y });
+      jetzt[t.id] = { x: t.x, y: t.y };
+    }
+    vorher = jetzt;
+  } else if (mouseIsPressed) {
+    const alt = vorher.maus || { x: mouseX, y: mouseY };
+    liste.push({ x: mouseX, y: mouseY, dx: mouseX - alt.x, dy: mouseY - alt.y });
+    vorher = { maus: { x: mouseX, y: mouseY } };
+  } else {
+    vorher = {};
+  }
+  return liste;
+}
+
+function draw() {
+  zeit += 0.0022;
+  const ctx = drawingContext;
+
+  // Spuren verblassen lassen
+  ctx.globalCompositeOperation = 'source-over';
+  ctx.fillStyle = HG;
+  ctx.fillRect(0, 0, width, height);
+
+  const fing = eingaben();
+  klangBewegung(fing);
+  if (fing.length) {
+    letzteEingabe = millis();
+    document.getElementById('hint').classList.add('weg');
+  }
+  const R = Math.min(width, height) * 0.3;
+  const R2 = R * R;
+
+  ZAEHLER.fill(0);
+  const s = 0.0016;
+
+  for (let i = 0; i < N; i++) {
+    const x = X[i], y = Y[i];
+
+    // Strömungsfeld, langsam atmend
+    const w = noise(x * s, y * s, zeit) * TWO_PI * 2.4;
+    VX[i] += (Math.cos(w) * 1.5 - VX[i]) * 0.07;
+    VY[i] += (Math.sin(w) * 1.5 - VY[i]) * 0.07;
+
+    // Finger wirken wie eine Hand in Flüssigkeit
+    for (const f of fing) {
+      const ax = x - f.x, ay = y - f.y;
+      const d2 = ax * ax + ay * ay;
+      if (d2 < R2) {
+        const d = Math.sqrt(d2) + 1;
+        const k = 1 - d / R;
+        const q = k * k;
+        VX[i] += f.dx * q * 0.22 + (-ay / d) * q * 0.9;
+        VY[i] += f.dy * q * 0.22 + (ax / d) * q * 0.9;
+      }
+    }
+
+    PX[i] = x; PY[i] = y;
+    X[i] = x + VX[i];
+    Y[i] = y + VY[i];
+    LEBEN[i] -= 1;
+
+    if (LEBEN[i] <= 0 || X[i] < -20 || X[i] > width + 20 || Y[i] < -20 || Y[i] > height + 20) {
+      neu(i);
+      continue;
+    }
+
+    // Farbe folgt der Bewegungsrichtung
+    const ang = Math.atan2(VY[i], VX[i]) / TWO_PI + 0.5;
+    const b = Math.min(FARBEN.length - 1, Math.floor(ang * FARBEN.length));
+    LISTEN[b][ZAEHLER[b]++] = i;
+  }
+
+  // Alle Linien einer Farbe in einem Zug zeichnen
+  ctx.globalCompositeOperation = 'lighter';
+  ctx.lineWidth = 1.1;
+  ctx.lineCap = 'round';
+  for (let b = 0; b < FARBEN.length; b++) {
+    ctx.strokeStyle = FARBEN[b];
+    ctx.beginPath();
+    const L = LISTEN[b];
+    for (let k = 0; k < ZAEHLER[b]; k++) {
+      const i = L[k];
+      ctx.moveTo(PX[i], PY[i]);
+      ctx.lineTo(X[i], Y[i]);
+    }
+    ctx.stroke();
+  }
+  ctx.globalCompositeOperation = 'source-over';
+}
+
+function touchStarted() { return false; }
+function touchMoved() { return false; }
+function touchEnded() { return false; }
+</script>
+<script>
+// Klang beim Wischen. Alles wird im Browser erzeugt. Je schneller die Bewegung, desto öfter wird angeschlagen, wie bei einem Glockenspiel.
+const KLAENGE = ['Aus', 'Mystisch', 'Fröhlich', 'Sanft'];
+let klang = 1, ac = null, bus = null, master = null, drohnen = [], wegStrecke = 0, tAnschlag = 0;
+const hz = (basis, halb) => basis * Math.pow(2, halb / 12);
+const D_MOLL = [0, 3, 5, 7, 10, 12, 15, 17, 19], C_DUR = [0, 2, 4, 7, 9, 12, 14, 16, 19];
+function audioBereit() {
+  if (ac) { if (ac.state === 'suspended') ac.resume(); return true; }
+  const AC = window.AudioContext || window.webkitAudioContext; if (!AC) return false;
+  ac = new AC();
+  const n = Math.floor(ac.sampleRate * 3.8), ib = ac.createBuffer(2, n, ac.sampleRate);
+  for (let c = 0; c < 2; c++) { const d = ib.getChannelData(c); for (let i = 0; i < n; i++) d[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / n, 3); }
+  master = ac.createGain(); master.gain.value = 1;
+  const filt = ac.createBiquadFilter(); filt.type = 'lowpass'; filt.frequency.value = 5200; filt.Q.value = .4;
+  const comp = ac.createDynamicsCompressor();
+  bus = ac.createGain();
+  const hall = ac.createConvolver(); hall.buffer = ib;
+  const nass = ac.createGain(); nass.gain.value = .7;
+  const trocken = ac.createGain(); trocken.gain.value = .75;
+  bus.connect(trocken); bus.connect(hall); hall.connect(nass);
+  trocken.connect(filt); nass.connect(filt); filt.connect(master); master.connect(comp); comp.connect(ac.destination);
+  return true;
+}
+function ton(f, t, vol, dauer, einsatz) {
+  const o = ac.createOscillator(), g = ac.createGain();
+  o.type = 'sine'; o.frequency.value = f;
+  g.gain.setValueAtTime(0, t); g.gain.linearRampToValueAtTime(vol, t + einsatz); g.gain.exponentialRampToValueAtTime(.0001, t + einsatz + dauer);
+  o.connect(g); g.connect(bus); o.start(t); o.stop(t + einsatz + dauer + .1);
+}
+function drohneStoppen() {
+  const alt = drohnen; drohnen = [];
+  alt.forEach(d => { try { d.g.gain.setTargetAtTime(0, ac.currentTime, .3); setTimeout(() => { try { d.o.stop(); d.l.stop(); } catch (e) {} }, 1500); } catch (e) {} });
+}
+function klangWaehlen(k) {
+  klang = k;
+  const b = document.getElementById('klang'); b.textContent = 'Klang ' + KLAENGE[k];
+  if (ac) drohneStoppen();
+  if (k === 1 && audioBereit()) {          // Mystisch, leiser tiefer Grundton als Untergrund
+    for (const [halb, vol] of [[-12, .06], [-5, .04], [0, .03]]) {
+      const o = ac.createOscillator(), l = ac.createOscillator(), lg = ac.createGain(), g = ac.createGain();
+      o.type = 'triangle'; o.frequency.value = hz(146.83, halb); l.frequency.value = .05 + Math.random() * .08; lg.gain.value = vol * .5;
+      g.gain.value = 0; g.gain.setTargetAtTime(vol, ac.currentTime, .8);
+      l.connect(lg); lg.connect(g.gain); o.connect(g); g.connect(bus); o.start(); l.start(); drohnen.push({ o, l, g });
+    }
+  }
+}
+function anschlagen(y, tempo) {
+  if (!klang || !ac || ac.state !== 'running') return;
+  const t = ac.currentTime + .01, hoehe = Math.max(0, Math.min(1, 1 - y / innerHeight)), vol = .09 + .16 * Math.min(1, tempo);
+  if (klang === 1) {
+    const f = hz(146.83, D_MOLL[Math.min(8, Math.floor(hoehe * 8.9))] + 12);
+    [[1, 1, 4], [2.76, .45, 2.4], [5.4, .18, 1.2]].forEach(([r, v, d]) => ton(f * r, t, vol * v * 1.4, d, .008));
+  } else if (klang === 2) {
+    const f = hz(523.25, C_DUR[Math.min(8, Math.floor(hoehe * 8.9))]);
+    ton(f, t, vol * 1.2, .9, .002); ton(f * 4.01, t, vol * .35, .25, .002); ton(f * 2, t, vol * .3, .5, .002);
+  } else {
+    const f = hz(392, C_DUR[Math.min(8, Math.floor(hoehe * 8.9))]);
+    ton(f, t, vol * .9, 2.6, .02); ton(f * 3, t, vol * .12, 1, .02);
+  }
+}
+function klangBewegung(fing) {
+  if (!fing.length) return;
+  let v = 0, y = innerHeight / 2;
+  for (const f of fing) { const s = Math.hypot(f.dx, f.dy); if (s >= v) { v = s; y = f.y; } }
+  const pv = v * 60;                                   // Pixel pro Sekunde
+  if (pv < 30) return;
+  wegStrecke += v;
+  const schwelle = 70 - 40 * Math.min(1, pv / 1400), jetzt = performance.now();
+  if (wegStrecke > schwelle && jetzt - tAnschlag > 55) {
+    wegStrecke = 0; tAnschlag = jetzt;
+    anschlagen(y + (Math.random() - .5) * innerHeight * .25, pv / 1200);
+  }
+}
+// Browser erlauben Ton erst nach einer Berührung
+addEventListener('pointerdown', () => { if (klang && !ac) { audioBereit(); klangWaehlen(klang); } else if (ac && ac.state === 'suspended') ac.resume(); }, { passive: true });
+document.getElementById('klang').addEventListener('click', () => { audioBereit(); klangWaehlen((klang + 1) % 4); });
+document.addEventListener('visibilitychange', () => { if (!ac) return; if (document.hidden) ac.suspend(); else if (klang) ac.resume(); });
+window.__klang = () => ({ klang, zustand: ac && ac.state });
+</script>
+</body>
+</html>

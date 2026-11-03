@@ -446,7 +446,7 @@ function audioBereit() {
   const AC = window.AudioContext || window.webkitAudioContext; if (!AC) return false;
   ac = new AC();
   master = ac.createGain(); master.gain.value = 0;
-  filt = ac.createBiquadFilter(); filt.type = "lowpass"; filt.frequency.value = 1200; filt.Q.value = .4;
+  filt = ac.createBiquadFilter(); filt.type = "lowpass"; filt.frequency.value = 1800; filt.Q.value = .4;
   const comp = ac.createDynamicsCompressor();
   bus = ac.createGain(); const hall = ac.createConvolver(); hall.buffer = impuls(3.8); nass = ac.createGain(); nass.gain.value = .5;
   const trocken = ac.createGain(); trocken.gain.value = .75;
@@ -482,10 +482,10 @@ function klangStarten(art) {
   if (!art || !audioBereit()) return;
   modusBus = ac.createGain(); modusBus.gain.value = 0; modusBus.connect(bus);
   modusBus.gain.setTargetAtTime(1, ac.currentTime, .8);
-  master.gain.setTargetAtTime(.5, ac.currentTime, .6);
-  schritte = 0; akkord = 0; naechste = ac.currentTime + .15;
+  master.gain.setTargetAtTime(1, ac.currentTime, .6);
+  schritte = 0; akkord = 0; naechste = ac.currentTime + .05;
   if (art === 1) {          // Mystisch, tiefer Grundton, Klangschalen, Atem
-    for (const [halb, vol] of [[-24, .09], [-17, .06], [-12, .05]]) {
+    for (const [halb, vol] of [[-12, .16], [-5, .10], [0, .07]]) {
       const o = ac.createOscillator(), l = ac.createOscillator(), lg = ac.createGain(), g = ac.createGain();
       o.type = "triangle"; o.frequency.value = hz(146.83, halb); l.frequency.value = .05 + Math.random() * .08; lg.gain.value = vol * .5;
       g.gain.value = vol; l.connect(lg); lg.connect(g.gain); o.connect(g); g.connect(modusBus); o.start(); l.start(); laufendeQuellen.push(o, l);
@@ -497,8 +497,8 @@ function klangStarten(art) {
     while (naechste < ac.currentTime + .4) {
       const t = naechste;
       if (art === 1) {
-        schale(hz(146.83, D_MOLL[(Math.random() * D_MOLL.length) | 0]), t, .16);
-        if (Math.random() < .35) schale(hz(146.83, D_MOLL[(Math.random() * 5) | 0]), t + 1.4 + Math.random(), .1);
+        schale(hz(146.83, D_MOLL[(Math.random() * D_MOLL.length) | 0] + 12), t, .3);
+        if (Math.random() < .35) schale(hz(146.83, D_MOLL[(Math.random() * 5) | 0] + 12), t + 1.4 + Math.random(), .2);
         if (Math.random() < .4) rauschen(t + 1, 7 + Math.random() * 4, .035, 400 + Math.random() * 500);
         naechste += 5 + Math.random() * 6;
       } else if (art === 2) {
@@ -539,7 +539,7 @@ function klangWaehlen(k, melden) {
 function klangAnpassen() {
   if (!ac || !filt || !modusBus) return;
   const a = Math.min(1, freiAnteil * 2.2), t = ac.currentTime;
-  filt.frequency.setTargetAtTime(700 + 6500 * Math.pow(a, .8), t, .25);
+  filt.frequency.setTargetAtTime(1600 + 6000 * Math.pow(a, .8), t, .25);
   nass.gain.setTargetAtTime(.4 + .7 * a, t, .4);
 }
 document.addEventListener("visibilitychange", () => { if (!ac) return; if (document.hidden) ac.suspend(); else if (klang) ac.resume(); });

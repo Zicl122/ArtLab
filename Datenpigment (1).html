@@ -1,0 +1,287 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
+<title>Datenpigment</title>
+<style>
+  :root { color-scheme: dark; --bg: #060712; --hint: rgba(255,255,255,.6); }
+  @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) { --bg: #060712; --hint: rgba(255,255,255,.6); } }
+  :root[data-theme="dark"] { --bg: #060712; --hint: rgba(255,255,255,.6); }
+  html, body { margin: 0; height: 100%; background: var(--bg); overflow: hidden; overscroll-behavior: none; }
+  canvas { display: block; touch-action: none; }
+  #hint {
+    position: fixed; left: 0; right: 0; bottom: 0; text-align: center;
+    padding: 0 24px calc(28px + env(safe-area-inset-bottom, 0px));
+    font: 300 17px/1.4 Georgia, "Times New Roman", serif; letter-spacing: .02em;
+    color: var(--hint); pointer-events: none; transition: opacity 2s ease;
+  }
+  #hint.weg { opacity: 0; }
+</style>
+<style>.zurueck{position:fixed;top:max(12px,env(safe-area-inset-top));left:max(12px,env(safe-area-inset-left));z-index:9999;font:400 14px/1 Georgia,serif;color:#f1f0f7;background:rgba(9,10,28,.55);border:1px solid rgba(255,255,255,.22);border-radius:999px;padding:9px 14px;text-decoration:none;-webkit-backdrop-filter:blur(6px);backdrop-filter:blur(6px);touch-action:manipulation}.zurueck:focus-visible{outline:2px solid #8fd3ff;outline-offset:3px}</style>
+</head>
+<body>
+<a class="zurueck" href="index.html" aria-label="Zurück zur Übersicht">← Übersicht</a>
+
+<div id="hint">Fahre mit dem Finger durch die Strömung</div>
+<script src="p5.min.js"></script>
+<script>
+const FARBEN = [
+  'rgba(60,90,255,0.42)',   // tiefes Blau
+  'rgba(46,230,255,0.40)',  // Cyan
+  'rgba(125,255,208,0.36)', // Mint
+  'rgba(255,199,102,0.40)', // Gold
+  'rgba(255,79,163,0.42)',  // Magenta
+  'rgba(154,92,255,0.42)'   // Violett
+];
+const HG = 'rgba(6,7,18,0.07)';
+
+let N, X, Y, PX, PY, VX, VY, LEBEN, B, ZAEHLER, LISTEN;
+let zeit = 0;
+let vorher = {};
+let letzteEingabe = 0;
+
+function setup() {
+  pixelDensity(1.5);
+  createCanvas(windowWidth, windowHeight);
+  starten();
+}
+
+function starten() {
+  N = Math.min(5500, Math.floor(width * height / 60));
+  X = new Float32Array(N); Y = new Float32Array(N);
+  PX = new Float32Array(N); PY = new Float32Array(N);
+  VX = new Float32Array(N); VY = new Float32Array(N);
+  LEBEN = new Float32Array(N);
+  B = new Uint8Array(N);
+  ZAEHLER = new Int32Array(FARBEN.length);
+  LISTEN = FARBEN.map(() => new Int32Array(N));
+  for (let i = 0; i < N; i++) neu(i);
+  drawingContext.fillStyle = '#060712';
+  drawingContext.fillRect(0, 0, width, height);
+}
+
+function neu(i) {
+  X[i] = PX[i] = random(width);
+  Y[i] = PY[i] = random(height);
+  VX[i] = VY[i] = 0;
+  LEBEN[i] = random(180, 650);
+}
+
+function windowResized() {
+  resizeCanvas(windowWidth, windowHeight);
+  starten();
+}
+
+function eingaben() {
+  const liste = [];
+  if (touches.length > 0) {
+    const jetzt = {};
+    for (const t of touches) {
+      const alt = vorher[t.id] || { x: t.x, y: t.y };
+      liste.push({ x: t.x, y: t.y, dx: t.x - alt.x, dy: t.y - alt.y });
+      jetzt[t.id] = { x: t.x, y: t.y };
+    }
+    vorher = jetzt;
+  } else if (mouseIsPressed) {
+    const alt = vorher.maus || { x: mouseX, y: mouseY };
+    liste.push({ x: mouseX, y: mouseY, dx: mouseX - alt.x, dy: mouseY - alt.y });
+    vorher = { maus: { x: mouseX, y: mouseY } };
+  } else {
+    vorher = {};
+  }
+  return liste;
+}
+
+function draw() {
+  zeit += 0.0022;
+  const ctx = drawingContext;
+
+  // Spuren verblassen lassen
+  ctx.globalCompositeOperation = 'source-over';
+  ctx.fillStyle = HG;
+  ctx.fillRect(0, 0, width, height);
+
+  const fing = eingaben();
+  try { klangBewegung(fing); } catch (e) {}   // ein Tonfehler darf die Zeichnung nie stoppen
+  if (fing.length) {
+    letzteEingabe = millis();
+    document.getElementById('hint').classList.add('weg');
+  }
+  const R = Math.min(width, height) * 0.3;
+  const R2 = R * R;
+
+  ZAEHLER.fill(0);
+  const s = 0.0016;
+
+  for (let i = 0; i < N; i++) {
+    const x = X[i], y = Y[i];
+
+    // Strömungsfeld, langsam atmend
+    const w = noise(x * s, y * s, zeit) * TWO_PI * 2.4;
+    VX[i] += (Math.cos(w) * 1.5 - VX[i]) * 0.07;
+    VY[i] += (Math.sin(w) * 1.5 - VY[i]) * 0.07;
+
+    // Finger wirken wie eine Hand in Flüssigkeit
+    for (const f of fing) {
+      const ax = x - f.x, ay = y - f.y;
+      const d2 = ax * ax + ay * ay;
+      if (d2 < R2) {
+        const d = Math.sqrt(d2) + 1;
+        const k = 1 - d / R;
+        const q = k * k;
+        VX[i] += f.dx * q * 0.22 + (-ay / d) * q * 0.9;
+        VY[i] += f.dy * q * 0.22 + (ax / d) * q * 0.9;
+      }
+    }
+
+    PX[i] = x; PY[i] = y;
+    X[i] = x + VX[i];
+    Y[i] = y + VY[i];
+    LEBEN[i] -= 1;
+
+    if (LEBEN[i] <= 0 || X[i] < -20 || X[i] > width + 20 || Y[i] < -20 || Y[i] > height + 20) {
+      neu(i);
+      continue;
+    }
+
+    // Farbe folgt der Bewegungsrichtung
+    const ang = Math.atan2(VY[i], VX[i]) / TWO_PI + 0.5;
+    const b = Math.min(FARBEN.length - 1, Math.floor(ang * FARBEN.length));
+    LISTEN[b][ZAEHLER[b]++] = i;
+  }
+
+  // Alle Linien einer Farbe in einem Zug zeichnen
+  ctx.globalCompositeOperation = 'lighter';
+  ctx.lineWidth = 1.1;
+  ctx.lineCap = 'round';
+  for (let b = 0; b < FARBEN.length; b++) {
+    ctx.strokeStyle = FARBEN[b];
+    ctx.beginPath();
+    const L = LISTEN[b];
+    for (let k = 0; k < ZAEHLER[b]; k++) {
+      const i = L[k];
+      ctx.moveTo(PX[i], PY[i]);
+      ctx.lineTo(X[i], Y[i]);
+    }
+    ctx.stroke();
+  }
+  ctx.globalCompositeOperation = 'source-over';
+}
+
+function touchStarted() { return false; }
+function touchMoved() { return false; }
+function touchEnded() { return false; }
+</script>
+<script>
+// Klang beim Wischen, ein mystischer Klang aus Klangschalen. Alles wird im Browser erzeugt. Je schneller die Bewegung, desto öfter wird angeschlagen.
+let ac = null, bus = null, wegStrecke = 0, tAnschlag = 0, entsperrt = false, letztesEreignis = '';
+const hz = (basis, halb) => basis * Math.pow(2, halb / 12);
+const D_MOLL = [0, 3, 5, 7, 10, 12, 15, 17, 19];
+
+function audioBauen() {
+  const AC = window.AudioContext || window.webkitAudioContext; if (!AC) return null;
+  const k = new AC();
+  const n = Math.floor(k.sampleRate * 3.8), ib = k.createBuffer(2, n, k.sampleRate);
+  for (let c = 0; c < 2; c++) { const d = ib.getChannelData(c); for (let i = 0; i < n; i++) d[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / n, 3); }
+  const filt = k.createBiquadFilter(); filt.type = 'lowpass'; filt.frequency.value = 5200; filt.Q.value = .4;
+  const comp = k.createDynamicsCompressor();
+  const b = k.createGain();
+  const hall = k.createConvolver(); hall.buffer = ib;
+  const nass = k.createGain(); nass.gain.value = .7;
+  const trocken = k.createGain(); trocken.gain.value = .75;
+  b.connect(trocken); b.connect(hall); hall.connect(nass);
+  trocken.connect(filt); nass.connect(filt); filt.connect(comp); comp.connect(k.destination);
+  for (const [halb, vol] of [[-12, .06], [-5, .04], [0, .03]]) {      // leiser tiefer Grundton als Untergrund
+    const o = k.createOscillator(), l = k.createOscillator(), lg = k.createGain(), g = k.createGain();
+    o.type = 'triangle'; o.frequency.value = hz(146.83, halb); l.frequency.value = .05 + Math.random() * .08; lg.gain.value = vol * .5;
+    g.gain.value = 0; g.gain.setTargetAtTime(vol, k.currentTime, .8);
+    l.connect(lg); lg.connect(g.gain); o.connect(g); g.connect(b); o.start(); l.start();
+  }
+  ac = k; bus = b;   // erst setzen, wenn alles fertig gebaut ist
+  return k;
+}
+
+function audioBereit() {
+  // Auf dem iPhone soll der Ton auch bei aktivem Stummschalter laufen
+  try { if (navigator.audioSession) navigator.audioSession.type = 'playback'; } catch (e) {}
+  try {
+    if (!ac) audioBauen();
+    if (!ac) return false;
+    if (ac.state !== 'running') { const p = ac.resume(); if (p && p.catch) p.catch(() => {}); }
+    if (!entsperrt && ac.state === 'running') {
+      // winziger stiller Ton, so entsperrt iOS die Ausgabe sicher
+      const s = ac.createBufferSource(); s.buffer = ac.createBuffer(1, 1, 22050); s.connect(ac.destination); s.start(0);
+      entsperrt = true;
+    }
+  } catch (e) { return false; }
+  return true;
+}
+
+function ton(f, t, vol, dauer, einsatz) {
+  const o = ac.createOscillator(), g = ac.createGain();
+  o.type = 'sine'; o.frequency.value = f;
+  g.gain.setValueAtTime(0, t); g.gain.linearRampToValueAtTime(vol, t + einsatz); g.gain.exponentialRampToValueAtTime(.0001, t + einsatz + dauer);
+  o.connect(g); g.connect(bus); o.start(t); o.stop(t + einsatz + dauer + .1);
+}
+function anschlagen(y, tempo) {
+  if (!ac || !bus) return;
+  if (ac.state !== 'running') { ac.resume(); return; }
+  const t = ac.currentTime + .01, hoehe = Math.max(0, Math.min(1, 1 - y / innerHeight)), vol = .12 + .2 * Math.min(1, tempo);
+  const f = hz(146.83, D_MOLL[Math.min(8, Math.floor(hoehe * 8.9))] + 12);
+  [[1, 1, 4], [2.76, .45, 2.4], [5.4, .18, 1.2]].forEach(([r, v, d]) => ton(f * r, t, vol * v * 1.4, d, .008));
+}
+function klangBewegung(fing) {
+  if (!fing.length) return;
+  let v = 0, y = innerHeight / 2;
+  for (const f of fing) { const s = Math.hypot(f.dx, f.dy); if (s >= v) { v = s; y = f.y; } }
+  const pv = v * 60;                                   // Pixel pro Sekunde
+  if (pv < 30) return;
+  wegStrecke += v;
+  const schwelle = 70 - 40 * Math.min(1, pv / 1400), jetzt = performance.now();
+  if (wegStrecke > schwelle && jetzt - tAnschlag > 55) {
+    wegStrecke = 0; tAnschlag = jetzt;
+    anschlagen(y + (Math.random() - .5) * innerHeight * .25, pv / 1200);
+  }
+}
+// Browser erlauben Ton erst nach einer Berührung, auf dem iPhone zählt dafür erst das Loslassen.
+// Die Lauscher hängen in der Capture-Phase, damit p5 sie mit seinen eigenen Touch-Handlern nicht ausbremst.
+['pointerdown', 'pointerup', 'touchstart', 'touchend', 'mousedown', 'mouseup', 'click', 'keydown'].forEach(t => {
+  window.addEventListener(t, () => { letztesEreignis = t; audioBereit(); }, { capture: true, passive: true });
+});
+document.addEventListener('visibilitychange', () => { if (!ac) return; if (document.hidden) ac.suspend(); else ac.resume(); });
+window.__klang = () => ({ zustand: ac && ac.state });
+
+// Fehlersuche am Handy, einfach #debug an die Adresse hängen
+if (location.hash === '#debug') {
+  const d = document.createElement('div');
+  d.style.cssText = 'position:fixed;left:12px;bottom:70px;z-index:9999;font:12px/1.3 monospace;color:#8fd3ff;background:rgba(0,0,0,.6);padding:6px 8px;border-radius:6px;pointer-events:none';
+  document.body.appendChild(d);
+  setInterval(() => { d.textContent = 'audio ' + (ac ? ac.state : 'nicht gestartet') + ' | ' + letztesEreignis + ' | session ' + (navigator.audioSession ? navigator.audioSession.type : 'n/a'); }, 250);
+}
+</script>
+<script>
+// Der Zurück-Link reagiert auf dem Handy auch dann, wenn die Seite Berührungen sonst abfängt.
+// Statt auf das Element zu vertrauen, wird die Berührungsposition selbst gegen das Rechteck des Links geprüft.
+(function () {
+  var a = document.querySelector('.zurueck'); if (!a) return;
+  var ziel = a.getAttribute('href'), unterwegs = false, startetImLink = false;
+  function gehe() { if (unterwegs) return; unterwegs = true; location.href = ziel; }
+  function drin(x, y) {
+    var r = a.getBoundingClientRect(), p = 14;
+    return x >= r.left - p && x <= r.right + p && y >= r.top - p && y <= r.bottom + p;
+  }
+  window.addEventListener('touchstart', function (e) {
+    var t = e.touches[0]; startetImLink = !!t && drin(t.clientX, t.clientY);
+  }, { capture: true, passive: true });
+  window.addEventListener('touchend', function (e) {
+    if (!startetImLink) return;
+    startetImLink = false;
+    var t = e.changedTouches[0];
+    if (t && drin(t.clientX, t.clientY)) { e.preventDefault(); gehe(); }
+  }, { capture: true, passive: false });
+  a.addEventListener('click', function (e) { e.preventDefault(); gehe(); });
+})();
+</script>
+</body>
+</html>

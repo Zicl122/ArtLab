@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Vibe Coding im Kunstunterricht</title>
+<title>KI im Kunstunterricht</title>
 <style>
   :root {
     color-scheme: dark;
@@ -57,12 +57,12 @@
 <body>
 <main>
   <header>
-    <h1>Vibe Coding im Kunstunterricht</h1>
-    <p>Kleine Experimente, die ich mit KI und ohne Programmierkenntnisse gebaut habe, um auszuprobieren, was davon im Kunstunterricht taugt. Scanne den QR-Code mit dem Handy oder öffne die Seiten direkt. Eine Einführung findest du unter <a href="ueber-dieses-projekt.html">Worum es hier geht</a>.</p>
+    <h1>KI im Kunstunterricht</h1>
+    <p>Bilder, die auf Berührung reagieren. Scanne den QR-Code mit dem Handy und streiche mit dem Finger über das Bild. Eine Einführung findest du unter <a href="ueber-dieses-projekt.html">Worum es hier geht</a>.</p>
   </header>
   <nav class="reiter" id="reiter" aria-label="Bereiche"></nav>
   <section class="raster" id="raster" aria-label="Projekte"></section>
-  <p style="margin: 56px 0 0; font-size: .85rem; color: var(--muted);"><a href="impressum.html" style="color: inherit;">Impressum</a> · <a href="datenschutz.html" style="color: inherit;">Datenschutz</a></p>
+  <footer style="margin-top:48px;font-size:.9rem;color:var(--muted)"><a href="impressum.html" style="color:inherit">Impressum</a> · <a href="datenschutz.html" style="color:inherit">Datenschutz</a></footer>
 </main>
 
 <script src="qrcode.js"></script>
@@ -174,14 +174,6 @@ const PROJEKTE = [
     alt: "Holbeins Gemälde Die Gesandten in goldenem Rahmen vor einer dunkelroten Galeriewand"
   },
   {
-    titel: "Art Director",
-    text: "Du bekommst einen Auftrag und gestaltest ein Plakat auf weißem Blatt, nur mit Worten. Ein KI-Grafiker setzt deine Anweisungen um. Mit Bild speichern.",
-    seite: "art-director.html",
-    bereiche: "produktion,reflexion",
-    bild: "vorschau/art-director.svg",
-    alt: "Ein Plakat mit dunkelblauem Grund, rotem Kreis und der Überschrift Jazz, daneben drei Zeilen Anweisungen"
-  },
-  {
     titel: "Auflösung",
     text: "Dein Live-Bild besteht aus tausenden Farbtupfern. Mit Finger, Maus oder Hand tragen sie sich ab, verlaufen, tropfen oder zerfallen und setzen sich wieder zusammen.",
     seite: "aufloesung.html",
@@ -207,7 +199,7 @@ for (const p of PROJEKTE) {
   k.className = "kachel";
   k.dataset.bereiche = p.bereiche;
   k.innerHTML = `
-    <a class="bild" href="${p.seite}" aria-label="${p.titel} öffnen"><img src="${p.bild}" alt="${p.alt}"></a>
+    <a class="bild" href="${p.seite}" aria-label="${p.titel} öffnen"><img src="${p.bild}" alt="${p.alt}" loading="lazy"></a>
     <div class="unten">
       <div class="text">
         <h2><a href="${p.seite}">${p.titel}</a></h2>

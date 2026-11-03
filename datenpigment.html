@@ -17,12 +17,22 @@
     color: var(--hint); pointer-events: none; transition: opacity 2s ease;
   }
   #hint.weg { opacity: 0; }
+  #tonKnopf {
+    position: fixed; left: 50%; transform: translateX(-50%); z-index: 9998;
+    bottom: calc(84px + env(safe-area-inset-bottom, 0px));
+    font: 400 16px/1 Georgia, "Times New Roman", serif; letter-spacing: .02em; color: #f1f0f7;
+    background: rgba(9,10,28,.55); border: 1px solid rgba(255,255,255,.3); border-radius: 999px;
+    padding: 13px 22px; -webkit-backdrop-filter: blur(6px); backdrop-filter: blur(6px);
+    touch-action: manipulation; -webkit-tap-highlight-color: transparent; transition: opacity .8s ease;
+  }
+  #tonKnopf.weg { opacity: 0; pointer-events: none; }
 </style>
 <style>.zurueck{position:fixed;top:max(12px,env(safe-area-inset-top));left:max(12px,env(safe-area-inset-left));z-index:9999;font:400 14px/1 Georgia,serif;color:#f1f0f7;background:rgba(9,10,28,.55);border:1px solid rgba(255,255,255,.22);border-radius:999px;padding:9px 14px;text-decoration:none;-webkit-backdrop-filter:blur(6px);backdrop-filter:blur(6px);touch-action:manipulation}.zurueck:focus-visible{outline:2px solid #8fd3ff;outline-offset:3px}</style>
 </head>
 <body>
 <a class="zurueck" href="index.html" aria-label="Zurück zur Übersicht">← Übersicht</a>
 
+<button id="tonKnopf" type="button">Ton einschalten</button>
 <div id="hint">Fahre mit dem Finger durch die Strömung</div>
 <script src="p5.min.js"></script>
 <script>
@@ -169,7 +179,9 @@ function draw() {
   ctx.globalCompositeOperation = 'source-over';
 }
 
-function touchMoved() { return false; }   // nur das Wischen sperren, Start und Ende bleiben frei, damit iOS den Ton freigibt
+function touchStarted() { return false; }
+function touchMoved() { return false; }
+function touchEnded() { return false; }
 </script>
 <script>
 // Klang beim Wischen, ein mystischer Klang aus Klangschalen. Alles wird im Browser erzeugt. Je schneller die Bewegung, desto öfter wird angeschlagen.
@@ -207,12 +219,10 @@ function audioBereit() {
     if (!ac) audioBauen();
     if (!ac) return false;
     if (ac.state !== 'running') { const p = ac.resume(); if (p && p.catch) p.catch(() => {}); }
-    if (!entsperrt && ac.state !== 'running') { ac.resume().then(() => { if (ac.state === 'running') audioBereit(); }).catch(() => {}); }
     if (!entsperrt && ac.state === 'running') {
       // winziger stiller Ton, so entsperrt iOS die Ausgabe sicher
       const s = ac.createBufferSource(); s.buffer = ac.createBuffer(1, 1, 22050); s.connect(ac.destination); s.start(0);
       entsperrt = true;
-      try { ton(hz(146.83, 12 + 12), ac.currentTime + .02, .05, 2.5, .01); } catch (e) {}   // kurzer leiser Klang als Zeichen, dass der Ton läuft
     }
   } catch (e) { return false; }
   return true;
@@ -246,10 +256,24 @@ function klangBewegung(fing) {
 }
 // Browser erlauben Ton erst nach einer Berührung, auf dem iPhone zählt dafür erst das Loslassen.
 // Die Lauscher hängen in der Capture-Phase, damit p5 sie mit seinen eigenen Touch-Handlern nicht ausbremst.
-['pointerup', 'touchend', 'mouseup', 'click', 'keydown'].forEach(t => {
+['pointerdown', 'pointerup', 'touchstart', 'touchend', 'mousedown', 'mouseup', 'click', 'keydown'].forEach(t => {
   window.addEventListener(t, () => { letztesEreignis = t; audioBereit(); }, { capture: true, passive: true });
 });
 document.addEventListener('visibilitychange', () => { if (!ac) return; if (document.hidden) ac.suspend(); else ac.resume(); });
+
+// Sichtbarer Knopf, denn auf dem iPhone gibt erst ein echtes Tippen den Ton frei, ein Wischen reicht nicht
+(function () {
+  const k = document.getElementById('tonKnopf'); if (!k) return;
+  function an(e) {
+    if (e) { e.preventDefault(); e.stopPropagation(); }
+    audioBereit();
+    setTimeout(() => { try { if (ac && ac.state === 'running') anschlagen(innerHeight * .5, .5); } catch (x) {} }, 200);
+  }
+  ['touchstart', 'pointerdown', 'mousedown'].forEach(t => k.addEventListener(t, e => e.stopPropagation(), { passive: true }));
+  k.addEventListener('touchend', an, { passive: false });
+  k.addEventListener('click', an);
+  setInterval(() => { if (ac && ac.state === 'running') k.classList.add('weg'); else k.classList.remove('weg'); }, 300);
+})();
 window.__klang = () => ({ zustand: ac && ac.state });
 
 // Fehlersuche am Handy, einfach #debug an die Adresse hängen

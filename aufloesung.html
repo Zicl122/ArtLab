@@ -123,7 +123,7 @@ varying vec2 vUv; varying float vSh; varying float vAng; varying float vSt; vary
 void main(){
   vec2 p = aPos.xy;
   float sp = length(aPos.zw);
-  float st = 1. + min(max(sp - 40., 0.) / 220., 2.2);
+  float st = 1. + min(max(sp - 15., 0.) / 130., 3.2);
   vAng = atan(aPos.w, aPos.z); vSt = st;
   float sz = aS.x * uSize * uDpr;
   if (uMaskOn > .5) {
@@ -152,12 +152,17 @@ void main(){
   if (r > 1.) discard;
   vec3 col = texture2D(uTex, vUv).rgb;
   float rr = dot(c, c);
-  float kugel = 1. - r;
-  float glanz = smoothstep(.2, .05, length(c + vec2(.26, .34 + .1 * sin(vSeed)))) * .42;       // nasser Glanzpunkt
-  float rand = smoothstep(.45, .95, r) * .42;                                 // dunkler Rand, wie Kontaktschatten
-  col = col * (.78 + .3 * kugel * vSh) * (1. - rand) + glanz * (.6 + .4 * vSh);
-  col = mix(col, col * col * 1.25, .18);                                     // etwas satter
-  gl_FragColor = vec4(col, 1. - smoothstep(.9, 1., r));
+  // flacher, nasser Farbklecks. Keine Kugelschattierung, nur ein heller Rand oben links, ein feiner dunkler Rand unten rechts und ein schmaler Glanzstreifen
+  float rd = sqrt(r);
+  vec2 nd = normalize(c + vec2(.0001));
+  float licht = dot(nd, normalize(vec2(-.6, -.8)));
+  float kante = smoothstep(.62, .95, rd);
+  float hell = kante * max(licht, 0.) * .32;
+  float dunkel = kante * max(-licht, 0.) * .26;
+  float streif = smoothstep(.16, .0, abs(dot(c - vec2(-.2, -.25), normalize(vec2(.8, -.6))))) * smoothstep(.55, .1, length(c - vec2(-.2, -.25))) * .30;
+  col = col * (.94 + .1 * vSh) * (1. - dunkel) + hell + streif;
+  col = mix(col, col * col * 1.25, .15);
+  gl_FragColor = vec4(col, 1. - smoothstep(.93, 1., r));
 }`;
 let prog, loc = {}, tex, bufDyn, bufSta;
 if (gl) {
@@ -182,7 +187,7 @@ if (gl) {
 // ---------- Größe und Teilchen ----------
 let W = 0, H = 0, DPR = 1, N = 0, spacing = 10;
 let hx, hy, px, py, vx, vy, fr, mf, ph, dyn, sta;
-let gz = 1, gb = 1, gh = 1, gA = null, gB = null, freiAnteil = 0;   // grobes Gitter, in dem die gelösten Tupfer aneinander kleben
+let gz = 1, gb = 1, gh = 1, gA = null, gB = null, freiAnteil = 0, bew = 0;   // grobes Gitter, in dem die gelösten Tupfer aneinander kleben
 let zielAnzahl = Math.min(34000, Math.round(window.innerWidth * window.innerHeight / 32));
 if (matchMedia("(pointer: coarse)").matches) zielAnzahl = Math.min(zielAnzahl, 22000);
 let quelle = null;       // { art: "kamera" | "bild", breite, hoehe, spiegel }
@@ -216,7 +221,7 @@ function aufbauen() {
     let u = 0, v = 0, gr = 0;
     if (quelle) {
       u = (x - fit.ox) / fit.dw; v = (y - fit.oy) / fit.dh;
-      if (u < 0 || u > 1 || v < 0 || v > 1) gr = 0; else gr = .55 + Math.pow(Math.random(), 2.4) * 1.7;
+      if (u < 0 || u > 1 || v < 0 || v > 1) gr = 0; else gr = .88 + Math.random() * .34;
       if (quelle.spiegel) u = 1 - u;
     }
     const o = i * 6; sta[o] = x; sta[o + 1] = y; sta[o + 2] = u; sta[o + 3] = 1 - v; sta[o + 4] = gr * spacing * 1.8; sta[o + 5] = .5 + Math.random() * .5;
@@ -325,6 +330,7 @@ function schritt(dt) {
   const r = R0();
   for (const z of zeiger.values()) pinsel.push({ x: z.x, y: z.y, vx: z.vx, vy: z.vy, r });
   for (const b of haende) pinsel.push({ x: b.x, y: b.y, vx: b.vx, vy: b.vy, r: r * b.f });
+  let pv = 0; for (const z of zeiger.values()) pv = Math.max(pv, Math.hypot(z.vx, z.vy)); for (const b of haende) pv = Math.max(pv, Math.hypot(b.vx, b.vy));
   for (const z of zeiger.values()) { z.vx *= Math.exp(-dt * 6); z.vy *= Math.exp(-dt * 6); }
   for (const b of haende) { b.vx *= Math.exp(-dt * 5); b.vy *= Math.exp(-dt * 5); }
   const nB = pinsel.length;
@@ -332,7 +338,7 @@ function schritt(dt) {
   const wind = modus === 3;
   const thr = .55 + .4 * Math.sin(zeit * .3);
   const damp = Math.exp(-dt * 2.2);
-  let nFrei = 0; gA.fill(0);
+  let nFrei = 0, sumV = 0; gA.fill(0);
   for (let i = 0; i < N; i++) {
     let x = px[i], y = py[i], ux = vx[i], uy = vy[i], f = fr[i];
     // Pinsel
@@ -348,8 +354,8 @@ function schritt(dt) {
         uy += 800 * w * dt * (.4 + Math.random());
       } else {
         const rz = (Math.random() - .5);
-        ux += (dx * inv * 2200 * w + B.vx * 6 * w + rz * 900 * w) * dt;
-        uy += (dy * inv * 2200 * w + B.vy * 6 * w + (Math.random() - .5) * 900 * w) * dt;
+        ux += (dx * inv * 700 * w + B.vx * 16 * w + rz * 300 * w) * dt;
+        uy += (dy * inv * 700 * w + B.vy * 16 * w + (Math.random() - .5) * 300 * w) * dt;
         if (f < 1.2) f = (1.2 + Math.random() * 3.5) * frSkala;
       }
     }
@@ -364,12 +370,12 @@ function schritt(dt) {
       cx = cx < 0 ? 0 : cx >= gb ? gb - 1 : cx; cy = cy < 0 ? 0 : cy >= gh ? gh - 1 : cy;
       const gi = (cy * gb + cx) * 5, nA = gB[gi];
       if (nA >= 3) {
-        const vis = (modus === 1 || modus === 2 ? 5 : 3) * dt, koh = (modus === 1 ? 1.4 : .9) * dt;
+        const vis = (modus === 1 || modus === 2 ? 9 : 7) * dt, koh = (modus === 1 ? 2.2 : 1.6) * dt;
         ux += (gB[gi + 3] / nA - ux) * Math.min(1, vis); uy += (gB[gi + 4] / nA - uy) * Math.min(1, vis);
         ux += (gB[gi + 1] / nA - x) * koh; uy += (gB[gi + 2] / nA - y) * koh;
       }
       gA[gi] += 1; gA[gi + 1] += x; gA[gi + 2] += y; gA[gi + 3] += ux; gA[gi + 4] += uy;
-      nFrei++;
+      nFrei++; sumV += Math.hypot(ux, uy);
     }
     // Feder zur Ausgangsposition
     let k = f > 0 ? kBasis * .08 : kBasis, dm = f > 0 ? daempfFrei : 1.8 * Math.sqrt(kBasis);
@@ -385,6 +391,8 @@ function schritt(dt) {
     dyn[i * 4] = x; dyn[i * 4 + 1] = y; dyn[i * 4 + 2] = ux; dyn[i * 4 + 3] = uy;
   }
   const t = gA; gA = gB; gB = t; freiAnteil = nFrei / Math.max(1, N);
+  const ziel = Math.min(1, Math.max(pv / 1100, (sumV / Math.max(1, nFrei)) / 260 * Math.min(1, nFrei / 250)));
+  bew += (ziel - bew) * Math.min(1, dt * (ziel > bew ? 9 : 2.2));
 }
 function zusammensetzen() { for (let i = 0; i < N; i++) { px[i] = hx[i]; py[i] = hy[i]; vx[i] = vy[i] = 0; fr[i] = 0; mf[i] = 0; } }
 
@@ -437,7 +445,7 @@ function los() {
 // ---------- Klang ----------
 // Alles wird im Browser erzeugt, es gibt keine Klangdateien. Je mehr sich das Bild auflöst, desto heller und weiter wird der Klang.
 const KLAENGE = ["Klang aus", "Mystisch", "Fröhlich", "Sanft"];
-let ac = null, bus = null, filt = null, nass = null, master = null, klang = 1, modusBus = null, plan = null, naechste = 0, laufendeQuellen = [];
+let wBand = null, wGain = null, wOsc = null, wOscG = null, ac = null, bus = null, filt = null, nass = null, master = null, klang = 1, modusBus = null, plan = null, naechste = 0, laufendeQuellen = [];
 function impuls(sek) {
   const n = Math.floor(ac.sampleRate * sek), b = ac.createBuffer(2, n, ac.sampleRate);
   for (let c = 0; c < 2; c++) { const d = b.getChannelData(c); for (let i = 0; i < n; i++) d[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / n, 3); }
@@ -453,6 +461,15 @@ function audioBereit() {
   bus = ac.createGain(); const hall = ac.createConvolver(); hall.buffer = impuls(3.8); nass = ac.createGain(); nass.gain.value = .5;
   const trocken = ac.createGain(); trocken.gain.value = .75;
   bus.connect(trocken); bus.connect(hall); hall.connect(nass); trocken.connect(filt); nass.connect(filt); filt.connect(master); master.connect(comp); comp.connect(ac.destination);
+  // Bewegungsstimme, ein weiches Rauschen und ein Gleitton, die dem Wischen folgen
+  const n = ac.sampleRate * 3, nb = ac.createBuffer(1, n, ac.sampleRate), nd = nb.getChannelData(0);
+  for (let i = 0; i < n; i++) nd[i] = Math.random() * 2 - 1;
+  const rq = ac.createBufferSource(); rq.buffer = nb; rq.loop = true;
+  wBand = ac.createBiquadFilter(); wBand.type = "bandpass"; wBand.frequency.value = 400; wBand.Q.value = 1.6;
+  wGain = ac.createGain(); wGain.gain.value = 0;
+  rq.connect(wBand); wBand.connect(wGain); wGain.connect(bus); rq.start();
+  wOsc = ac.createOscillator(); wOsc.type = "sine"; wOsc.frequency.value = 220;
+  wOscG = ac.createGain(); wOscG.gain.value = 0; wOsc.connect(wOscG); wOscG.connect(bus); wOsc.start();
   return true;
 }
 const hz = (basis, halbtoene) => basis * Math.pow(2, halbtoene / 12);
@@ -502,7 +519,7 @@ function klangStarten(art) {
         schale(hz(146.83, D_MOLL[(Math.random() * D_MOLL.length) | 0] + 12), t, .3);
         if (Math.random() < .35) schale(hz(146.83, D_MOLL[(Math.random() * 5) | 0] + 12), t + 1.4 + Math.random(), .2);
         if (Math.random() < .4) rauschen(t + 1, 7 + Math.random() * 4, .035, 400 + Math.random() * 500);
-        naechste += 5 + Math.random() * 6;
+        naechste += (5 + Math.random() * 6) / (.6 + 2.2 * bew);
       } else if (art === 2) {
         const sechzehntel = 60 / 112 / 2;
         if (schritte % 8 === 0) ton(hz(65.41, [0, -3, -5, -1][akkord % 4]), t, { vol: .2, dauer: .5, typ: "triangle" });
@@ -510,13 +527,13 @@ function klangStarten(art) {
         if (Math.random() < .62) ton(hz(261.63, C_DUR[(Math.random() * C_DUR.length) | 0]), t, { vol: .16, dauer: .55 + Math.random() * .3, typ: "triangle", einsatz: .004, verstimmt: (Math.random() - .5) * 8 });
         if (Math.random() < .16) ton(hz(523.25, C_DUR[(Math.random() * C_DUR.length) | 0]), t + sechzehntel / 2, { vol: .06, dauer: .9, einsatz: .004 });
         schritte++; if (schritte % 16 === 0) akkord++;
-        naechste += sechzehntel;
+        naechste += sechzehntel / (.75 + .9 * bew);
       } else {
         const ak = AKKORDE[akkord % 4];
         for (const halb of ak) ton(hz(130.81, halb), t + Math.random() * .3, { vol: .05, dauer: 7, einsatz: 3, verstimmt: (Math.random() - .5) * 10 });
         const n = 2 + ((Math.random() * 2) | 0);
         for (let i = 0; i < n; i++) ton(hz(523.25, C_DUR[(Math.random() * C_DUR.length) | 0]), t + 1.5 + i * (1.2 + Math.random() * 1.5), { vol: .05, dauer: 3.2, einsatz: .01 });
-        akkord++; naechste += 8;
+        akkord++; naechste += 8 / (.7 + 1.5 * bew);
       }
     }
   }
@@ -540,9 +557,14 @@ function klangWaehlen(k, melden) {
 }
 function klangAnpassen() {
   if (!ac || !filt || !modusBus) return;
-  const a = Math.min(1, freiAnteil * 2.2), t = ac.currentTime;
-  filt.frequency.setTargetAtTime(1600 + 6000 * Math.pow(a, .8), t, .25);
+  const a = Math.min(1, freiAnteil * 2.2), t = ac.currentTime, b = Math.min(1, bew * 1.6);
+  filt.frequency.setTargetAtTime(1300 + 5500 * Math.pow(Math.max(a, b), .8), t, .15);
   nass.gain.setTargetAtTime(.4 + .7 * a, t, .4);
+  modusBus.gain.setTargetAtTime(.25 + .75 * Math.min(1, b * 1.4), t, .12);        // Musik folgt der Bewegung, in Ruhe nur ein Hauch
+  wGain.gain.setTargetAtTime(.22 * b * b, t, .06);
+  wBand.frequency.setTargetAtTime(250 + 2200 * b, t, .08);
+  wOscG.gain.setTargetAtTime(.07 * b, t, .08);
+  wOsc.frequency.setTargetAtTime(160 * Math.pow(2, b * 2.2), t, .1);
 }
 document.addEventListener("visibilitychange", () => { if (!ac) return; if (document.hidden) ac.suspend(); else if (klang) ac.resume(); });
 document.querySelectorAll("#klaenge button").forEach(b => b.addEventListener("click", () => klangWaehlen(+b.dataset.k, true)));
@@ -596,7 +618,7 @@ $("datei").addEventListener("change", async e => {
 window.__au = {
   starten: async () => { await bildStarten("gesichter/gesicht-04.jpg"); los(); },
   zustand: () => { let g = 0, s = 0; for (let i = 0; i < N; i++) { if (sta[i * 6 + 4] > 0) { s++; if (Math.hypot(px[i] - hx[i], py[i] - hy[i]) > 8) g++; } } return { N, sichtbar: s, geloest: g, W, H, modus, zielAnzahl }; },
-  modus: m => { modus = m; }, klang: k => klangWaehlen(k, false), audio: () => ac && { zustand: ac.state, t: ac.currentTime, filter: filt.frequency.value, aktiv: !!modusBus }, heilung: h => { heilung = h; }, schritt, zusammensetzen,
+  modus: m => { modus = m; }, klang: k => klangWaehlen(k, false), audio: () => ac && { zustand: ac.state, filter: filt.frequency.value, aktiv: !!modusBus, bew, wisch: wGain.gain.value, musik: modusBus ? modusBus.gain.value : 0 }, heilung: h => { heilung = h; }, schritt, zusammensetzen,
 };
 aufbauen();
 </script>

@@ -169,9 +169,7 @@ function draw() {
   ctx.globalCompositeOperation = 'source-over';
 }
 
-function touchStarted() { return false; }
-function touchMoved() { return false; }
-function touchEnded() { return false; }
+function touchMoved() { return false; }   // nur das Wischen sperren, Start und Ende bleiben frei, damit iOS den Ton freigibt
 </script>
 <script>
 // Klang beim Wischen, ein mystischer Klang aus Klangschalen. Alles wird im Browser erzeugt. Je schneller die Bewegung, desto öfter wird angeschlagen.
@@ -209,10 +207,12 @@ function audioBereit() {
     if (!ac) audioBauen();
     if (!ac) return false;
     if (ac.state !== 'running') { const p = ac.resume(); if (p && p.catch) p.catch(() => {}); }
+    if (!entsperrt && ac.state !== 'running') { ac.resume().then(() => { if (ac.state === 'running') audioBereit(); }).catch(() => {}); }
     if (!entsperrt && ac.state === 'running') {
       // winziger stiller Ton, so entsperrt iOS die Ausgabe sicher
       const s = ac.createBufferSource(); s.buffer = ac.createBuffer(1, 1, 22050); s.connect(ac.destination); s.start(0);
       entsperrt = true;
+      try { ton(hz(146.83, 12 + 12), ac.currentTime + .02, .05, 2.5, .01); } catch (e) {}   // kurzer leiser Klang als Zeichen, dass der Ton läuft
     }
   } catch (e) { return false; }
   return true;
@@ -246,7 +246,7 @@ function klangBewegung(fing) {
 }
 // Browser erlauben Ton erst nach einer Berührung, auf dem iPhone zählt dafür erst das Loslassen.
 // Die Lauscher hängen in der Capture-Phase, damit p5 sie mit seinen eigenen Touch-Handlern nicht ausbremst.
-['pointerdown', 'pointerup', 'touchstart', 'touchend', 'mousedown', 'mouseup', 'click', 'keydown'].forEach(t => {
+['pointerup', 'touchend', 'mouseup', 'click', 'keydown'].forEach(t => {
   window.addEventListener(t, () => { letztesEreignis = t; audioBereit(); }, { capture: true, passive: true });
 });
 document.addEventListener('visibilitychange', () => { if (!ac) return; if (document.hidden) ac.suspend(); else ac.resume(); });

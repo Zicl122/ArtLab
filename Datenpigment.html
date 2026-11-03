@@ -17,17 +17,12 @@
     color: var(--hint); pointer-events: none; transition: opacity 2s ease;
   }
   #hint.weg { opacity: 0; }
-  #klang { position: fixed; top: max(12px, env(safe-area-inset-top)); right: max(12px, env(safe-area-inset-right)); z-index: 9999; font: 400 14px/1 Georgia, serif;
-           color: #f1f0f7; background: rgba(9,10,28,.55); border: 1px solid rgba(255,255,255,.22); border-radius: 999px; padding: 9px 14px;
-           -webkit-backdrop-filter: blur(6px); backdrop-filter: blur(6px); touch-action: manipulation; cursor: pointer; }
-  #klang:focus-visible { outline: 2px solid #8fd3ff; outline-offset: 3px; }
 </style>
 <style>.zurueck{position:fixed;top:max(12px,env(safe-area-inset-top));left:max(12px,env(safe-area-inset-left));z-index:9999;font:400 14px/1 Georgia,serif;color:#f1f0f7;background:rgba(9,10,28,.55);border:1px solid rgba(255,255,255,.22);border-radius:999px;padding:9px 14px;text-decoration:none;-webkit-backdrop-filter:blur(6px);backdrop-filter:blur(6px);touch-action:manipulation}.zurueck:focus-visible{outline:2px solid #8fd3ff;outline-offset:3px}</style>
 </head>
 <body>
 <a class="zurueck" href="index.html" aria-label="Zurück zur Übersicht">← Übersicht</a>
 
-<button id="klang" type="button" aria-label="Klang wechseln">Klang Mystisch</button>
 <div id="hint">Fahre mit dem Finger durch die Strömung</div>
 <script src="p5.min.js"></script>
 <script>
@@ -179,18 +174,16 @@ function touchMoved() { return false; }
 function touchEnded() { return false; }
 </script>
 <script>
-// Klang beim Wischen. Alles wird im Browser erzeugt. Je schneller die Bewegung, desto öfter wird angeschlagen, wie bei einem Glockenspiel.
-const KLAENGE = ['Aus', 'Mystisch', 'Fröhlich', 'Sanft'];
-let klang = 1, ac = null, bus = null, master = null, drohnen = [], wegStrecke = 0, tAnschlag = 0;
+// Klang beim Wischen, ein mystischer Klang aus Klangschalen. Alles wird im Browser erzeugt. Je schneller die Bewegung, desto öfter wird angeschlagen.
+let ac = null, bus = null, wegStrecke = 0, tAnschlag = 0;
 const hz = (basis, halb) => basis * Math.pow(2, halb / 12);
-const D_MOLL = [0, 3, 5, 7, 10, 12, 15, 17, 19], C_DUR = [0, 2, 4, 7, 9, 12, 14, 16, 19];
+const D_MOLL = [0, 3, 5, 7, 10, 12, 15, 17, 19];
 function audioBereit() {
-  if (ac) { if (ac.state === 'suspended') ac.resume(); return true; }
+  if (ac) { if (ac.state !== 'running') ac.resume(); return true; }
   const AC = window.AudioContext || window.webkitAudioContext; if (!AC) return false;
   ac = new AC();
   const n = Math.floor(ac.sampleRate * 3.8), ib = ac.createBuffer(2, n, ac.sampleRate);
   for (let c = 0; c < 2; c++) { const d = ib.getChannelData(c); for (let i = 0; i < n; i++) d[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / n, 3); }
-  master = ac.createGain(); master.gain.value = 1;
   const filt = ac.createBiquadFilter(); filt.type = 'lowpass'; filt.frequency.value = 5200; filt.Q.value = .4;
   const comp = ac.createDynamicsCompressor();
   bus = ac.createGain();
@@ -198,7 +191,13 @@ function audioBereit() {
   const nass = ac.createGain(); nass.gain.value = .7;
   const trocken = ac.createGain(); trocken.gain.value = .75;
   bus.connect(trocken); bus.connect(hall); hall.connect(nass);
-  trocken.connect(filt); nass.connect(filt); filt.connect(master); master.connect(comp); comp.connect(ac.destination);
+  trocken.connect(filt); nass.connect(filt); filt.connect(comp); comp.connect(ac.destination);
+  for (const [halb, vol] of [[-12, .06], [-5, .04], [0, .03]]) {      // leiser tiefer Grundton als Untergrund
+    const o = ac.createOscillator(), l = ac.createOscillator(), lg = ac.createGain(), g = ac.createGain();
+    o.type = 'triangle'; o.frequency.value = hz(146.83, halb); l.frequency.value = .05 + Math.random() * .08; lg.gain.value = vol * .5;
+    g.gain.value = 0; g.gain.setTargetAtTime(vol, ac.currentTime, .8);
+    l.connect(lg); lg.connect(g.gain); o.connect(g); g.connect(bus); o.start(); l.start();
+  }
   return true;
 }
 function ton(f, t, vol, dauer, einsatz) {
@@ -207,36 +206,12 @@ function ton(f, t, vol, dauer, einsatz) {
   g.gain.setValueAtTime(0, t); g.gain.linearRampToValueAtTime(vol, t + einsatz); g.gain.exponentialRampToValueAtTime(.0001, t + einsatz + dauer);
   o.connect(g); g.connect(bus); o.start(t); o.stop(t + einsatz + dauer + .1);
 }
-function drohneStoppen() {
-  const alt = drohnen; drohnen = [];
-  alt.forEach(d => { try { d.g.gain.setTargetAtTime(0, ac.currentTime, .3); setTimeout(() => { try { d.o.stop(); d.l.stop(); } catch (e) {} }, 1500); } catch (e) {} });
-}
-function klangWaehlen(k) {
-  klang = k;
-  const b = document.getElementById('klang'); b.textContent = 'Klang ' + KLAENGE[k];
-  if (ac) drohneStoppen();
-  if (k === 1 && audioBereit()) {          // Mystisch, leiser tiefer Grundton als Untergrund
-    for (const [halb, vol] of [[-12, .06], [-5, .04], [0, .03]]) {
-      const o = ac.createOscillator(), l = ac.createOscillator(), lg = ac.createGain(), g = ac.createGain();
-      o.type = 'triangle'; o.frequency.value = hz(146.83, halb); l.frequency.value = .05 + Math.random() * .08; lg.gain.value = vol * .5;
-      g.gain.value = 0; g.gain.setTargetAtTime(vol, ac.currentTime, .8);
-      l.connect(lg); lg.connect(g.gain); o.connect(g); g.connect(bus); o.start(); l.start(); drohnen.push({ o, l, g });
-    }
-  }
-}
 function anschlagen(y, tempo) {
-  if (!klang || !ac || ac.state !== 'running') return;
-  const t = ac.currentTime + .01, hoehe = Math.max(0, Math.min(1, 1 - y / innerHeight)), vol = .09 + .16 * Math.min(1, tempo);
-  if (klang === 1) {
-    const f = hz(146.83, D_MOLL[Math.min(8, Math.floor(hoehe * 8.9))] + 12);
-    [[1, 1, 4], [2.76, .45, 2.4], [5.4, .18, 1.2]].forEach(([r, v, d]) => ton(f * r, t, vol * v * 1.4, d, .008));
-  } else if (klang === 2) {
-    const f = hz(523.25, C_DUR[Math.min(8, Math.floor(hoehe * 8.9))]);
-    ton(f, t, vol * 1.2, .9, .002); ton(f * 4.01, t, vol * .35, .25, .002); ton(f * 2, t, vol * .3, .5, .002);
-  } else {
-    const f = hz(392, C_DUR[Math.min(8, Math.floor(hoehe * 8.9))]);
-    ton(f, t, vol * .9, 2.6, .02); ton(f * 3, t, vol * .12, 1, .02);
-  }
+  if (!ac) return;
+  if (ac.state !== 'running') { ac.resume(); return; }
+  const t = ac.currentTime + .01, hoehe = Math.max(0, Math.min(1, 1 - y / innerHeight)), vol = .12 + .2 * Math.min(1, tempo);
+  const f = hz(146.83, D_MOLL[Math.min(8, Math.floor(hoehe * 8.9))] + 12);
+  [[1, 1, 4], [2.76, .45, 2.4], [5.4, .18, 1.2]].forEach(([r, v, d]) => ton(f * r, t, vol * v * 1.4, d, .008));
 }
 function klangBewegung(fing) {
   if (!fing.length) return;
@@ -251,11 +226,18 @@ function klangBewegung(fing) {
     anschlagen(y + (Math.random() - .5) * innerHeight * .25, pv / 1200);
   }
 }
-// Browser erlauben Ton erst nach einer Berührung
-addEventListener('pointerdown', () => { if (klang && !ac) { audioBereit(); klangWaehlen(klang); } else if (ac && ac.state === 'suspended') ac.resume(); }, { passive: true });
-document.getElementById('klang').addEventListener('click', () => { audioBereit(); klangWaehlen((klang + 1) % 4); });
-document.addEventListener('visibilitychange', () => { if (!ac) return; if (document.hidden) ac.suspend(); else if (klang) ac.resume(); });
-window.__klang = () => ({ klang, zustand: ac && ac.state });
+// Browser erlauben Ton erst nach einer Berührung, auf dem iPhone zählt dafür erst das Loslassen
+['pointerdown', 'pointerup', 'touchstart', 'touchend', 'mousedown', 'mouseup', 'click', 'keydown'].forEach(t => addEventListener(t, () => audioBereit(), { passive: true }));
+document.addEventListener('visibilitychange', () => { if (!ac) return; if (document.hidden) ac.suspend(); else ac.resume(); });
+window.__klang = () => ({ zustand: ac && ac.state });
+</script>
+<script>
+// Der Zurück-Link reagiert auf dem Handy auch dann, wenn die Seite Berührungen sonst abfängt
+(function () {
+  var a = document.querySelector('.zurueck'); if (!a) return;
+  ['touchstart', 'pointerdown', 'mousedown'].forEach(function (t) { a.addEventListener(t, function (e) { e.stopPropagation(); }, { passive: true }); });
+  a.addEventListener('touchend', function (e) { e.preventDefault(); e.stopPropagation(); location.href = a.getAttribute('href'); }, { passive: false });
+})();
 </script>
 </body>
 </html>

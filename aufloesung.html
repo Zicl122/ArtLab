@@ -95,6 +95,7 @@
     <button type="button" data-m="1" aria-pressed="false">Verlaufen</button>
     <button type="button" data-m="2" aria-pressed="false">Schmelzen</button>
     <button type="button" data-m="3" aria-pressed="false">Zerfallen</button>
+    <button type="button" data-m="4" aria-pressed="false">Automatisch</button>
   </div>
   <div class="zeile">
     <button id="bReset" type="button">Zusammensetzen</button>
@@ -322,15 +323,27 @@ async function bildStarten(url) {
 }
 
 // ---------- Physik ----------
-let modus = 0, zeit = 0, groesse = 1, heilung = .35, laeuft = false, letztes = performance.now(), msMittel = 16, langsam = 0;
-const R0 = () => Math.max(60, Math.min(W, H) * .11);
+let tAnschlag = 0, auto = false, wechselT = 0, modus = 0, zeit = 0, groesse = 1, heilung = .35, laeuft = false, letztes = performance.now(), msMittel = 16, langsam = 0;
+const R0 = () => Math.max(40, Math.min(W, H) * .072);
 function schritt(dt) {
   zeit += dt;
+  if (auto && zeit > wechselT) { modus = (modus + 1 + ((Math.random() * 3) | 0)) % 4; wechselT = zeit + 4.5 + Math.random() * 3; toast(NAMEN[modus]); }
   const pinsel = [];
   const r = R0();
   for (const z of zeiger.values()) pinsel.push({ x: z.x, y: z.y, vx: z.vx, vy: z.vy, r });
   for (const b of haende) pinsel.push({ x: b.x, y: b.y, vx: b.vx, vy: b.vy, r: r * b.f });
   let pv = 0; for (const z of zeiger.values()) pv = Math.max(pv, Math.hypot(z.vx, z.vy)); for (const b of haende) pv = Math.max(pv, Math.hypot(b.vx, b.vy));
+  if (pv > 30 && klang) {
+    wegStrecke += pv * dt;
+    const schwelle = 70 - 40 * Math.min(1, pv / 1400);          // schneller wischen, kürzere Abstände
+    if (wegStrecke > schwelle && zeit - tAnschlag > .055) {
+      wegStrecke = 0; tAnschlag = zeit;
+      let sx = W / 2, sy = H / 2, m = 0;
+      for (const z of zeiger.values()) { const v = Math.hypot(z.vx, z.vy); if (v >= m) { m = v; sx = z.x; sy = z.y; } }
+      for (const b of haende) { const v = Math.hypot(b.vx, b.vy); if (v >= m) { m = v; sx = b.x; sy = b.y; } }
+      anschlagen(sx, sy + (Math.random() - .5) * H * .25, pv / 1200);
+    }
+  }
   for (const z of zeiger.values()) { z.vx *= Math.exp(-dt * 6); z.vy *= Math.exp(-dt * 6); }
   for (const b of haende) { b.vx *= Math.exp(-dt * 5); b.vy *= Math.exp(-dt * 5); }
   const nB = pinsel.length;
@@ -445,7 +458,7 @@ function los() {
 // ---------- Klang ----------
 // Alles wird im Browser erzeugt, es gibt keine Klangdateien. Je mehr sich das Bild auflöst, desto heller und weiter wird der Klang.
 const KLAENGE = ["Klang aus", "Mystisch", "Fröhlich", "Sanft"];
-let wBand = null, wGain = null, wOsc = null, wOscG = null, ac = null, bus = null, filt = null, nass = null, master = null, klang = 1, modusBus = null, plan = null, naechste = 0, laufendeQuellen = [];
+let noteBus = null, letzterAnschlag = 0, wegStrecke = 0, ac = null, bus = null, filt = null, nass = null, master = null, klang = 1, modusBus = null, plan = null, naechste = 0, laufendeQuellen = [];
 function impuls(sek) {
   const n = Math.floor(ac.sampleRate * sek), b = ac.createBuffer(2, n, ac.sampleRate);
   for (let c = 0; c < 2; c++) { const d = b.getChannelData(c); for (let i = 0; i < n; i++) d[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / n, 3); }
@@ -461,15 +474,7 @@ function audioBereit() {
   bus = ac.createGain(); const hall = ac.createConvolver(); hall.buffer = impuls(3.8); nass = ac.createGain(); nass.gain.value = .5;
   const trocken = ac.createGain(); trocken.gain.value = .75;
   bus.connect(trocken); bus.connect(hall); hall.connect(nass); trocken.connect(filt); nass.connect(filt); filt.connect(master); master.connect(comp); comp.connect(ac.destination);
-  // Bewegungsstimme, ein weiches Rauschen und ein Gleitton, die dem Wischen folgen
-  const n = ac.sampleRate * 3, nb = ac.createBuffer(1, n, ac.sampleRate), nd = nb.getChannelData(0);
-  for (let i = 0; i < n; i++) nd[i] = Math.random() * 2 - 1;
-  const rq = ac.createBufferSource(); rq.buffer = nb; rq.loop = true;
-  wBand = ac.createBiquadFilter(); wBand.type = "bandpass"; wBand.frequency.value = 400; wBand.Q.value = 1.6;
-  wGain = ac.createGain(); wGain.gain.value = 0;
-  rq.connect(wBand); wBand.connect(wGain); wGain.connect(bus); rq.start();
-  wOsc = ac.createOscillator(); wOsc.type = "sine"; wOsc.frequency.value = 220;
-  wOscG = ac.createGain(); wOscG.gain.value = 0; wOsc.connect(wOscG); wOscG.connect(bus); wOsc.start();
+  noteBus = ac.createGain(); noteBus.gain.value = 1; noteBus.connect(bus);
   return true;
 }
 const hz = (basis, halbtoene) => basis * Math.pow(2, halbtoene / 12);
@@ -478,7 +483,7 @@ function ton(f, t, o) {   // ein Ton mit weichem Ein- und Ausklang
   osc.type = o.typ || "sine"; osc.frequency.value = f; if (o.verstimmt) osc.detune.value = o.verstimmt;
   const a = o.einsatz || .01, d = o.dauer || 1;
   g.gain.setValueAtTime(0, t); g.gain.linearRampToValueAtTime(o.vol, t + a); g.gain.exponentialRampToValueAtTime(.0001, t + a + d);
-  osc.connect(g); g.connect(modusBus); osc.start(t); osc.stop(t + a + d + .1);
+  osc.connect(g); g.connect(o.ziel || modusBus); osc.start(t); osc.stop(t + a + d + .1);
   return osc;
 }
 function schale(f, t, vol) {   // Klangschale, mehrere nicht ganzzahlige Obertöne
@@ -504,39 +509,39 @@ function klangStarten(art) {
   master.gain.setTargetAtTime(1, ac.currentTime, .6);
   schritte = 0; akkord = 0; naechste = ac.currentTime + .05;
   if (art === 1) {          // Mystisch, tiefer Grundton, Klangschalen, Atem
-    for (const [halb, vol] of [[-12, .16], [-5, .10], [0, .07]]) {
+    for (const [halb, vol] of [[-12, .08], [-5, .05], [0, .035]]) {
       const o = ac.createOscillator(), l = ac.createOscillator(), lg = ac.createGain(), g = ac.createGain();
       o.type = "triangle"; o.frequency.value = hz(146.83, halb); l.frequency.value = .05 + Math.random() * .08; lg.gain.value = vol * .5;
       g.gain.value = vol; l.connect(lg); lg.connect(g.gain); o.connect(g); g.connect(modusBus); o.start(); l.start(); laufendeQuellen.push(o, l);
     }
   }
-  plan = setInterval(planen, 100);
-  function planen() {
-    if (!ac) return;
-    while (naechste < ac.currentTime + .4) {
-      const t = naechste;
-      if (art === 1) {
-        schale(hz(146.83, D_MOLL[(Math.random() * D_MOLL.length) | 0] + 12), t, .3);
-        if (Math.random() < .35) schale(hz(146.83, D_MOLL[(Math.random() * 5) | 0] + 12), t + 1.4 + Math.random(), .2);
-        if (Math.random() < .4) rauschen(t + 1, 7 + Math.random() * 4, .035, 400 + Math.random() * 500);
-        naechste += (5 + Math.random() * 6) / (.6 + 2.2 * bew);
-      } else if (art === 2) {
-        const sechzehntel = 60 / 112 / 2;
-        if (schritte % 8 === 0) ton(hz(65.41, [0, -3, -5, -1][akkord % 4]), t, { vol: .2, dauer: .5, typ: "triangle" });
-        if (schritte % 4 === 2) ton(hz(65.41 * 2, [0, -3, -5, -1][akkord % 4] + 7), t, { vol: .08, dauer: .35, typ: "triangle" });
-        if (Math.random() < .62) ton(hz(261.63, C_DUR[(Math.random() * C_DUR.length) | 0]), t, { vol: .16, dauer: .55 + Math.random() * .3, typ: "triangle", einsatz: .004, verstimmt: (Math.random() - .5) * 8 });
-        if (Math.random() < .16) ton(hz(523.25, C_DUR[(Math.random() * C_DUR.length) | 0]), t + sechzehntel / 2, { vol: .06, dauer: .9, einsatz: .004 });
-        schritte++; if (schritte % 16 === 0) akkord++;
-        naechste += sechzehntel / (.75 + .9 * bew);
-      } else {
-        const ak = AKKORDE[akkord % 4];
-        for (const halb of ak) ton(hz(130.81, halb), t + Math.random() * .3, { vol: .05, dauer: 7, einsatz: 3, verstimmt: (Math.random() - .5) * 10 });
-        const n = 2 + ((Math.random() * 2) | 0);
-        for (let i = 0; i < n; i++) ton(hz(523.25, C_DUR[(Math.random() * C_DUR.length) | 0]), t + 1.5 + i * (1.2 + Math.random() * 1.5), { vol: .05, dauer: 3.2, einsatz: .01 });
-        akkord++; naechste += 8 / (.7 + 1.5 * bew);
-      }
-    }
+  if (art === 3) {
+    plan = setInterval(() => {
+      if (!ac || naechste > ac.currentTime + .4) return;
+      const ak = AKKORDE[akkord % 4];
+      for (const halb of ak) ton(hz(130.81, halb), naechste + Math.random() * .3, { vol: .045, dauer: 7, einsatz: 3, verstimmt: (Math.random() - .5) * 10 });
+      akkord++; naechste += 7;
+    }, 100);
   }
+}
+// Anschlag beim Wischen. Je schneller die Bewegung, desto öfter wird angeschlagen, wie bei einem Glockenspiel.
+function anschlagen(x, y, tempo) {
+  if (!ac || !noteBus || !klang || ac.state !== "running") return;
+  const t = ac.currentTime + .01;
+  const hoehe = Math.max(0, Math.min(1, 1 - y / H));
+  const vol = .09 + .16 * Math.min(1, tempo);
+  const ziel = noteBus;
+  if (klang === 1) {            // Mystisch, Klangschale in d-Moll
+    const f = hz(146.83, D_MOLL[Math.min(D_MOLL.length - 1, Math.floor(hoehe * D_MOLL.length * .99))] + 12);
+    for (const [r, v, d] of [[1, 1, 4], [2.76, .45, 2.4], [5.4, .18, 1.2]]) ton(f * r, t, { vol: vol * v * 1.4, dauer: d, einsatz: .008, ziel });
+  } else if (klang === 2) {     // Fröhlich, helles Glockenspiel in C-Dur
+    const f = hz(523.25, C_DUR[Math.min(C_DUR.length - 1, Math.floor(hoehe * C_DUR.length * .99))]);
+    ton(f, t, { vol: vol * 1.2, dauer: .9, einsatz: .002, ziel }); ton(f * 4.01, t, { vol: vol * .35, dauer: .25, einsatz: .002, ziel }); ton(f * 2, t, { vol: vol * .3, dauer: .5, einsatz: .002, ziel });
+  } else {                       // Sanft, weiche Glöckchen
+    const f = hz(392, C_DUR[Math.min(C_DUR.length - 1, Math.floor(hoehe * C_DUR.length * .99))]);
+    ton(f, t, { vol: vol * .9, dauer: 2.6, einsatz: .02, ziel }); ton(f * 3, t, { vol: vol * .12, dauer: 1, einsatz: .02, ziel });
+  }
+  letzterAnschlag++;
 }
 function klangStoppen(sofort) {
   clearInterval(plan); plan = null;
@@ -558,22 +563,17 @@ function klangWaehlen(k, melden) {
 function klangAnpassen() {
   if (!ac || !filt || !modusBus) return;
   const a = Math.min(1, freiAnteil * 2.2), t = ac.currentTime, b = Math.min(1, bew * 1.6);
-  filt.frequency.setTargetAtTime(1300 + 5500 * Math.pow(Math.max(a, b), .8), t, .15);
+  filt.frequency.setTargetAtTime(1800 + 5500 * Math.pow(Math.max(a, b), .8), t, .2);
   nass.gain.setTargetAtTime(.4 + .7 * a, t, .4);
-  modusBus.gain.setTargetAtTime(.25 + .75 * Math.min(1, b * 1.4), t, .12);        // Musik folgt der Bewegung, in Ruhe nur ein Hauch
-  wGain.gain.setTargetAtTime(.22 * b * b, t, .06);
-  wBand.frequency.setTargetAtTime(250 + 2200 * b, t, .08);
-  wOscG.gain.setTargetAtTime(.07 * b, t, .08);
-  wOsc.frequency.setTargetAtTime(160 * Math.pow(2, b * 2.2), t, .1);
 }
 document.addEventListener("visibilitychange", () => { if (!ac) return; if (document.hidden) ac.suspend(); else if (klang) ac.resume(); });
 document.querySelectorAll("#klaenge button").forEach(b => b.addEventListener("click", () => klangWaehlen(+b.dataset.k, true)));
 $("bKlang").addEventListener("click", () => klangWaehlen(klang === 0 ? 1 : (klang % 3) + 1 === klang ? 0 : (klang % 3) + 1, true));
 
 // ---------- Bedienung ----------
-const NAMEN = ["Abtragen", "Verlaufen", "Schmelzen", "Zerfallen"];
+const NAMEN = ["Abtragen", "Verlaufen", "Schmelzen", "Zerfallen", "Automatisch"];
 document.querySelectorAll("#modi button").forEach(b => b.addEventListener("click", () => {
-  modus = +b.dataset.m; document.querySelectorAll("#modi button").forEach(x => x.setAttribute("aria-pressed", x === b)); toast(NAMEN[modus]);
+  const m = +b.dataset.m; auto = m === 4; if (!auto) modus = m; wechselT = zeit + 5; document.querySelectorAll("#modi button").forEach(x => x.setAttribute("aria-pressed", x === b)); toast(NAMEN[modus]);
 }));
 $("rGroesse").addEventListener("input", e => { groesse = +e.target.value; });
 $("rHeilung").addEventListener("input", e => { heilung = +e.target.value; });
@@ -618,7 +618,7 @@ $("datei").addEventListener("change", async e => {
 window.__au = {
   starten: async () => { await bildStarten("gesichter/gesicht-04.jpg"); los(); },
   zustand: () => { let g = 0, s = 0; for (let i = 0; i < N; i++) { if (sta[i * 6 + 4] > 0) { s++; if (Math.hypot(px[i] - hx[i], py[i] - hy[i]) > 8) g++; } } return { N, sichtbar: s, geloest: g, W, H, modus, zielAnzahl }; },
-  modus: m => { modus = m; }, klang: k => klangWaehlen(k, false), audio: () => ac && { zustand: ac.state, filter: filt.frequency.value, aktiv: !!modusBus, bew, wisch: wGain.gain.value, musik: modusBus ? modusBus.gain.value : 0 }, heilung: h => { heilung = h; }, schritt, zusammensetzen,
+  modus: m => { auto = m === 4; if (!auto) modus = m; }, klang: k => klangWaehlen(k, false), audio: () => ac && { zustand: ac.state, filter: filt.frequency.value, aktiv: !!modusBus, bew, weg: Math.round(wegStrecke), anschlaege: letzterAnschlag }, heilung: h => { heilung = h; }, schritt, zusammensetzen,
 };
 aufbauen();
 </script>

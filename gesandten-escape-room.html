@@ -262,7 +262,7 @@ p { margin: 0; }
       <li>Tipps sind erlaubt. Sie kosten nichts außer Stolz.</li>
     </ul>
     <div class="row">
-      <button class="cta" id="start" type="button">Zum Bild</button>
+      <button class="cta" id="start" type="button">Spiel starten</button>
       <button class="linkbtn" id="reset" type="button" hidden>Neu beginnen</button>
     </div>
   </div>
@@ -984,7 +984,7 @@ p { margin: 0; }
   /* ---------- Start ---------- */
   function showIntro() {
     $('#intro').hidden = false; $('#top').hidden = true; $('#main').hidden = true; $('#dock').hidden = true;
-    $('#start').textContent = S.start ? 'Zurück zum Bild' : 'Zum Bild';
+    $('#start').textContent = S.start ? 'Weiterspielen' : 'Spiel starten';
     $('#reset').hidden = !S.start;
     $('#intro').scrollTop = 0;
   }

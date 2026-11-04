@@ -258,11 +258,11 @@ p { margin: 0; }
     <div class="bubble pop"><span class="who">Der Schädel</span>Seit 1533 schaut mich keiner richtig an. Also habe ich den Spiegel zerbrochen. Vier Splitter, vier Orte im Bild. Ihr habt 30 Minuten. Ich habe Zeit.</div>
     <ul class="rules">
       <li>Spielt zu viert an einem Gerät.</li>
-      <li>Tippt die vier Orte an der Wand an. Mit zwei Fingern oder mit + und − tretet ihr näher an das Bild heran.</li>
+      <li>Tippt die vier Orte im Bild an. Mit zwei Fingern oder mit + und − tretet ihr näher heran.</li>
       <li>Tipps sind erlaubt. Sie kosten nichts außer Stolz.</li>
     </ul>
     <div class="row">
-      <button class="cta" id="start" type="button">Zur Wand</button>
+      <button class="cta" id="start" type="button">Zum Bild</button>
       <button class="linkbtn" id="reset" type="button" hidden>Neu beginnen</button>
     </div>
   </div>
@@ -300,7 +300,7 @@ p { margin: 0; }
   <div class="sheet-in">
     <div class="sh-head">
       <h2><small id="sh-step"></small><span id="sh-title"></span></h2>
-      <button class="cta ghost" id="sh-close" type="button">Zur Wand</button>
+      <button class="cta ghost" id="sh-close" type="button">Zum Bild</button>
     </div>
     <p class="task" id="sh-task"></p>
     <div class="riddle" id="sh-riddle" hidden><small>Wer bin ich?</small><p id="sh-riddle-t"></p></div>
@@ -360,7 +360,7 @@ p { margin: 0; }
           <li>Was würdet ihr heute in ein Vanitas-Bild malen?</li>
         </ol>
         <p class="stat" id="fin-stat"></p>
-        <div class="tools"><button class="cta ghost" id="fin-back" type="button">Zur Wand</button><button class="linkbtn" id="fin-again" type="button">Nochmal von vorn</button></div>
+        <div class="tools"><button class="cta ghost" id="fin-back" type="button">Zum Bild</button><button class="linkbtn" id="fin-again" type="button">Nochmal von vorn</button></div>
       </div>
     </div>
   </div>
@@ -478,12 +478,7 @@ p { margin: 0; }
           view: [830, 790, 2.6], reveal: ['lute', 'neck'],
           opts: [{ t: 'Für Zwietracht, einen Misston im Zusammenklang', ok: 1 }, { t: 'Für Armut, weil man keine neue Saite kaufen kann' }, { t: 'Für den Frühling, wenn alles neu beginnt' }],
           explain: 'Eine gerissene Saite ist ein klassisches Zeichen für Zwietracht. Viele sehen darin den Streit der Konfessionen in der Reformation.',
-          hints: ['Denkt an Töne. Was klingt schief, wenn eine Saite fehlt?'] },
-        { type: 'quiz', task: 'Neben der Laute liegt ein aufgeschlagenes Gesangbuch mit deutschen Liedern. Welches große Ereignis der Zeit steckt damit im Bild?',
-          view: [790, 820, 2.8], reveal: ['score'],
-          opts: [{ t: 'Die Reformation', ok: 1 }, { t: 'Die Entdeckung Amerikas' }, { t: 'Die Erfindung des Buchdrucks' }],
-          explain: 'Seit 1517 stritten Anhänger Luthers und der alten Kirche. Eine gerissene Saite neben einem evangelischen Gesangbuch ist deshalb kein Zufall.',
-          hints: ['Es geht um das Jahr 1533 und den Streit der Kirchen.'] }
+          hints: ['Denkt an Töne. Was klingt schief, wenn eine Saite fehlt?'] }
       ] },
     s3: { q: 2, title: 'Die beiden Männer', sub: 'Macht und Kirche', pos: [270, 520],
       done: 'Weltliche Macht links, Kirche rechts. Beide sind jung und reich, beide stützen sich auf Wissen. Im Original sitzt am Barett des Gesandten sogar eine winzige Totenkopf-Brosche. Der Tod ist schon im Glanz der Macht angekommen.', revTitle: 'Macht und Kirche',
@@ -498,14 +493,7 @@ p { margin: 0; }
             { q: 'Ich bin 25 und Bischof. Mein dunkler Talar reicht bis zu den Füßen.', a: 'manR' },
             { q: 'Ich trage Pelz, Kette und Dolch und stehe für weltliche Macht.', a: 'manL' }
           ],
-          hints: ['Links steht der Mann mit dem Pelz, rechts der im dunklen Talar.', 'Der Jüngere steht rechts.'] },
-        { type: 'who', task: 'Zwei Dinge verraten noch mehr über die Männer. Zoomt heran und tippt sie an.',
-          view: [830, 470, 1.8], keys: ['carpet', 'book25'],
-          prompts: [
-            { q: 'Ich liege unter den Instrumenten, bin geknüpft und komme aus dem Osten. Mein Muster zeigt Reichtum.', a: 'carpet' },
-            { q: 'Ich bin ein Buch am Tischrand. Auf mir steht das Alter des Bischofs. Zoomt ganz nah heran.', a: 'book25' }
-          ],
-          hints: ['Der Teppich liegt unter den Instrumenten auf dem Tisch.', 'Das Buch liegt am rechten Tischrand, unter dem Ellbogen des Bischofs.', { text: 'Ich zoome euch heran.', view: [860, 425, 5] }] }
+          hints: ['Links steht der Mann mit dem Pelz, rechts der im dunklen Talar.', 'Der Jüngere steht rechts.'] }
       ] },
     s4: { q: 3, title: 'Boden und Ecke', sub: 'Zwei Gäste', pos: [430, 1170],
       done: 'Ein Schädel am Boden, ein Kreuz in der Ecke und ein Marmorboden aus der Krönungskirche. Der Tod ist groß, die Hoffnung klein, und beide sind leicht zu übersehen.', revTitle: 'Zwei Gäste',
@@ -515,11 +503,7 @@ p { margin: 0; }
           hints: ['Es ist lang und hell und liegt schräg.', 'Es zieht sich diagonal von links unten nach rechts oben, zwischen den Füßen der beiden.'] },
         { type: 'find', task: 'Ein zweiter, winziger Gast versteckt sich im Bild. Er ist das Gegenteil vom ersten. Findet ihn.',
           view: [640, 630, 1], keys: ['cross'], pool: ['cross'], need: 1, label: 'Zweiter Gast',
-          hints: ['Er ist sehr klein und sehr weit oben.', 'Sucht am Rand des Bildes, hinter dem Vorhang.', { text: 'Ganz oben links in der Ecke. Ich zoome euch heran.', view: [60, 85, 4.6] }] },
-        { type: 'who', task: 'Zum Schluss der Boden, auf dem alles steht.',
-          view: [640, 1000, 1.4], keys: ['floor', 'skull'],
-          prompts: [{ q: 'Ich bin ein Marmorboden aus bunten Steinchen. Es gibt mich wirklich, in einer berühmten Kirche in London.', a: 'floor' }],
-          hints: ['Ganz unten im Bild, unter den Füßen der beiden Männer.'] }
+          hints: ['Er ist sehr klein und sehr weit oben.', 'Sucht am Rand des Bildes, hinter dem Vorhang.', { text: 'Ganz oben links in der Ecke. Ich zoome euch heran.', view: [60, 85, 4.6] }] }
       ] }
   };
   var IDS = ['s1', 's2', 's3', 's4'];
@@ -712,7 +696,7 @@ p { margin: 0; }
   function buildWall() {
     var host = $('#stage');
     chips = {};
-    wall = Zoom(host, { view: [W / 2, H / 2, 1], onView: placeChips, label: 'Das Gemälde Die Gesandten an der Wand. Zoombar.' });
+    wall = Zoom(host, { view: [W / 2, H / 2, 1], onView: placeChips, label: 'Das Gemälde Die Gesandten. Zoombar.' });
     IDS.forEach(function (id) {
       var b = document.createElement('button');
       b.type = 'button'; b.className = 'chip'; b.setAttribute('data-id', id);
@@ -904,7 +888,7 @@ p { margin: 0; }
   function showReveal(id, again) {
     var st = ST[id], box = $('#sh-reveal');
     box.hidden = false;
-    box.innerHTML = '<div class="got">' + mirrorSVG(84, again ? null : id) + '<p>Spiegelsplitter ' + (st.q + 1) + ' von 4</p></div><h3>' + st.revTitle + '</h3><p class="txt">' + st.done + '</p><div><button class="cta" type="button" id="rv-back">Zur Wand</button></div>';
+    box.innerHTML = '<div class="got">' + mirrorSVG(84, again ? null : id) + '<p>Spiegelsplitter ' + (st.q + 1) + ' von 4</p></div><h3>' + st.revTitle + '</h3><p class="txt">' + st.done + '</p><div><button class="cta" type="button" id="rv-back">Zum Bild</button></div>';
     $('#rv-back').addEventListener('click', closeStation);
     if (!again) setTimeout(function () { box.scrollIntoView({ behavior: RM ? 'auto' : 'smooth', block: 'center' }); }, 150);
   }
@@ -1000,7 +984,7 @@ p { margin: 0; }
   /* ---------- Start ---------- */
   function showIntro() {
     $('#intro').hidden = false; $('#top').hidden = true; $('#main').hidden = true; $('#dock').hidden = true;
-    $('#start').textContent = S.start ? 'Zurück zur Wand' : 'Zur Wand';
+    $('#start').textContent = S.start ? 'Zurück zum Bild' : 'Zum Bild';
     $('#reset').hidden = !S.start;
     $('#intro').scrollTop = 0;
   }
@@ -1009,7 +993,7 @@ p { margin: 0; }
     $('#intro').hidden = true; $('#top').hidden = false; $('#main').hidden = false; $('#dock').hidden = false;
     buildWall(); refresh(); startClock();
     window.scrollTo(0, 0);
-    say(doneCount() === 0 ? 'Willkommen an der Wand. Vier Orte leuchten. Ich warte. Ich habe Zeit, ihr nicht.' : 'Ihr seid zurück. Wie schön. Nein, ich meine es nicht so.');
+    say(doneCount() === 0 ? 'Willkommen vor dem Bild. Vier Orte leuchten. Ich warte. Ich habe Zeit, ihr nicht.' : 'Ihr seid zurück. Wie schön. Nein, ich meine es nicht so.');
   }
   $('#start').addEventListener('click', begin);
   $('#reset').addEventListener('click', function () { fresh(); said = {}; showIntro(); });
@@ -1017,4 +1001,224 @@ p { margin: 0; }
 })();
 </script>
 
-<a class="zurueck" href="index.html" aria-label="Zurück zur Übersicht">← Übersicht</a><style>.zurueck{position:fixed;bottom:max(12px,env(safe-area-inset-bottom));left:max(12px,env(safe-area-inset-left));z-index:9999;font:400 14px/1 Georgia,serif;color:#efe6d2;background:rgba(16,12,11,.7);border:1px solid rgba(255,255,255,.25);border-radius:999px;padding:9px 14px;text-decoration:none;touch-action:manipulation}.zurueck:focus-visible{outline:2px solid #d8ae52;outline-offset:3px}</style></body></html>
+<a class="zurueck" href="index.html" aria-label="Zurück zur Übersicht">← Übersicht</a><style>.zurueck{position:fixed;bottom:max(12px,env(safe-area-inset-bottom));left:max(12px,env(safe-area-inset-left));z-index:9999;font:400 14px/1 Georgia,serif;color:#efe6d2;background:rgba(16,12,11,.7);border:1px solid rgba(255,255,255,.25);border-radius:999px;padding:9px 14px;text-decoration:none;touch-action:manipulation}.zurueck:focus-visible{outline:2px solid #d8ae52;outline-offset:3px}</style><script>
+// Der Zurück-Link reagiert auf dem Handy auch dann, wenn die Seite Berührungen sonst abfängt
+(function () {
+  var a = document.querySelector('.zurueck'); if (!a) return;
+  ['touchstart', 'pointerdown', 'mousedown'].forEach(function (t) { a.addEventListener(t, function (e) { e.stopPropagation(); }, { passive: true }); });
+  a.addEventListener('touchend', function (e) { e.preventDefault(); e.stopPropagation(); location.href = a.getAttribute('href'); }, { passive: false });
+})();
+</script>
+<style>
+/* Trainer, Karteikarten und Quiz zu Bild, Maler, Zeit und Malweise */
+.trbtn { padding: 8px 14px; min-height: 40px; font-size: 14px; white-space: nowrap; }
+#tr { z-index: 160; }
+#tr-body { display: grid; gap: 14px; }
+.tr-chips { display: flex; flex-wrap: wrap; gap: 8px; }
+.tr-chips button { background: var(--panel-2); border: 1px solid var(--line); border-radius: 999px; padding: 8px 14px; font-size: 14px; min-height: 40px; }
+.tr-chips button[aria-pressed="true"] { border-color: var(--gold); background: #3a2d17; color: var(--gold); }
+.tr-chips small { color: var(--ink-dim); margin-left: 6px; }
+.tr-mode { display: flex; gap: 8px; }
+.tr-mode button { flex: 1; }
+.tr-mode button[aria-pressed="true"] { background: var(--gold); color: #1a1405; border-color: var(--gold); }
+.tr-card { background: var(--paper); color: var(--paper-ink); border-radius: 4px; padding: 22px 20px; display: flex; flex-direction: column; gap: 14px; min-height: 230px; box-shadow: 0 8px 28px #0008; }
+.tr-card .kat { font-size: 12px; letter-spacing: .14em; text-transform: uppercase; color: #7a5a1c; }
+.tr-card .frage { font-family: var(--font-display); font-style: italic; font-size: clamp(24px, 6vw, 32px); line-height: 1.15; }
+.tr-card .antwort { border-top: 1px solid #b9a97f; padding-top: 12px; display: grid; gap: 6px; }
+.tr-card .antwort b { font-size: 18px; }
+.tr-card .antwort span { font-size: 16px; }
+.tr-bew { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+.tr-bew button { border-radius: 3px; padding: 12px 8px; min-height: 50px; border: 1px solid var(--gold-soft); background: var(--panel-2); font-weight: 700; }
+.tr-bew button.ja { border-color: var(--good); }
+.tr-bew button.nein { border-color: var(--alarm); }
+.tr-meta { display: flex; justify-content: space-between; color: var(--ink-dim); font-size: 14px; }
+.tr-bar { height: 6px; background: var(--panel-2); border-radius: 3px; overflow: hidden; }
+.tr-bar i { display: block; height: 100%; background: var(--gold); transition: width .3s ease; }
+.tr-sum { text-align: center; display: grid; gap: 12px; padding: 20px 0; }
+.tr-sum h3 { font-size: 30px; font-style: italic; }
+</style>
+<div class="sheet" id="tr" role="dialog" aria-modal="true" aria-labelledby="tr-title" hidden>
+  <div class="sheet-in">
+    <div class="sh-head"><h2><small>Üben und merken</small><span id="tr-title">Trainer</span></h2><button class="cta ghost" id="tr-close" type="button">Schließen</button></div>
+    <div class="tr-chips" id="tr-kat" role="group" aria-label="Themenbereich"></div>
+    <div class="tr-mode" role="group" aria-label="Übungsart">
+      <button class="cta ghost" id="tr-m-karte" type="button" aria-pressed="true">Karten</button>
+      <button class="cta ghost" id="tr-m-quiz" type="button" aria-pressed="false">Quiz</button>
+    </div>
+    <div class="tr-meta"><span id="tr-pos"></span><span id="tr-gelernt"></span></div>
+    <div class="tr-bar" aria-hidden="true"><i id="tr-bar"></i></div>
+    <div id="tr-body" aria-live="polite"></div>
+    <button class="linkbtn" id="tr-reset" type="button">Fortschritt zurücksetzen</button>
+  </div>
+</div>
+<script>
+(function () {
+  var KEY = 'gesandten-trainer-v1';
+  var KATS = [
+    { id: 'alle', n: 'Alles' },
+    { id: 'wort', n: 'Fachwörter' },
+    { id: 'maler', n: 'Der Maler' },
+    { id: 'zeit', n: 'Die Zeit' },
+    { id: 'technik', n: 'Malweise' },
+    { id: 'bild', n: 'Zeichen im Bild' }
+  ];
+  /* f = Frage, k = kurze Antwort, b = Erklärung */
+  var C = [
+    { id: 'w1', c: 'wort', f: 'Was ist eine Anamorphose?', k: 'Ein verzerrtes Bild, das nur aus einem bestimmten Blickwinkel richtig aussieht', b: 'Das Motiv ist so in die Länge gezogen, dass man es von vorn kaum erkennt. Der Schädel bei den Gesandten wird erst schräg von der Seite lesbar.' },
+    { id: 'w2', c: 'wort', f: 'Was bedeutet Vanitas?', k: 'Die Vergänglichkeit und Eitelkeit des Lebens', b: 'Das Wort ist lateinisch und heißt Nichtigkeit. Typisch sind Totenköpfe, Uhren und welkende Blumen. Sie sagen, dass Reichtum und Wissen nicht ewig halten.' },
+    { id: 'w3', c: 'wort', f: 'Was heißt Memento mori?', k: 'Bedenke, dass du sterben musst', b: 'Eine lateinische Mahnung. Der Schädel mitten im Glanz des Bildes ist so eine Mahnung.' },
+    { id: 'w4', c: 'wort', f: 'Was ist ein Doppelporträt?', k: 'Ein Bild, das zwei Personen zusammen zeigt', b: 'Hier stehen Jean de Dinteville links und Georges de Selve rechts, getrennt durch das Regal.' },
+    { id: 'w5', c: 'wort', f: 'Was ist ein Symbol?', k: 'Ein Gegenstand, der für etwas anderes steht', b: 'Die gerissene Saite der Laute meint nicht nur eine kaputte Laute. Sie steht für Zwietracht.' },
+    { id: 'w6', c: 'wort', f: 'Was ist die Zentralperspektive?', k: 'Eine Darstellung, bei der alle Tiefenlinien auf einen Fluchtpunkt zulaufen', b: 'Seit der Renaissance baut man Räume so, dass sie auf dem Bild räumlich wirken. Die Anamorphose spielt bewusst mit dieser Ordnung.' },
+    { id: 'w7', c: 'wort', f: 'Was bedeutet Quadrivium?', k: 'Die vier Künste Arithmetik, Geometrie, Musik und Astronomie', b: 'Sie galten damals als Grundlage des höheren Wissens. Ihre Gegenstände stehen auf den beiden Regalbrettern.' },
+    { id: 'w8', c: 'wort', f: 'Was ist ein Auftraggeber?', k: 'Wer ein Kunstwerk bestellt und bezahlt', b: 'Das Bild hat wohl Jean de Dinteville in Auftrag gegeben. Er wollte sich und seinen Freund wirkungsvoll zeigen.' },
+    { id: 'w9', c: 'wort', f: 'Was ist ein Hofmaler?', k: 'Ein Maler, der fest im Dienst eines Herrschers arbeitet', b: 'Holbein war ab 1536 Hofmaler des englischen Königs Heinrich VIII.' },
+    { id: 'w10', c: 'wort', f: 'Was ist eine Lasur?', k: 'Eine dünne, durchscheinende Farbschicht über einer anderen', b: 'Mit Ölfarbe kann man viele dünne Schichten übereinander legen. So entstehen Tiefe, Glanz und weiche Übergänge.' },
+    { id: 'w11', c: 'wort', f: 'Was ist ein Attribut in der Bildkunst?', k: 'Ein Gegenstand, der Stand oder Eigenschaft einer Person zeigt', b: 'Kette und Dolch gehören zum Gesandten, Bücher und dunkler Talar zum Bischof.' },
+    { id: 'w12', c: 'wort', f: 'Was meint der Begriff Komposition?', k: 'Den Aufbau eines Bildes aus Figuren, Formen und Linien', b: 'Hier stehen zwei Männer außen, dazwischen ein Regal, und unten liegt als Diagonale der Schädel.' },
+
+    { id: 'm1', c: 'maler', f: 'Wer malte Die Gesandten?', k: 'Hans Holbein der Jüngere', b: 'Er wurde um 1497 in Augsburg geboren und starb 1543 in London.' },
+    { id: 'm2', c: 'maler', f: 'Warum heißt er Holbein der Jüngere?', k: 'Sein Vater hieß auch Hans Holbein und war Maler', b: 'Zur Unterscheidung nennt man den Vater der Ältere und den Sohn der Jüngere.' },
+    { id: 'm3', c: 'maler', f: 'In welcher Stadt arbeitete Holbein lange, bevor er nach England ging?', k: 'In Basel', b: 'In Basel malte er unter anderem den Gelehrten Erasmus von Rotterdam.' },
+    { id: 'm4', c: 'maler', f: 'Welcher König machte Holbein zum Hofmaler?', k: 'Heinrich VIII. von England', b: 'Das war ab 1536. Holbein malte den König und sein Gefolge.' },
+    { id: 'm5', c: 'maler', f: 'Woran starb Holbein 1543?', k: 'Vermutlich an der Pest in London', b: 'Genau weiß man es nicht, aber die Pest gilt als wahrscheinlich.' },
+    { id: 'm6', c: 'maler', f: 'Welche Bilderfolge zum Tod schuf Holbein außerdem?', k: 'Holzschnitte zum Totentanz', b: 'Der Tod holt darin Menschen jeden Standes. Gedruckt wurde die Folge 1538. Das Thema steckt auch in den Gesandten.' },
+
+    { id: 'z1', c: 'zeit', f: 'In welchem Jahr entstand Die Gesandten?', k: '1533', b: 'Es war eine unruhige Zeit. Heinrich VIII. lag im Streit mit Rom, und in Europa stritten die Konfessionen.' },
+    { id: 'z2', c: 'zeit', f: 'Wo hängt das Bild heute?', k: 'In der National Gallery in London', b: 'Es ist dort eines der berühmtesten Bilder.' },
+    { id: 'z3', c: 'zeit', f: 'Wer ist der Mann links im Bild?', k: 'Jean de Dinteville, Gesandter des französischen Königs', b: 'Er war 29 Jahre alt und vertrat König Franz I. am englischen Hof.' },
+    { id: 'z4', c: 'zeit', f: 'Wer ist der Mann rechts im Bild?', k: 'Georges de Selve, Bischof von Lavaur', b: 'Er war 25 Jahre alt, Diplomat und besuchte seinen Freund 1533 in London.' },
+    { id: 'z5', c: 'zeit', f: 'Was löste Martin Luther 1517 aus?', k: 'Die Reformation und die Spaltung der Kirche', b: 'Im Bild begegnet sie im Gesangbuch und in der gerissenen Saite der Laute.' },
+    { id: 'z6', c: 'zeit', f: 'Was tat Heinrich VIII. von England um 1534?', k: 'Er löste die englische Kirche von Rom', b: 'Er wollte seine Ehe beenden, der Papst war dagegen. Danach stand er selbst an der Spitze der englischen Kirche. Die Gesandten fallen mitten in diese unruhige Zeit.' },
+    { id: 'z7', c: 'zeit', f: 'Wie groß ist das Bild ungefähr?', k: 'Etwa zwei mal zwei Meter', b: 'Die Männer stehen fast in Lebensgröße vor einem. Das erhöht die Wirkung.' },
+
+    { id: 't1', c: 'technik', f: 'Womit und worauf ist das Bild gemalt?', k: 'Mit Ölfarbe auf einer Holztafel', b: 'Öl lässt sich in feinen Schichten auftragen und trocknet langsam. Das passt zu sehr genauer Malerei.' },
+    { id: 't2', c: 'technik', f: 'Warum malte Holbein einen verzerrten Schädel?', k: 'Als Mahnung, die man erst bei einem Wechsel des Standpunkts entdeckt', b: 'Wer nur geradeaus schaut, sieht Macht und Wissen. Erst wer seinen Standpunkt ändert, erkennt den Tod. Das spielt ihr am Ende des Spiels nach.' },
+    { id: 't3', c: 'technik', f: 'Wie wird der Schädel im Bild lesbar?', k: 'Aus einem sehr schrägen Blickwinkel von der Seite', b: 'Von vorn sieht man nur einen hellen Streifen.' },
+    { id: 't4', c: 'technik', f: 'Wie malt Holbein Stoffe wie Seide und Pelz?', k: 'Mit sehr genauer Detailmalerei, man spürt das Material', b: 'Glanz auf der Seide, Struktur im Pelz und Muster im Teppich sind so genau, dass man sie fast anfassen möchte.' },
+    { id: 't5', c: 'technik', f: 'Wie nennt man den Teppichtyp auf dem Tisch heute?', k: 'Holbein-Teppich', b: 'Holbein malte solche anatolischen Teppiche so oft, dass der Typ seinen Namen trägt.' },
+    { id: 't6', c: 'technik', f: 'Wie ist das Bild aufgebaut?', k: 'Zwei Figuren außen, in der Mitte ein zweistöckiges Regal', b: 'Oben liegt das Wissen vom Himmel, unten das von Musik und Zahlen. Unter allem liegt der Boden mit dem Schädel.' },
+
+    { id: 'b1', c: 'bild', f: 'Wofür steht die gerissene Saite der Laute?', k: 'Für Zwietracht und Misston', b: 'Viele sehen darin den Streit der Konfessionen in der Reformation.' },
+    { id: 'b2', c: 'bild', f: 'Welches Ereignis steckt im aufgeschlagenen Gesangbuch?', k: 'Die Reformation', b: 'Es ist ein evangelisches Gesangbuch nach Johann Walter, 1524, mit deutschen Liedern.' },
+    { id: 'b3', c: 'bild', f: 'Wofür stehen die Messgeräte auf dem oberen Tisch?', k: 'Für Wissen, aber auch für die ablaufende Zeit', b: 'Wer Zeit misst, erinnert daran, dass sie vergeht. Globus, Quadrant, Torquetum und Sonnenuhren gehören dazu.' },
+    { id: 'b4', c: 'bild', f: 'Was bedeutet das Kruzifix oben links?', k: 'Hoffnung auf Auferstehung', b: 'Es ist klein und fast verdeckt, das Gegenstück zum großen Schädel.' },
+    { id: 'b5', c: 'bild', f: 'Was verrät die kleine Brosche am Barett im Original?', k: 'Einen Totenkopf, also einen Hinweis auf den Tod', b: 'Erst die Restaurierung machte sie wieder sichtbar. Der Tod steckt schon im Glanz der Macht.' },
+    { id: 'b6', c: 'bild', f: 'Wofür steht die Kette vor der Brust des Gesandten?', k: 'Für eine hohe Auszeichnung des französischen Königs', b: 'Sie trägt eine Medaille des Michaelsordens.' },
+    { id: 'b7', c: 'bild', f: 'Welcher Ort ist im Mosaikboden zitiert?', k: 'Die Westminster Abbey in London', b: 'Das ist die Kirche, in der Könige gekrönt werden. Marmor und bunte Steinchen stehen für Pracht.' },
+    { id: 'b8', c: 'bild', f: 'Welche Altersangaben stehen im Bild?', k: '29 am Dolch und 25 am Buch', b: 'Der Gesandte ist 29, der Bischof 25. Beide sind jung, reich und mächtig.' }
+  ];
+
+  var S = { box: {}, rec: {} };
+  try { var r = JSON.parse(localStorage.getItem(KEY) || 'null'); if (r && r.box) S = r; } catch (e) {}
+  function save() { try { localStorage.setItem(KEY, JSON.stringify(S)); } catch (e) {} }
+  var $ = function (s) { return document.querySelector(s); };
+  var kat = 'alle', mode = 'karte', deck = [], pos = 0, richtig = 0, offen = false, vorher = null;
+
+  function box(id) { return S.box[id] || 0; }
+  function inKat() { return C.filter(function (c) { return kat === 'alle' || c.c === kat; }); }
+  function gelernt(list) { return list.filter(function (c) { return box(c.id) >= 2; }).length; }
+  function shuffle(a) { a = a.slice(); for (var i = a.length - 1; i > 0; i--) { var j = Math.floor(Math.random() * (i + 1)), t = a[i]; a[i] = a[j]; a[j] = t; } return a; }
+
+  /* Karten mit niedrigem Fach kommen häufiger. Ein Durchgang hat bis zu zehn Karten. */
+  function neuerDurchgang() {
+    var pool = inKat().map(function (c) { return { c: c, w: [6, 3, 1.5, .6][box(c.id)] * (0.6 + Math.random()) }; });
+    pool.sort(function (a, b) { return b.w - a.w; });
+    var n = Math.min(10, pool.length);
+    deck = shuffle(pool.slice(0, n).map(function (p) { return p.c; }));
+    if (vorher && deck.length > 1 && deck[0].id === vorher) deck.push(deck.shift());
+    pos = 0; richtig = 0; offen = false; zeichnen();
+  }
+
+  function bewerten(c, stufe) {   // stufe 2 gewusst, 1 fast, 0 nicht
+    var b = box(c.id), rec = S.rec[c.id] || (S.rec[c.id] = { r: 0, w: 0 });
+    if (stufe === 2) { S.box[c.id] = Math.min(3, b + 1); rec.r++; richtig++; }
+    else if (stufe === 1) { S.box[c.id] = Math.max(b, 1); }
+    else { S.box[c.id] = 0; rec.w++; }
+    save(); vorher = c.id;
+  }
+
+  function chips() {
+    var h = '';
+    KATS.forEach(function (k) {
+      var l = C.filter(function (c) { return k.id === 'alle' || c.c === k.id; });
+      h += '<button type="button" data-k="' + k.id + '" aria-pressed="' + (k.id === kat) + '">' + k.n + '<small>' + gelernt(l) + '/' + l.length + '</small></button>';
+    });
+    $('#tr-kat').innerHTML = h;
+  }
+
+  function optionen(c) {
+    var gleich = C.filter(function (x) { return x.id !== c.id && x.c === c.c; });
+    var fremd = C.filter(function (x) { return x.id !== c.id && x.c !== c.c; });
+    var falsch = shuffle(gleich).slice(0, 3);
+    if (falsch.length < 3) falsch = falsch.concat(shuffle(fremd).slice(0, 3 - falsch.length));
+    return shuffle([{ t: c.k, ok: 1 }].concat(falsch.map(function (x) { return { t: x.k }; })));
+  }
+
+  function zeichnen() {
+    chips();
+    var l = inKat(), body = $('#tr-body');
+    $('#tr-gelernt').textContent = 'Sicher gelernt ' + gelernt(l) + ' von ' + l.length;
+    $('#tr-m-karte').setAttribute('aria-pressed', mode === 'karte'); $('#tr-m-quiz').setAttribute('aria-pressed', mode === 'quiz');
+    if (!deck.length) { body.innerHTML = ''; return; }
+    $('#tr-bar').style.width = Math.round(100 * pos / deck.length) + '%';
+    if (pos >= deck.length) {
+      $('#tr-pos').textContent = 'Geschafft';
+      body.innerHTML = '<div class="tr-sum"><h3>' + richtig + ' von ' + deck.length + ' sicher gewusst</h3><p>Karten, die ihr noch nicht sicher wisst, kommen im nächsten Durchgang öfter dran.</p><button class="cta" id="tr-again" type="button">Noch ein Durchgang</button></div>';
+      $('#tr-again').onclick = neuerDurchgang; return;
+    }
+    var c = deck[pos];
+    $('#tr-pos').textContent = 'Karte ' + (pos + 1) + ' von ' + deck.length;
+    var kn = KATS.filter(function (k) { return k.id === c.c; })[0].n;
+    if (mode === 'karte') {
+      var h = '<div class="tr-card"><div class="kat">' + kn + '</div><div class="frage">' + c.f + '</div>';
+      if (offen) h += '<div class="antwort"><b>' + c.k + '</b><span>' + c.b + '</span></div>';
+      h += '</div>';
+      if (!offen) h += '<button class="cta" id="tr-zeig" type="button">Antwort zeigen</button>';
+      else h += '<div class="tr-bew"><button class="nein" data-s="0" type="button">Noch nicht</button><button data-s="1" type="button">Fast</button><button class="ja" data-s="2" type="button">Gewusst</button></div>';
+      body.innerHTML = h;
+      if (!offen) $('#tr-zeig').onclick = function () { offen = true; zeichnen(); $('#tr-body').scrollIntoView({ block: 'nearest' }); };
+      else body.querySelectorAll('.tr-bew button').forEach(function (b) { b.onclick = function () { bewerten(c, +b.dataset.s); pos++; offen = false; zeichnen(); }; });
+    } else {
+      var opts = optionen(c), h2 = '<div class="tr-card"><div class="kat">' + kn + '</div><div class="frage">' + c.f + '</div></div><div class="opts" id="tr-opts"></div><div class="explain" id="tr-ex" hidden></div><button class="cta" id="tr-weiter" type="button" hidden>Weiter</button>';
+      body.innerHTML = h2;
+      var box_ = $('#tr-opts'), beantwortet = false;
+      opts.forEach(function (op) {
+        var b = document.createElement('button'); b.type = 'button'; b.textContent = op.t;
+        b.onclick = function () {
+          if (beantwortet) return; beantwortet = true;
+          box_.querySelectorAll('button').forEach(function (x) { x.disabled = true; });
+          if (op.ok) { b.classList.add('good'); bewerten(c, 2); } else { b.classList.add('bad'); bewerten(c, 0); box_.querySelectorAll('button').forEach(function (x) { if (x.textContent === c.k) x.classList.add('good'); }); }
+          var ex = $('#tr-ex'); ex.hidden = false; ex.textContent = (op.ok ? 'Richtig. ' : 'Nicht ganz. ') + c.b;
+          var w = $('#tr-weiter'); w.hidden = false; w.focus(); w.onclick = function () { pos++; zeichnen(); };
+        };
+        box_.appendChild(b);
+      });
+    }
+  }
+
+  function oeffnen() {
+    var el = $('#tr'); if (!el.hidden) return;
+    el.hidden = false; document.body.classList.add('lock'); el.scrollTop = 0;
+    if (!deck.length || pos >= deck.length) neuerDurchgang(); else zeichnen();
+    setTimeout(function () { $('#tr-close').focus(); }, 30);
+  }
+  function schliessen() { $('#tr').hidden = true; document.body.classList.remove('lock'); }
+
+  $('#tr-close').onclick = schliessen;
+  $('#tr-kat').addEventListener('click', function (e) { var b = e.target.closest('button'); if (!b) return; kat = b.dataset.k; neuerDurchgang(); });
+  $('#tr-m-karte').onclick = function () { mode = 'karte'; neuerDurchgang(); };
+  $('#tr-m-quiz').onclick = function () { mode = 'quiz'; neuerDurchgang(); };
+  $('#tr-reset').onclick = function () { if (confirm('Den Lernfortschritt im Trainer wirklich zurücksetzen?')) { S = { box: {}, rec: {} }; save(); neuerDurchgang(); } };
+  document.addEventListener('keydown', function (e) { if (e.key === 'Escape' && !$('#tr').hidden) schliessen(); });
+
+  /* Zugänge, immer erreichbar, in der Einleitung, in der Kopfzeile, im Katalog und am Ende */
+  function knopf(text) { var b = document.createElement('button'); b.type = 'button'; b.className = 'cta ghost trbtn'; b.textContent = text; b.addEventListener('click', oeffnen); return b; }
+  var st = $('#start'); if (st && st.parentNode) st.parentNode.insertBefore(knopf('Trainer'), st.nextSibling);
+  var top = $('#top .clock'); if (top) top.parentNode.insertBefore(knopf('Trainer'), top);
+  var bl = $('#bk-list'); if (bl) bl.parentNode.insertBefore(knopf('Im Trainer üben'), bl.nextSibling);
+  var fb = $('#fin-back'); if (fb && fb.parentNode) fb.parentNode.insertBefore(knopf('Trainer'), fb);
+  window.__trainer = { oeffnen: oeffnen, karten: C.length };
+})();
+</script>
+</body></html>

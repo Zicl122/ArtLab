@@ -50,6 +50,18 @@
   header a { color: var(--text); text-underline-offset: 4px; text-decoration-color: rgba(255,255,255,.4); }
   .kachel[hidden] { display: none; }
   a:focus-visible { outline: 2px solid var(--focus); outline-offset: 3px; border-radius: 4px; }
+
+  .startprompt { font: inherit; font-size: .92rem; color: var(--text); background: none; border: 0; padding: 0; margin-left: 16px; cursor: pointer; text-decoration: underline; text-underline-offset: 4px; text-decoration-color: rgba(255,255,255,.4); touch-action: manipulation; }
+  .startprompt:focus-visible, dialog button:focus-visible { outline: 2px solid var(--focus); outline-offset: 3px; border-radius: 4px; }
+  dialog { width: min(92vw, 640px); max-height: 86vh; padding: 0; border: 1px solid var(--line); border-radius: 14px; background: var(--panel); color: var(--text); }
+  dialog::backdrop { background: rgba(3, 4, 12, .72); }
+  .dlg { padding: 22px 22px 20px; display: flex; flex-direction: column; gap: 14px; max-height: 86vh; }
+  .dlg h2 { font-weight: 400; font-size: 1.35rem; line-height: 1.2; margin: 0; }
+  .dlg p { margin: 0; color: var(--muted); font-size: .92rem; line-height: 1.45; }
+  .dlg pre { margin: 0; padding: 14px 16px; background: #05060f; border: 1px solid var(--line); border-radius: 10px; font: inherit; font-size: .95rem; line-height: 1.5; white-space: pre-wrap; overflow-wrap: anywhere; overflow-y: auto; user-select: text; -webkit-user-select: text; }
+  .dlg .knoepfe { display: flex; gap: 10px; flex-wrap: wrap; }
+  .dlg button { font: inherit; font-size: .95rem; padding: .6em 1.2em; border-radius: 999px; cursor: pointer; border: 1px solid var(--line); background: transparent; color: var(--text); touch-action: manipulation; }
+  .dlg button.primaer { background: var(--text); color: var(--bg); border-color: transparent; }
   @media (max-width: 420px) { .unten { flex-direction: column; align-items: flex-start; } .qr { width: 132px; } }
   @media (prefers-reduced-motion: reduce) { .bild img { transition: none; } }
 </style>
@@ -64,6 +76,15 @@
   <section class="raster" id="raster" aria-label="Projekte"></section>
   <footer style="margin-top:48px;font-size:.9rem;color:var(--muted)"><a href="impressum.html" style="color:inherit">Impressum</a> · <a href="datenschutz.html" style="color:inherit">Datenschutz</a></footer>
 </main>
+
+<dialog id="promptDialog" aria-labelledby="pdTitel">
+  <div class="dlg">
+    <h2 id="pdTitel"></h2>
+    <p>So könntest du eine ähnliche Seite bauen. Kopiere den Auftrag, füge ihn bei Claude oder ChatGPT ein und passe ihn nach Lust und Laune an.</p>
+    <pre id="pdText" tabindex="0"></pre>
+    <div class="knoepfe"><button type="button" class="primaer" id="pdKopieren">Kopieren</button><button type="button" id="pdZu">Schließen</button></div>
+  </div>
+</dialog>
 
 <script src="qrcode.js"></script>
 <script>
@@ -90,6 +111,7 @@ const PROJEKTE = [
     text: "Leuchtende Spuren folgen dem Finger und ziehen in weichen Strömungen davon.",
     seite: "fliessendes-licht.html",
     bereiche: "produktion",
+    prompt: "Baue mir eine einzelne HTML-Seite im Vollbild auf dunklem Grund. Leuchtende Lichtspuren sollen dem Finger oder der Maus folgen und in weichen Strömungen davonziehen, wie Licht im Wasser. Die Spuren verblassen langsam und schimmern in sanften Farben. Es soll auf dem Handy flüssig laufen und ohne Konto und Server auskommen.",
     bild: "vorschau/fliessendes-licht.jpg",
     alt: "Leuchtende blau-violette Lichtspuren auf dunklem Grund"
   },
@@ -98,6 +120,7 @@ const PROJEKTE = [
     text: "Eine Strömung aus feinen Farblinien, die sich mit dem Finger verwirbeln lässt.",
     seite: "datenpigment.html",
     bereiche: "produktion",
+    prompt: "Baue mir eine Seite, auf der tausende feine Farblinien in einer ruhigen Strömung fließen. Die Linien färben sich nach ihrer Bewegungsrichtung, zum Beispiel in Blau, Cyan, Mint, Gold, Magenta und Violett. Wenn ich mit dem Finger oder der Maus hindurchfahre, soll sich die Strömung verwirbeln wie bei einer Hand in Flüssigkeit. Dunkler Hintergrund, die Spuren verblassen langsam. Eine einzelne HTML-Datei, flüssig auf dem Handy.",
     bild: "vorschau/datenpigment.jpg",
     alt: "Dichte Strömung aus feinen violetten, blauen und goldenen Linien"
   },
@@ -106,6 +129,7 @@ const PROJEKTE = [
     text: "Van Goghs Gemälde als Strömung aus Farblinien, die den Pinselstrichen folgen und sich verwirbeln lassen.",
     seite: "sternennacht-fliessend.html",
     bereiche: "rezeption",
+    prompt: "Nimm Van Goghs Sternennacht als Bild und lass die Farben als feine Linien den Pinselstrichen folgen, sodass das Gemälde wie eine Strömung wirkt. Mit Finger oder Maus soll sich die Strömung verwirbeln lassen. Das Bild soll als Datei neben der Seite liegen, damit alles ohne Anfragen nach außen läuft. Es soll auch auf dem Handy flüssig sein.",
     bild: "vorschau/sternennacht-fliessend.jpg",
     alt: "Van Goghs Sternennacht, aus feinen blauen und gelben Linien gezeichnet"
   },
@@ -114,6 +138,7 @@ const PROJEKTE = [
     text: "Spreize die Finger vor der Kamera, und zwischen den Fingerspitzen ziehen sich leuchtende Fäden aus Farbe wie Kaugummi. Braucht die Kamera.",
     seite: "pigmentfaeden.html",
     bereiche: "produktion",
+    prompt: "Baue mir eine Seite, die mit der Kamera meine Hand erkennt, direkt im Browser mit MediaPipe. Wenn ich die Finger spreize, sollen sich zwischen den Fingerspitzen leuchtende Fäden aus Farbe ziehen wie Kaugummi und irgendwann reißen. Bei zwei Händen sollen auch zwischen den Händen Fäden entstehen. Das Kamerabild darf das Gerät nicht verlassen. Eine HTML-Datei, die auf dem Handy läuft.",
     bild: "vorschau/pigmentfaeden.jpg",
     alt: "Leuchtende bunte Fäden zwischen den Fingerspitzen zweier Hände auf dunklem Grund"
   },
@@ -122,6 +147,7 @@ const PROJEKTE = [
     text: "Halte eine oder beide Hände vor die Kamera. Kleine leuchtende Punkte sitzen auf den Fingern, und zwischen beiden Händen spannen sich bunte feine Linien. Braucht die Kamera.",
     seite: "handnetz.html",
     bereiche: "produktion",
+    prompt: "Baue mir eine Seite, die mit der Kamera eine oder zwei Hände erkennt, direkt im Browser mit MediaPipe. Auf den Fingern sitzen kleine leuchtende Punkte, und zwischen beiden Händen spannen sich bunte, feine Linien wie ein Netz. Das Kamerabild bleibt auf dem Gerät. Ich möchte zwischen Front- und Rückkamera wechseln können. Eine HTML-Datei, die auf dem Handy läuft.",
     bild: "vorschau/handnetz.jpg",
     alt: "Leuchtendes buntes Bündel feiner Linien zwischen den Fingern zweier Hände, dazu kleine leuchtende Punkte auf dunklem Grund"
   },
@@ -130,6 +156,7 @@ const PROJEKTE = [
     text: "Unterrichtseinheit für Klasse 10 in zwei Doppelstunden. Mit Arbeitsblättern als PDF, Übungen, Spiel, Quiz und Lehrkraftbereich.",
     seite: "van-gogh-einheit/index.html",
     bereiche: "rezeption",
+    prompt: "Baue mir eine Unterrichtseinheit für Klasse 10 zu Van Gogh und Bildanalyse in zwei Doppelstunden als kleine Website. Dazu gehören Arbeitsblätter zum Ausdrucken als PDF, interaktive Übungen, ein Spiel, ein Quiz und ein Bereich für Lehrkräfte mit Verlaufsplan und Lösungen. Die Seiten sollen auf Tablet und Handy gut lesbar sein. Frag mich zuerst nach Lernzielen und Vorwissen der Klasse.",
     bild: "vorschau/van-gogh-einheit.jpg",
     alt: "Vincent van Goghs Sternennacht mit blauem Wirbelhimmel, gelbem Mond und Zypresse"
   },
@@ -138,6 +165,7 @@ const PROJEKTE = [
     text: "Zeichne eine kleine Skizze, beschreibe sie, und eine KI macht daraus ein Bild, zum Beispiel im Stil von Van Gogh. Kostenloser Demo-Dienst bei Hugging Face, eingebettet.",
     seite: "kritzel-bild.html",
     bereiche: "produktion,reflexion",
+    prompt: "Baue mir eine Seite, auf der man mit Finger oder Maus eine kleine Skizze zeichnet, sie mit einem Satz beschreibt und daraus von einer KI ein Bild erzeugen lässt, zum Beispiel im Stil von Van Gogh. Nutze dafür einen kostenlosen Demo-Dienst, etwa einen Hugging-Face-Space, und binde ihn ein. Sag mir bitte genau, welche Daten dabei das Gerät verlassen, damit ich es im Unterricht erklären kann.",
     bild: "vorschau/kritzel-bild.jpg",
     alt: "Ein eingebettetes Zeichenbrett mit weißer Fläche, Werkzeugen und Eingabefeld für die Bildbeschreibung"
   },
@@ -146,6 +174,7 @@ const PROJEKTE = [
     text: "Wie Gesichter klappen, aber mit Kamera. Dein eigenes Foto klappt als dreizehntes Gesicht mit und bleibt auf deinem Gerät.",
     seite: "gesichter-klappen-kamera.html",
     bereiche: "reflexion",
+    prompt: "Baue mir eine Seite im Stil eines Klappbuchs. Zwölf Gesichter sind in waagerechte Streifen geteilt, und jeder Streifen lässt sich einzeln weiterklappen, sodass neue Mischgesichter entstehen. Mit der Kamera kann man ein eigenes Foto machen, das als dreizehntes Gesicht mitklappt und auf dem Gerät bleibt. Ein kurzes Klackgeräusch beim Klappen wäre schön. Eine HTML-Datei, die auf dem Handy läuft.",
     bild: "vorschau/gesichter-klappen.jpg",
     alt: "Ein Brett aus zwölf Klappfeldern, das ein aus Teilen verschiedener Menschen gemischtes Gesicht zeigt"
   },
@@ -154,6 +183,7 @@ const PROJEKTE = [
     text: "Zeichne mit dem Finger in die Luft. Daumen und Zeigefinger zusammenkneifen, dann leuchtet der Stift. Mit Verblassen, Farbwechsel und Bild speichern.",
     seite: "lichtzeichnung.html",
     bereiche: "produktion",
+    prompt: "Baue mir eine Seite, die mit der Kamera meine Hand erkennt, direkt im Browser mit MediaPipe. Wenn ich Daumen und Zeigefinger zusammenkneife, leuchtet ein Stift, und ich kann damit in die Luft zeichnen. Die Linien sollen glatt aussehen. Dazu gibt es einen Modus, in dem die Spur verblasst, einen Farbwechsel und eine Taste, um das Bild zu speichern. Das Kamerabild bleibt auf dem Gerät.",
     bild: "vorschau/lichtzeichnung.jpg",
     alt: "Eine leuchtende, bunte Linie schwingt in Schleifen über einen dunklen Grund"
   },
@@ -162,6 +192,7 @@ const PROJEKTE = [
     text: "Ein Kaleidoskop aus Kristall und Glut dreht sich um deinen Standpunkt. Mit der Hand vom Frosch zum Vogel, auf Wunsch mit deinem Kamerabild in den Facetten.",
     seite: "blickwechsel.html",
     bereiche: "produktion,reflexion",
+    prompt: "Baue mir ein Kaleidoskop aus Kristall und Glut, das sich um meinen Standpunkt dreht. Die Höhe meiner Hand vor der Kamera steuert die Perspektive vom Frosch bis zum Vogel, und die Drehung der Hand dreht das Kaleidoskop. Auf Wunsch erscheint mein Kamerabild in den Facetten. Front- und Rückkamera sollen wählbar sein, das Kamerabild bleibt auf dem Gerät.",
     bild: "vorschau/blickwechsel.jpg",
     alt: "Ein symmetrisches Kaleidoskop aus glühenden orange-roten Kristallfacetten mit hellen Kanten"
   },
@@ -170,6 +201,7 @@ const PROJEKTE = [
     text: "Ein Escape-Room-Lernspiel zu Holbeins Gemälde. Rätsel öffnen sich als Blätter über dem Bild, bis das Geheimnis des verzerrten Schädels gelöst ist.",
     seite: "gesandten-escape-room.html",
     bereiche: "rezeption",
+    prompt: "Baue mir ein Escape-Room-Lernspiel als einzelne HTML-Datei zu Holbeins Gemälde Die Gesandten, für eine Einzelstunde Kunst in der Oberstufe, in Kleingruppen. Thema sind Vanitas und Memento mori. Das Bild ist zoombar, vier Orte im Bild öffnen Rätsel als Blätter über dem Bild, und am Ende lässt sich der verzerrte Schädel mit einem Regler entzerren. Das Spiel dauert etwa 30 Minuten. Nutze bitte nur Fakten, die du sicher belegen kannst.",
     bild: "vorschau/gesandten-escape-room.jpg",
     alt: "Holbeins Gemälde Die Gesandten in goldenem Rahmen vor einer dunkelroten Galeriewand"
   },
@@ -178,6 +210,7 @@ const PROJEKTE = [
     text: "Dein Live-Bild besteht aus tausenden Farbtupfern. Mit Finger, Maus oder Hand tragen sie sich ab, verlaufen, tropfen oder zerfallen und setzen sich wieder zusammen.",
     seite: "aufloesung.html",
     bereiche: "produktion,reflexion",
+    prompt: "Ich habe hier ein Video, so etwas möchte ich bauen. Ein Live-Bild von einem Gesicht, und wenn man auf den Bildschirm tippt oder mit der Maus darüberfährt, verzerrt sich alles, verläuft oder löst sich auf. Hast du eine Idee, wie das gehen könnte? Es soll als einzelne HTML-Datei im Browser laufen, auch auf dem Handy.",
     bild: "vorschau-aufloesung.jpg",
     alt: "Ein Porträt aus kleinen Farbtupfern, in das eine Stelle als schwarzes Loch hineingewischt ist"
   },
@@ -186,6 +219,7 @@ const PROJEKTE = [
     text: "Ein Vokabeltrainer für Englisch, Französisch und Italienisch mit Karteikarten und Vokabelkasten. Ein Beispiel dafür, was sich mit Vibe Coding für den eigenen Lernbedarf bauen lässt.",
     seite: "tre-lingue.html",
     bereiche: "reflexion",
+    prompt: "Baue mir eine Vokabel-App als einzelne HTML-Datei für Englisch (B1), Französisch (B1) und Italienisch (A1). Sie soll lernpsychologisch gut sein, mit einem Vokabelkasten in fünf Fächern, wachsenden Wiederholungsabständen, Antworten zum Tippen, Aussprache per Sprachausgabe und Lückensätzen. Für Italienisch möchte ich zusätzlich Grammatik und Redewendungen. Das Design soll wie eine schöne Apple-App wirken, gern etwas schräg. Der Fortschritt bleibt im Browser, ohne Konto.",
     bild: "vorschau/tre-lingue.jpg",
     alt: "Die Startseite eines Vokabeltrainers mit der Überschrift Tre Lingue und einer grünen Karte für Italienisch"
   }
@@ -212,7 +246,7 @@ for (const p of PROJEKTE) {
       <div class="text">
         <h2><a href="${p.seite}">${p.titel}</a></h2>
         <p>${p.text}</p>
-        <a class="oeffnen" href="${p.seite}">Hier öffnen</a>
+        <a class="oeffnen" href="${p.seite}">Hier öffnen</a>${p.prompt ? `<button type="button" class="startprompt" data-i="${PROJEKTE.indexOf(p)}">Startprompt</button>` : ""}
       </div>
       <div class="qr">
         ${imNetz
@@ -222,6 +256,26 @@ for (const p of PROJEKTE) {
     </div>`;
   raster.appendChild(k);
 }
+
+// Startprompt anzeigen und kopieren
+const dlg = document.getElementById("promptDialog"), pdText = document.getElementById("pdText"), pdKopieren = document.getElementById("pdKopieren");
+raster.addEventListener("click", e => {
+  const b = e.target.closest(".startprompt"); if (!b) return;
+  const p = PROJEKTE[+b.dataset.i];
+  document.getElementById("pdTitel").textContent = "Startprompt, " + p.titel;
+  pdText.textContent = p.prompt; pdKopieren.textContent = "Kopieren";
+  if (dlg.showModal) dlg.showModal(); else dlg.setAttribute("open", "");
+});
+document.getElementById("pdZu").addEventListener("click", () => dlg.close());
+dlg.addEventListener("click", e => { if (e.target === dlg) dlg.close(); });
+pdKopieren.addEventListener("click", async () => {
+  const t = pdText.textContent; let ok = false;
+  try { await navigator.clipboard.writeText(t); ok = true; } catch (e) {
+    try { const r = document.createRange(); r.selectNodeContents(pdText); const s = getSelection(); s.removeAllRanges(); s.addRange(r); ok = document.execCommand("copy"); s.removeAllRanges(); } catch (e2) {}
+  }
+  pdKopieren.textContent = ok ? "Kopiert" : "Bitte markieren und kopieren";
+  if (ok) setTimeout(() => { pdKopieren.textContent = "Kopieren"; }, 2200);
+});
 
 // Reiter nach Kompetenzbereichen
 const BEREICHE = [["alle", "Alle"], ["organisatorisches", "Organisatorisches"], ["produktion", "Produktion"], ["rezeption", "Rezeption"], ["reflexion", "Reflexion"]];

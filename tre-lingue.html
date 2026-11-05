@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title>Tre Lingue</title>
-<meta name="description" content="Vokabeltrainer für Englisch, Französisch und Italienisch mit Vokabelkasten, Karteikarten und Italienisch-Grammatik. Läuft komplett im Browser, ohne Konto und ohne Tracking.">
+<meta name="description" content="Vokabeltrainer für Englisch, Französisch und Italienisch mit Vokabelkasten mit fünf Fächern und Italienisch-Grammatik. Läuft komplett im Browser, ohne Konto und ohne Tracking.">
 <!-- Eigenständige Version. Keine externen Anfragen, keine Schriften von Drittanbietern, kein Server. Der Lernfortschritt liegt nur im localStorage des jeweiligen Browsers. -->
 <style>
 :root{color-scheme:light;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
@@ -61,6 +61,7 @@ button{font:inherit;color:inherit}
 .meta b{color:var(--ink);font-variant-numeric:tabular-nums}
 .bar{height:8px;border-radius:99px;background:color-mix(in srgb,var(--c) 18%,transparent);margin:14px 0 16px;overflow:hidden}
 .bar i{display:block;height:100%;background:var(--c);border-radius:99px;min-width:6px}
+.bar2{position:relative}.bar2 i{position:absolute;left:0;top:0}.bar2 .b1{background:color-mix(in srgb,var(--c) 45%,transparent)}.bar2 .b2{background:var(--c);min-width:0}
 .seg{display:flex;gap:6px;margin:12px 0 4px;flex-wrap:wrap}
 .seg button{flex:1 1 0;min-width:84px;border:1.5px solid color-mix(in srgb,var(--c) 35%,transparent);background:transparent;border-radius:16px;padding:8px 10px;cursor:pointer;text-align:center;line-height:1.2}
 .seg button b{display:block;font:800 17px var(--display);color:var(--c)}
@@ -164,6 +165,30 @@ td:first-child{color:var(--muted)}
 .tabs{display:flex;gap:6px;margin:10px 0 4px}
 .tabs button{flex:1;border:1.5px solid var(--line);background:transparent;border-radius:14px;padding:9px 6px;font-weight:650;cursor:pointer}
 .tabs button[aria-pressed="true"]{background:var(--c);border-color:var(--c);color:var(--on-c)}
+
+/* Vokabelkasten als Bild, fünf Fächer mit eingelegten Karten */
+.kasten{display:grid;grid-template-columns:.8fr repeat(5,1fr);gap:6px;margin:16px 0 4px;align-items:end}
+.kfach{appearance:none;border:1.5px solid var(--line);background:var(--surface);border-radius:14px 14px 10px 10px;padding:0;height:148px;position:relative;overflow:hidden;cursor:pointer;display:flex;flex-direction:column;justify-content:flex-end;box-shadow:var(--shadow)}
+.kfach[aria-pressed="true"]{border-color:var(--c);background:color-mix(in srgb,var(--c) 9%,var(--surface))}
+.kfach .kl{position:absolute;top:6px;left:0;right:0;text-align:center;font:700 11px var(--body);color:var(--muted);letter-spacing:.02em}
+.kfach .kn{position:absolute;top:20px;left:0;right:0;text-align:center;font:800 18px var(--display);font-variant-numeric:tabular-nums}
+.kfach .stack{position:relative;height:96px;margin:0 5px 6px}
+.kk{position:absolute;left:0;right:0;height:16px;border-radius:5px;background:var(--c);border:1.5px solid color-mix(in srgb,var(--c) 55%,#000);bottom:calc(var(--i)*11px);transform:rotate(var(--r));animation:einlegen .6s cubic-bezier(.2,.9,.3,1.1) both;animation-delay:var(--d)}
+.kfach.f0 .kk{background:color-mix(in srgb,var(--c) 22%,var(--surface));border-color:color-mix(in srgb,var(--c) 40%,transparent)}
+.kfach.f4 .kk,.kfach.f5 .kk{background:var(--c)}
+.kfach .more{position:absolute;right:2px;top:-14px;font:700 10px var(--body);color:var(--muted)}
+.kfach .due{position:absolute;right:4px;top:6px;width:9px;height:9px;border-radius:50%;background:var(--bad)}
+@keyframes einlegen{from{opacity:0;transform:translate(-90px,-30px) rotate(-12deg)}to{opacity:1;transform:rotate(var(--r))}}
+.kkap{font-size:12px;color:var(--muted);margin:4px 2px 0;display:grid;grid-template-columns:.8fr repeat(5,1fr);gap:6px;text-align:center}
+.hop{position:relative;margin:14px 0 4px;padding:12px 12px 10px;border-radius:16px;background:var(--surface);border:1.5px solid var(--line);box-shadow:var(--shadow)}
+.hop .track{position:relative;height:30px;margin:2px 14px 0}
+.hop .track::before{content:"";position:absolute;left:0;right:0;top:14px;height:3px;border-radius:2px;background:color-mix(in srgb,var(--c) 22%,transparent)}
+.hop .pt{position:absolute;top:8px;width:15px;height:15px;margin-left:-7px;border-radius:50%;background:var(--surface);border:2px solid color-mix(in srgb,var(--c) 45%,transparent)}
+.hop .tk{position:absolute;top:2px;width:26px;height:26px;margin-left:-13px;border-radius:8px;background:var(--c);border:2px solid color-mix(in srgb,var(--c) 55%,#000);left:var(--to);animation:hop .8s cubic-bezier(.3,.8,.3,1) both;animation-delay:.12s;transform:rotate(-6deg)}
+.hop .lab{display:flex;justify-content:space-between;font-size:11px;color:var(--muted);margin:2px 8px 0}
+.hop p{margin:6px 0 0;font-weight:700;font-size:14px}
+@keyframes hop{from{left:var(--from)}to{left:var(--to)}}
+@media (prefers-reduced-motion: reduce){.kk,.hop .tk{animation:none}}
 .fach{display:block;width:100%;text-align:left;cursor:pointer;margin:10px 0 0;border:1.5px solid var(--line);background:var(--surface);border-radius:20px;padding:13px 14px;box-shadow:var(--shadow)}
 .fach[aria-pressed="true"]{border-color:var(--c);background:color-mix(in srgb,var(--c) 9%,var(--surface))}
 .fach .fh{display:flex;align-items:center;gap:12px}
@@ -481,6 +506,7 @@ async function flush(){
 }
 function paintSync(){const n=document.getElementById('sync');if(n)n.textContent=sync==='cloud'?'Dein Fortschritt ist gesichert und auf jedem Gerät da.':'Dein Fortschritt liegt nur in diesem Browser.'}
 async function initStore(){
+  try{if(navigator.storage&&navigator.storage.persist)navigator.storage.persist()}catch(e){}
   try{const raw=localStorage.getItem('tl.state');if(raw)S=merge(JSON.parse(raw))}catch(e){}
   render();
   try{
@@ -644,14 +670,15 @@ function renderHome(){
 <p class="sub">${todayN?`Heute schon ${todayN} Antworten.`:'Zehn Minuten am Tag reichen, wenn du sie jeden Tag machst.'}</p>`;
   ['it','fr','en'].forEach(l=>{
     const L=LANGS[l],st=stat(l),ad=advice(l),pct=Math.round(st.sec/Math.max(1,st.pool)*100);
+    const begun=ITEMS[l].filter(i=>S.cards[i.id]&&S.cards[i.id].box>0).length,pb=Math.round(begun/Math.max(1,ITEMS[l].length)*100);
     h+=`<section class="tile l-${l}" style="--rot:${L.rot}">
 <div class="tile-top"><span class="code">${L.code}</span><button class="btn" data-act="lvlopen" data-lang="${l}" aria-expanded="${ui.openLvl===l}">Niveau ${S.lvl[l]}</button></div>
 <h2>${L.name}</h2>
-<p class="meta"><b>${st.due}</b> fällig · <b>${st.fresh}</b> neu · <b>${st.sec}</b> von ${st.pool} sicher</p>
-<div class="bar" role="img" aria-label="${pct} Prozent sicher"><i style="width:${pct}%"></i></div>`;
+<p class="meta"><b>${begun}</b> von ${ITEMS[l].length} Wörtern begonnen · <b>${st.sec}</b> sicher · <b>${st.due}</b> heute fällig</p>
+<div class="bar bar2" role="img" aria-label="${begun} Wörter begonnen, ${st.sec} sicher"><i class="b1" style="width:${pb}%"></i><i class="b2" style="width:${Math.round(st.sec/Math.max(1,ITEMS[l].length)*100)}%"></i></div>`;
     if(ui.openLvl===l)h+=`<div class="seg">${L.levels.map(v=>`<button data-act="setlvl" data-lang="${l}" data-lvl="${v}" aria-pressed="${S.lvl[l]===v}"><b>${v}</b><span>${LD[v]}</span></button>`).join('')}</div>`;
     if(ad)h+=`<div class="adv">${ad.up?`Läuft sehr gut, ${Math.round(ad.a*100)} Prozent richtig. `:`Zuletzt nur ${Math.round(ad.a*100)} Prozent richtig. `}<button class="link" data-act="setlvl" data-lang="${l}" data-lvl="${ad.to}">${ad.up?`Stufe ${ad.to} ausprobieren`:`Zurück auf ${ad.to}`}</button></div>`;
-    h+=`<div class="row" style="margin-top:0"><button class="btn primary" data-act="start" data-lang="${l}">${st.due+st.fresh?`Üben (${st.due+st.fresh})`:'Wiederholen'}</button><button class="btn" data-act="box" data-tab="${l}">Kasten</button></div></section>`;
+    h+=`<div class="row" style="margin-top:0"><button class="btn primary" data-act="start" data-lang="${l}">${st.due+st.fresh?`Üben (${st.due+st.fresh})`:'Wiederholen'}</button><button class="btn" data-act="box" data-tab="${l}">Vokabelkasten</button></div></section>`;
     if(l==='it'){
       const ps=pstat(),done=GR.filter(g=>S.les[g.id]).length;
       h+=`<div class="pair"><button class="mini" data-act="gram"><span class="chip">A1 bis A2</span><h3>Grammatik</h3><p>${done} von ${GR.length} Lektionen</p></button>
@@ -659,6 +686,8 @@ function renderHome(){
     }
   });
   h+=`<div class="foot"><span id="sync">${sync==='cloud'?'Dein Fortschritt ist gesichert und auf jedem Gerät da.':'Dein Fortschritt liegt nur in diesem Browser.'}</span>
+<div class="row" style="margin:0"><button class="btn" data-act="export">Fortschritt sichern</button><button class="btn" data-act="import">Fortschritt laden</button></div>
+<input type="file" id="impf" accept="application/json,.json" hidden>
 ${ui.confirm?`<div class="row" style="margin:0"><button class="btn" data-act="reset2">Ja, alles zurücksetzen</button><button class="btn" data-act="reset0">Abbrechen</button></div>`:`<button class="btn" data-act="reset1">Fortschritt zurücksetzen</button>`}</div>`;
   return h;
 }
@@ -673,7 +702,15 @@ function renderSession(){
   if(s.extra)h+=`<p class="note">Heute ist nichts fällig. Das hier ist freiwillige Wiederholung.</p>`;
   if(s.kind==='w'){const it=BYID[t.id];h+=t.k==='intro'?introWord(it,l):recWord(it,t,l)}
   else{const it=PBYID[t.id];h+=t.k==='intro'?introPhrase(it):recPhrase(it,t)}
+  if(s.phase==='fb'&&t.k!=='intro'&&!t.retry&&s.pre){const hp=hopHtml(t.id,s.pre,!(s.res&&!s.res.ok));if(hp)h=h.replace('<div class="fb ',hp+'<div class="fb ')}
   return h+'</div>';
+}
+function hopHtml(id,pre,ok){
+  const c=S.cards[id];if(!c)return '';
+  const von=pre.card?Math.max(0,pre.card.box):0,nach=c.box,pos=n=>Math.max(0,Math.min(5,n))/5*100+'%';
+  const text=!ok?(von>1?`Zurück in Fach ${nach}`:`Landet in Fach ${nach}, kommt bald wieder`):nach>von?(nach>=4?`Fach ${nach}, jetzt sicher`:`Weiter in Fach ${nach}`):nach<von?`Zurück in Fach ${nach}`:`Bleibt in Fach ${nach}`;
+  let pts='';for(let n=0;n<=5;n++)pts+=`<i class="pt" style="left:${pos(n)}"></i>`;
+  return `<div class="hop" role="img" aria-label="${text}"><div class="track">${pts}<i class="tk" style="--from:${pos(von)};--to:${pos(nach)}"></i></div><div class="lab"><span>neu</span><span>1</span><span>2</span><span>3</span><span>4</span><span>5</span></div><p>${text}</p></div>`;
 }
 function introWord(it,l){
   return `<article class="flash"><span class="sticker">Neu</span><div class="chips"><span class="chip">${it.lvl}</span>${it.th?`<span class="chip">${esc(it.th)}</span>`:''}</div>
@@ -746,6 +783,13 @@ function renderBox(){
   let h=`<div class="l-${l}"><div class="topbar"><button class="icon" data-act="home" aria-label="Zurück">${I.back}</button><h2>Vokabelkasten</h2></div>
 <div class="tabs">${tabs.map(x=>`<button data-act="boxtab" data-tab="${x[0]}" aria-pressed="${tab===x[0]}">${x[1]}</button>`).join('')}</div>
 <p class="sub">${learned} von ${items.length} eingelegt. Richtig beantwortet rückt ein Wort ein Fach weiter, falsch geht es zurück in Fach 1.</p>`;
+  h+=`<div class="kasten">`;
+  for(let n=0;n<=5;n++){
+    const c=by[n].length,d=n?due(n):0,show=Math.min(c,7);
+    let st='';for(let k=0;k<show;k++)st+=`<i class="kk" style="--i:${k};--r:${(((k*37+n*11)%9)-4)*.9}deg;--d:${n*70+k*45}ms"></i>`;
+    h+=`<button class="kfach f${n}" data-act="fach" data-n="${n}" aria-pressed="${sel===n}" aria-label="${n?'Fach '+n:'Noch nicht gelernt'}, ${c} Karten"><span class="kl">${n?'Fach':'Neu'}</span>${n?'':''}<span class="kn">${c}</span>${d?`<span class="due" title="${d} fällig"></span>`:''}<span class="stack">${st}</span></button>`;
+  }
+  h+=`</div><div class="kkap"><span>draußen</span><span>1 Tag</span><span>3 Tage</span><span>1 Woche</span><span>2 Wochen</span><span>5 Wochen</span></div>`;
   for(let n=1;n<=5;n++){
     const c=by[n].length,d=due(n);
     h+=`<button class="fach" data-act="fach" data-n="${n}" aria-pressed="${sel===n}"><div class="fh"><span class="no">${n}</span><div class="tx"><b>Fach ${n}${n>=4?' (sicher)':''}</b><span>${FACH_IV[n]} wieder</span></div>${d?`<span class="chip">${d} fällig</span>`:''}<span class="n">${c}</span></div><div class="bar"><i style="width:${learned?Math.round(c/learned*100):0}%"></i></div></button>`;
@@ -754,7 +798,7 @@ function renderBox(){
   const rows=by[sel].slice();
   if(sel>0)rows.sort((a,b)=>S.cards[a.id].due-S.cards[b.id].due);
   h+=`<h3 class="vh">${sel?`Fach ${sel}`:'Noch nicht gelernt'}</h3>`;
-  h+=`<div class="row" style="margin-top:12px">${rows.length?`<button class="btn primary" data-act="drill" data-n="${sel}">Karteikarten üben (${rows.length})</button>`:''}${learned>0&&(sel===0||learned>rows.length)?`<button class="btn" data-act="drill" data-n="all">Alle eingelegten (${learned})</button>`:''}</div><p class="note">Reine Übung. Dein Lernplan bleibt dabei unverändert.</p>`;
+  h+=`<div class="row" style="margin-top:12px">${rows.length?`<button class="btn primary" data-act="drill" data-n="${sel}">Dieses Fach durchgehen (${rows.length})</button>`:''}${learned>0&&(sel===0||learned>rows.length)?`<button class="btn" data-act="drill" data-n="all">Alle eingelegten (${learned})</button>`:''}</div><p class="note">Reine Übung. Dein Lernplan bleibt dabei unverändert.</p>`;
   h+=rows.length?`<ul class="vlist">${rows.map(i=>{const w=ph?i.it:i.w,c=S.cards[i.id];return `<li><div class="v"><b>${esc(w)}</b><span>${esc(i.de)}</span></div><span class="w">${sel?whenDue(c.due):i.lvl}</span>${spk(w,l)}</li>`}).join('')}</ul>`:`<p class="note">Hier liegt noch nichts.</p>`;
   return h+'</div>';
 }
@@ -879,11 +923,22 @@ function act(a,d){
     case 'override':override();break;
     case 'opt':chooseOpt(+d.i);break;
     case 'speak':speak(d.t,d.l);break;
+    case 'export':exportState();break;
+    case 'import':document.getElementById('impf').click();break;
     case 'reset1':ui.confirm=true;render();break;
     case 'reset0':ui.confirm=false;render();break;
     case 'reset2':S=def();ui.confirm=false;touch();render();break;
   }
 }
+function exportState(){
+  const blob=new Blob([JSON.stringify(S)],{type:'application/json'}),u=URL.createObjectURL(blob),a=document.createElement('a');
+  a.href=u;a.download='tre-lingue-fortschritt.json';document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(u),4000);
+}
+document.addEventListener('change',e=>{
+  if(!e.target||e.target.id!=='impf')return;const f=e.target.files&&e.target.files[0];if(!f)return;
+  f.text().then(t=>{const r=JSON.parse(t);if(!r||typeof r!=='object'||!r.cards)throw 0;S=merge(r);S.ts=Date.now();cacheLocal();ui.view='home';render();clearTimeout(saveT);saveT=setTimeout(flush,500)}).catch(()=>alert('Die Datei konnte nicht gelesen werden.'));
+  e.target.value='';
+});
 document.addEventListener('click',e=>{const b=e.target.closest('[data-act]');if(!b)return;act(b.dataset.act,b.dataset)});
 document.addEventListener('submit',e=>{
   e.preventDefault();

@@ -17,25 +17,29 @@
   @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) { color-scheme: dark; } }
   * { box-sizing: border-box; }
   html, body { margin: 0; background: var(--bg); color: var(--text); }
-  body { font: 300 18px/1.5 Georgia, "Times New Roman", serif; -webkit-text-size-adjust: 100%; }
+  body { font: 400 17px/1.5 -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", Inter, system-ui, sans-serif; -webkit-font-smoothing: antialiased; -webkit-text-size-adjust: 100%; }
   main { max-width: 1040px; margin: 0 auto; padding: clamp(40px, 9vh, 96px) 20px 64px; }
 
   header { max-width: 640px; margin: 0 0 clamp(32px, 6vh, 56px); }
-  h1 { font-weight: 400; font-size: clamp(2rem, 6vw, 3.1rem); line-height: 1.1; letter-spacing: -.01em; margin: 0 0 .5em; }
+  h1 { font-weight: 700; font-size: clamp(2.1rem, 6.5vw, 3.4rem); line-height: 1.05; letter-spacing: -.035em; margin: 0 0 .5em; }
   header p { margin: 0; color: var(--muted); max-width: 34em; }
 
   .raster { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 440px), 1fr)); gap: 20px; }
 
-  .kachel { background: var(--panel); border: 1px solid var(--line); border-radius: 14px; overflow: hidden; display: flex; flex-direction: column; }
+  .kachel { background: var(--panel); border: 1px solid var(--line); border-radius: 24px; overflow: hidden; display: flex; flex-direction: column; box-shadow: 0 1px 2px rgba(0,0,0,.3), 0 18px 40px -22px rgba(0,0,0,.7); }
+  .bildrahmen { position: relative; }
   .bild { display: block; aspect-ratio: 8 / 5; background: #05060f; overflow: hidden; }
   .bild img { width: 100%; height: 100%; object-fit: cover; display: block; transition: transform .5s ease; }
   .bild:hover img, .bild:focus-visible img { transform: scale(1.025); }
-  .unten { display: flex; gap: 18px; align-items: center; justify-content: space-between; padding: 18px 20px 20px; }
+  .unten { display: flex; gap: 18px; align-items: flex-end; justify-content: space-between; padding: 20px 22px 22px; }
   .text { min-width: 0; }
-  .text h2 { font-weight: 400; font-size: 1.35rem; line-height: 1.2; margin: 0 0 .3em; }
+  .text h2 { font-weight: 650; font-size: 1.3rem; line-height: 1.2; letter-spacing: -.02em; margin: 0 0 .35em; }
   .text h2 a { color: inherit; text-decoration: none; }
-  .text p { margin: 0 0 .7em; color: var(--muted); font-size: .92rem; line-height: 1.45; }
-  .oeffnen { font-size: .92rem; color: var(--text); text-decoration: underline; text-underline-offset: 4px; text-decoration-color: rgba(255,255,255,.4); }
+  .text p { margin: 0 0 1em; color: var(--muted); font-size: .94rem; line-height: 1.5; }
+  .oeffnen { display: inline-flex; align-items: center; gap: .45em; font-size: .95rem; font-weight: 600; letter-spacing: -.005em; color: var(--bg); background: var(--text); text-decoration: none; padding: .62em 1.15em .62em 1.25em; border-radius: 999px; transition: transform .15s ease, opacity .15s ease; touch-action: manipulation; }
+  .oeffnen:hover { opacity: .9; }
+  .oeffnen:active { transform: scale(.96); }
+  .oeffnen svg { width: 1em; height: 1em; }
 
   .qr { flex: none; width: 112px; text-align: center; }
   .qr .platte { background: #fff; border-radius: 8px; padding: 6px; line-height: 0; }
@@ -44,23 +48,26 @@
   .qr .leer { background: transparent; border: 1px dashed var(--line); color: var(--muted); font-size: .72rem; line-height: 1.3; padding: 10px 6px; border-radius: 8px; }
 
   .reiter { display: flex; flex-wrap: wrap; gap: 8px; margin: 0 0 24px; }
-  .reiter button { font: inherit; font-size: .95rem; color: var(--text); background: transparent; border: 1px solid var(--line); border-radius: 999px; padding: .5em 1.1em; cursor: pointer; touch-action: manipulation; }
+  .reiter button { font: inherit; font-weight: 500; font-size: .95rem; color: var(--text); background: transparent; border: 1px solid var(--line); border-radius: 999px; padding: .5em 1.1em; cursor: pointer; touch-action: manipulation; }
   .reiter button[aria-pressed="true"] { background: var(--text); color: var(--bg); border-color: transparent; }
   .reiter button:focus-visible { outline: 2px solid var(--focus); outline-offset: 3px; }
   header a { color: var(--text); text-underline-offset: 4px; text-decoration-color: rgba(255,255,255,.4); }
   .kachel[hidden] { display: none; }
   a:focus-visible { outline: 2px solid var(--focus); outline-offset: 3px; border-radius: 4px; }
 
-  .startprompt { font: inherit; font-size: .92rem; color: var(--text); background: none; border: 0; padding: 0; margin-left: 16px; cursor: pointer; text-decoration: underline; text-underline-offset: 4px; text-decoration-color: rgba(255,255,255,.4); touch-action: manipulation; }
+  .startprompt { position: absolute; top: 12px; right: 12px; display: inline-flex; align-items: center; gap: .4em; font: inherit; font-size: .82rem; font-weight: 600; color: #fff; background: rgba(12,13,24,.5); -webkit-backdrop-filter: blur(14px) saturate(1.4); backdrop-filter: blur(14px) saturate(1.4); border: 1px solid rgba(255,255,255,.22); padding: .45em .85em .45em .7em; border-radius: 999px; cursor: pointer; touch-action: manipulation; transition: background .15s ease, transform .15s ease; }
+  .startprompt:hover { background: rgba(12,13,24,.72); }
+  .startprompt:active { transform: scale(.95); }
+  .startprompt svg { width: 1.15em; height: 1.15em; color: #ffd98a; }
   .startprompt:focus-visible, dialog button:focus-visible { outline: 2px solid var(--focus); outline-offset: 3px; border-radius: 4px; }
-  dialog { width: min(92vw, 640px); max-height: 86vh; padding: 0; border: 1px solid var(--line); border-radius: 14px; background: var(--panel); color: var(--text); }
+  dialog { width: min(92vw, 640px); max-height: 86vh; padding: 0; border: 1px solid var(--line); border-radius: 24px; background: var(--panel); color: var(--text); }
   dialog::backdrop { background: rgba(3, 4, 12, .72); }
   .dlg { padding: 22px 22px 20px; display: flex; flex-direction: column; gap: 14px; max-height: 86vh; }
-  .dlg h2 { font-weight: 400; font-size: 1.35rem; line-height: 1.2; margin: 0; }
+  .dlg h2 { font-weight: 650; font-size: 1.3rem; line-height: 1.2; letter-spacing: -.02em; margin: 0; }
   .dlg p { margin: 0; color: var(--muted); font-size: .92rem; line-height: 1.45; }
   .dlg pre { margin: 0; padding: 14px 16px; background: #05060f; border: 1px solid var(--line); border-radius: 10px; font: inherit; font-size: .95rem; line-height: 1.5; white-space: pre-wrap; overflow-wrap: anywhere; overflow-y: auto; user-select: text; -webkit-user-select: text; }
   .dlg .knoepfe { display: flex; gap: 10px; flex-wrap: wrap; }
-  .dlg button { font: inherit; font-size: .95rem; padding: .6em 1.2em; border-radius: 999px; cursor: pointer; border: 1px solid var(--line); background: transparent; color: var(--text); touch-action: manipulation; }
+  .dlg button { font: inherit; font-weight: 600; font-size: .95rem; padding: .6em 1.2em; border-radius: 999px; cursor: pointer; border: 1px solid var(--line); background: transparent; color: var(--text); touch-action: manipulation; }
   .dlg button.primaer { background: var(--text); color: var(--bg); border-color: transparent; }
   @media (max-width: 420px) { .unten { flex-direction: column; align-items: flex-start; } .qr { width: 132px; } }
   @media (prefers-reduced-motion: reduce) { .bild img { transition: none; } }
@@ -232,6 +239,7 @@ function qrSvg(adresse) {
   return q.createSvgTag({ scalable: true, margin: 0 });
 }
 
+const FUNKEL = '<svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M10 3l1.9 5.1L17 10l-5.1 1.9L10 17l-1.9-5.1L3 10l5.1-1.9z"/><path d="M18.5 12l.9 2.6 2.6.9-2.6.9-.9 2.6-.9-2.6-2.6-.9 2.6-.9z"/><path d="M18 3l.6 1.9 1.9.6-1.9.6L18 8l-.6-1.9-1.9-.6 1.9-.6z"/></svg>';
 const imNetz = location.protocol === "http:" || location.protocol === "https:";
 const raster = document.getElementById("raster");
 
@@ -241,12 +249,14 @@ for (const p of PROJEKTE) {
   k.className = "kachel";
   k.dataset.bereiche = p.bereiche;
   k.innerHTML = `
-    <a class="bild" href="${p.seite}" aria-label="${p.titel} öffnen"><img src="${p.bild}" alt="${p.alt}" loading="lazy"></a>
+    <div class="bildrahmen">
+      <a class="bild" href="${p.seite}" aria-label="${p.titel} öffnen"><img src="${p.bild}" alt="${p.alt}" loading="lazy"></a>${p.prompt ? `<button type="button" class="startprompt" data-i="${PROJEKTE.indexOf(p)}" aria-label="Startprompt zu ${p.titel} anzeigen">${FUNKEL}Startprompt</button>` : ""}
+    </div>
     <div class="unten">
       <div class="text">
         <h2><a href="${p.seite}">${p.titel}</a></h2>
         <p>${p.text}</p>
-        <a class="oeffnen" href="${p.seite}">Hier öffnen</a>${p.prompt ? `<button type="button" class="startprompt" data-i="${PROJEKTE.indexOf(p)}">Startprompt</button>` : ""}
+        <a class="oeffnen" href="${p.seite}">Hier öffnen<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 8h10M9 4l4 4-4 4"/></svg></a>
       </div>
       <div class="qr">
         ${imNetz

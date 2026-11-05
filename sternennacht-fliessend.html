@@ -1,3 +1,4 @@
+<meta charset="utf-8">
 <meta name="claude:viewport-fit-sides" content="cover">
 <title>Sternennacht fließt</title>
 <style>
@@ -37,6 +38,15 @@
     transition: opacity 1.6s ease;
   }
   #hinweis.weg { opacity: 0; }
+  #tonKnopf {
+    position: fixed; left: 50%; transform: translateX(-50%); z-index: 9998;
+    bottom: calc(84px + env(safe-area-inset-bottom, 0px));
+    font: 400 16px/1 Georgia, "Times New Roman", serif; letter-spacing: .02em; color: #f1f0f7;
+    background: rgba(9,10,28,.55); border: 1px solid rgba(255,255,255,.3); border-radius: 999px;
+    padding: 13px 22px; -webkit-backdrop-filter: blur(6px); backdrop-filter: blur(6px);
+    touch-action: manipulation; -webkit-tap-highlight-color: transparent; transition: opacity .8s ease;
+  }
+  #tonKnopf.weg { opacity: 0; pointer-events: none; }
   .quelle {
     margin: 0; font-size: 12px; letter-spacing: .02em; color: var(--muted); opacity: .85;
     text-shadow: 0 0 10px var(--bg), 0 0 3px var(--bg);
@@ -44,6 +54,7 @@
 </style>
 
 <canvas id="bild" aria-label="Vincent van Gogh, Die Sternennacht, als Strömung aus feinen Farblinien. Mit dem Finger durch die Strömung streichen."></canvas>
+<button id="tonKnopf" type="button">Ton einschalten</button>
 <div class="fuss">
   <p id="hinweis">Fahre mit dem Finger durch die Strömung</p>
   <p class="quelle">Vincent van Gogh, Die Sternennacht, 1889 (gemeinfrei)</p>
@@ -68,7 +79,7 @@ const FARBRUECKKEHR = 0.006; // wie schnell Pigment die Farbe des Gemäldes anni
 const HG = "rgba(7,8,26," + VERBLASSEN + ")";
 
 let W = 0, H = 0, DPR = 1, N = 0;
-let gw = 0, gh = 0, S = 1, OX = 0, OY = 0;
+let gw = 0, gh = 0, S = 1, OX = 0, OY = 0, BX0 = 0, BX1 = 0, BY0 = 0, BY1 = 0;
 let CR, CG, CB, TX, TY, COH;
 let X, Y, PX, PY, VX, VY, LEB, R, G, B, SG, SP;
 let LISTEN, ZAEHLER;
@@ -149,8 +160,8 @@ function zelle(x, y) {
 }
 
 function neu(i) {
-  X[i] = PX[i] = Math.random() * W;
-  Y[i] = PY[i] = Math.random() * H;
+  X[i] = PX[i] = BX0 + Math.random() * (BX1 - BX0);
+  Y[i] = PY[i] = BY0 + Math.random() * (BY1 - BY0);
   VX[i] = VY[i] = 0;
   const k = zelle(X[i], Y[i]);
   R[i] = CR[k]; G[i] = CG[k]; B[i] = CB[k];
@@ -164,9 +175,13 @@ function aufbauen() {
   W = window.innerWidth; H = window.innerHeight;
   cv.width = Math.round(W * DPR); cv.height = Math.round(H * DPR);
   ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
-  S = Math.max(W / gw, H / gh);
+  // Querformat füllt den Bildschirm, im Hochformat wird das ganze Gemälde gezeigt
+  const ganz = W < H;
+  S = ganz ? Math.min(W / gw, H / gh) : Math.max(W / gw, H / gh);
   OX = (W - gw * S) / 2; OY = (H - gh * S) / 2;
-  N = Math.max(5000, Math.min(11000, Math.floor(W * H / 60)));
+  if (ganz) { BX0 = OX; BX1 = OX + gw * S; BY0 = OY; BY1 = OY + gh * S; }
+  else { BX0 = 0; BX1 = W; BY0 = 0; BY1 = H; }
+  N = Math.max(5000, Math.min(11000, Math.floor((BX1 - BX0) * (BY1 - BY0) / 60)));
   X = new Float32Array(N); Y = new Float32Array(N);
   PX = new Float32Array(N); PY = new Float32Array(N);
   VX = new Float32Array(N); VY = new Float32Array(N);
@@ -206,6 +221,7 @@ function bild() {
 
   const fing = [];
   for (const p of zeiger.values()) { fing.push({ x: p.x, y: p.y, dx: p.dx, dy: p.dy }); p.dx = 0; p.dy = 0; }
+  try { klangBewegung(fing); } catch (e) {}   // ein Tonfehler darf die Zeichnung nie stoppen
   const RAD = Math.min(W, H) * 0.3, RAD2 = RAD * RAD;
   const tempo = TEMPO * Math.max(0.7, Math.min(W, H) / 600);
 
@@ -247,7 +263,7 @@ function bild() {
     const nx = x + vx, ny = y + vy;
     X[i] = nx; Y[i] = ny; VX[i] = vx; VY[i] = vy;
     LEB[i] -= 1;
-    if (LEB[i] <= 0 || nx < -20 || nx > W + 20 || ny < -20 || ny > H + 20) { neu(i); continue; }
+    if (LEB[i] <= 0 || nx < BX0 - 20 || nx > BX1 + 20 || ny < BY0 - 20 || ny > BY1 + 20) { neu(i); continue; }
 
     // Das Pigment nimmt langsam wieder die Farbe des Gemäldes an diesem Ort an.
     const k2 = zelle(nx, ny);
@@ -287,6 +303,100 @@ img.onload = () => {
 img.onerror = () => { hinweis.textContent = "Das Bild konnte nicht geladen werden."; };
 img.src = BILD;
 window.addEventListener("resize", () => { if (gw) aufbauen(); });
+</script>
+<script>
+// Klang beim Wischen, ein mystischer Klang aus Klangschalen. Alles wird im Browser erzeugt. Je schneller die Bewegung, desto öfter wird angeschlagen.
+let ac = null, bus = null, wegStrecke = 0, tAnschlag = 0, entsperrt = false, letztesEreignis = '';
+const hz = (basis, halb) => basis * Math.pow(2, halb / 12);
+const D_MOLL = [0, 3, 5, 7, 10, 12, 15, 17, 19];
+
+function audioBauen() {
+  const AC = window.AudioContext || window.webkitAudioContext; if (!AC) return null;
+  const k = new AC();
+  const n = Math.floor(k.sampleRate * 3.8), ib = k.createBuffer(2, n, k.sampleRate);
+  for (let c = 0; c < 2; c++) { const d = ib.getChannelData(c); for (let i = 0; i < n; i++) d[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / n, 3); }
+  const filt = k.createBiquadFilter(); filt.type = 'lowpass'; filt.frequency.value = 5200; filt.Q.value = .4;
+  const comp = k.createDynamicsCompressor();
+  const b = k.createGain();
+  const hall = k.createConvolver(); hall.buffer = ib;
+  const nass = k.createGain(); nass.gain.value = .7;
+  const trocken = k.createGain(); trocken.gain.value = .75;
+  b.connect(trocken); b.connect(hall); hall.connect(nass);
+  trocken.connect(filt); nass.connect(filt); filt.connect(comp); comp.connect(k.destination);
+  for (const [halb, vol] of [[-12, .06], [-5, .04], [0, .03]]) {      // leiser tiefer Grundton als Untergrund
+    const o = k.createOscillator(), l = k.createOscillator(), lg = k.createGain(), g = k.createGain();
+    o.type = 'triangle'; o.frequency.value = hz(146.83, halb); l.frequency.value = .05 + Math.random() * .08; lg.gain.value = vol * .5;
+    g.gain.value = 0; g.gain.setTargetAtTime(vol, k.currentTime, .8);
+    l.connect(lg); lg.connect(g.gain); o.connect(g); g.connect(b); o.start(); l.start();
+  }
+  ac = k; bus = b;   // erst setzen, wenn alles fertig gebaut ist
+  return k;
+}
+
+function audioBereit() {
+  // Auf dem iPhone soll der Ton auch bei aktivem Stummschalter laufen
+  try { if (navigator.audioSession) navigator.audioSession.type = 'playback'; } catch (e) {}
+  try {
+    if (!ac) audioBauen();
+    if (!ac) return false;
+    if (ac.state !== 'running') { const p = ac.resume(); if (p && p.catch) p.catch(() => {}); }
+    if (!entsperrt && ac.state === 'running') {
+      // winziger stiller Ton, so entsperrt iOS die Ausgabe sicher
+      const s = ac.createBufferSource(); s.buffer = ac.createBuffer(1, 1, 22050); s.connect(ac.destination); s.start(0);
+      entsperrt = true;
+    }
+  } catch (e) { return false; }
+  return true;
+}
+
+function ton(f, t, vol, dauer, einsatz) {
+  const o = ac.createOscillator(), g = ac.createGain();
+  o.type = 'sine'; o.frequency.value = f;
+  g.gain.setValueAtTime(0, t); g.gain.linearRampToValueAtTime(vol, t + einsatz); g.gain.exponentialRampToValueAtTime(.0001, t + einsatz + dauer);
+  o.connect(g); g.connect(bus); o.start(t); o.stop(t + einsatz + dauer + .1);
+}
+function anschlagen(y, tempo) {
+  if (!ac || !bus) return;
+  if (ac.state !== 'running') { ac.resume(); return; }
+  const t = ac.currentTime + .01, hoehe = Math.max(0, Math.min(1, 1 - y / innerHeight)), vol = .12 + .2 * Math.min(1, tempo);
+  const f = hz(146.83, D_MOLL[Math.min(8, Math.floor(hoehe * 8.9))] + 12);
+  [[1, 1, 4], [2.76, .45, 2.4], [5.4, .18, 1.2]].forEach(([r, v, d]) => ton(f * r, t, vol * v * 1.4, d, .008));
+}
+function klangBewegung(fing) {
+  if (!fing.length) return;
+  let v = 0, y = innerHeight / 2;
+  for (const f of fing) { const s = Math.hypot(f.dx, f.dy); if (s >= v) { v = s; y = f.y; } }
+  const pv = v * 60;                                   // Pixel pro Sekunde
+  if (pv < 30) return;
+  wegStrecke += v;
+  const schwelle = 70 - 40 * Math.min(1, pv / 1400), jetzt = performance.now();
+  if (wegStrecke > schwelle && jetzt - tAnschlag > 55) {
+    wegStrecke = 0; tAnschlag = jetzt;
+    anschlagen(y + (Math.random() - .5) * innerHeight * .25, pv / 1200);
+  }
+}
+// Browser erlauben Ton erst nach einer Berührung, auf dem iPhone zählt dafür erst das Loslassen.
+// Die Lauscher hängen in der Capture-Phase, damit p5 sie mit seinen eigenen Touch-Handlern nicht ausbremst.
+['pointerdown', 'pointerup', 'touchstart', 'touchend', 'mousedown', 'mouseup', 'click', 'keydown'].forEach(t => {
+  window.addEventListener(t, () => { letztesEreignis = t; audioBereit(); }, { capture: true, passive: true });
+});
+document.addEventListener('visibilitychange', () => { if (!ac) return; if (document.hidden) ac.suspend(); else ac.resume(); });
+
+// Sichtbarer Knopf, denn auf dem iPhone gibt erst ein echtes Tippen den Ton frei, ein Wischen reicht nicht
+(function () {
+  const k = document.getElementById('tonKnopf'); if (!k) return;
+  function an(e) {
+    if (e) { e.preventDefault(); e.stopPropagation(); }
+    audioBereit();
+    setTimeout(() => { try { if (ac && ac.state === 'running') anschlagen(innerHeight * .5, .5); } catch (x) {} }, 200);
+  }
+  ['touchstart', 'pointerdown', 'mousedown'].forEach(t => k.addEventListener(t, e => e.stopPropagation(), { passive: true }));
+  k.addEventListener('touchend', an, { passive: false });
+  k.addEventListener('click', an);
+  setInterval(() => { if (ac && ac.state === 'running') k.classList.add('weg'); else k.classList.remove('weg'); }, 300);
+})();
+window.__klang = () => ({ zustand: ac && ac.state, wegStrecke });
+
 </script>
 <style>.zurueck{position:fixed;top:max(12px,env(safe-area-inset-top));left:max(12px,env(safe-area-inset-left));z-index:9999;font:400 14px/1 Georgia,serif;color:#f1f0f7;background:rgba(9,10,28,.55);border:1px solid rgba(255,255,255,.22);border-radius:999px;padding:9px 14px;text-decoration:none;-webkit-backdrop-filter:blur(6px);backdrop-filter:blur(6px);touch-action:manipulation}.zurueck:focus-visible{outline:2px solid #8fd3ff;outline-offset:3px}</style>
 <a class="zurueck" href="index.html" aria-label="Zurück zur Übersicht">← Übersicht</a>

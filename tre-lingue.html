@@ -546,6 +546,7 @@ function activity(){
 function grade(id,ok,hinted,key,isNew){
   const c=S.cards[id]||(S.cards[id]={box:0,due:0,r:0,w:0});
   ok?c.r++:c.w++;
+  if(ok&&c.box>0&&c.due>today()){activity();touch();return}
   if(ok&&!hinted)c.box=Math.min(5,c.box+1);else if(ok)c.box=Math.max(1,c.box);else c.box=1;
   c.due=today()+INT[c.box];
   if(!isNew){const h=S.hist[key]||(S.hist[key]=[]);h.push(ok&&!hinted?1:0);if(h.length>30)h.shift()}
@@ -708,7 +709,8 @@ function renderSession(){
 function hopHtml(id,pre,ok){
   const c=S.cards[id];if(!c)return '';
   const von=pre.card?Math.max(0,pre.card.box):0,nach=c.box,pos=n=>Math.max(0,Math.min(5,n))/5*100+'%';
-  const text=!ok?(von>1?`Zurück in Fach ${nach}`:`Landet in Fach ${nach}, kommt bald wieder`):nach>von?(nach>=4?`Fach ${nach}, jetzt sicher`:`Weiter in Fach ${nach}`):nach<von?`Zurück in Fach ${nach}`:`Bleibt in Fach ${nach}`;
+  const early=ok&&pre.card&&pre.card.box>0&&pre.card.due>today()&&nach===von;
+  const text=early?`Noch nicht dran, bleibt in Fach ${nach}`:!ok?(von>1?`Zurück in Fach ${nach}`:`Landet in Fach ${nach}, kommt bald wieder`):nach>von?(nach>=4?`Fach ${nach}, jetzt sicher`:`Weiter in Fach ${nach}`):nach<von?`Zurück in Fach ${nach}`:`Bleibt in Fach ${nach}`;
   let pts='';for(let n=0;n<=5;n++)pts+=`<i class="pt" style="left:${pos(n)}"></i>`;
   return `<div class="hop" role="img" aria-label="${text}"><div class="track">${pts}<i class="tk" style="--from:${pos(von)};--to:${pos(nach)}"></i></div><div class="lab"><span>neu</span><span>1</span><span>2</span><span>3</span><span>4</span><span>5</span></div><p>${text}</p></div>`;
 }

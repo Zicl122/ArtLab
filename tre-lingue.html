@@ -495,20 +495,50 @@ const spk=(t,l)=>HAS_TTS?`<button class="icon sm" type="button" data-act="speak"
 const def=()=>({v:1,ts:0,lvl:{en:'B1',fr:'B1',it:'A1'},cards:{},hist:{en:[],fr:[],it:[],ph:[]},streak:{last:0,n:0},log:{},les:{}});
 const merge=r=>{const d=def();const o=Object.assign(d,r,{lvl:Object.assign(d.lvl,r.lvl||{}),hist:Object.assign(d.hist,r.hist||{})});Object.keys(o.cards||{}).forEach(k=>{if(o.cards[k].box>5)o.cards[k].box=5});return o};
 let S=def(),dbh=null,saveT=null,inflight=false,again=false,sync='local';
+let CFG=null;try{CFG=JSON.parse(localStorage.getItem('tl.sync')||'null')}catch(e){}
+function mergeStates(a,b){
+  const ea=a.epoch||0,eb=b.epoch||0;
+  if(ea!==eb){const w=ea>eb?a:b;return merge(JSON.parse(JSON.stringify(w)))}
+  const n=(a.ts||0)>=(b.ts||0)?a:b,o=n===a?b:a;
+  const m=merge(JSON.parse(JSON.stringify(n)));m.epoch=ea;
+  const ids=new Set([...Object.keys(a.cards||{}),...Object.keys(b.cards||{})]);
+  m.cards={};
+  ids.forEach(k=>{const x=(a.cards||{})[k],y=(b.cards||{})[k];
+    if(!x||!y){m.cards[k]=JSON.parse(JSON.stringify(x||y));return}
+    const tx=x.t||0,ty=y.t||0;
+    const w=tx!==ty?(tx>ty?x:y):((x.r+x.w)>=(y.r+y.w)?x:y);
+    m.cards[k]=JSON.parse(JSON.stringify(w))});
+  m.les=Object.assign({},o.les||{},n.les||{});
+  m.log=Object.assign({},o.log||{});Object.keys(n.log||{}).forEach(k=>{m.log[k]=Math.max(m.log[k]||0,n.log[k])});
+  const sa=a.streak||{last:0,n:0},sb=b.streak||{last:0,n:0};m.streak=JSON.parse(JSON.stringify(sa.last>sb.last||(sa.last===sb.last&&sa.n>=sb.n)?sa:sb));
+  m.ts=Math.max(a.ts||0,b.ts||0);
+  return m;
+}
+async function cloudSync(){
+  const u=CFG.url.replace(/\/+$/,'')+'/sync/'+encodeURIComponent(CFG.code)+'.json';
+  const r=await fetch(u,{cache:'no-store'});if(!r.ok)throw new Error('get '+r.status);
+  const j=await r.json();let changed=false;
+  if(j&&j.json){const rem=JSON.parse(j.json);const m=mergeStates(S,rem);changed=JSON.stringify(m)!==JSON.stringify(S);S=m;cacheLocal()}
+  const p=await fetch(u,{method:'PUT',body:JSON.stringify({json:JSON.stringify(S),ts:S.ts})});if(!p.ok)throw new Error('put '+p.status);
+  if(changed&&ui.view==='home')render();
+}
+const syncText=()=>CFG?(sync==='cloud'?'Abgeglichen, dein Stand ist auf allen verbundenen Geräten gleich.':'Abgleich gerade nicht möglich, dein Stand liegt vorerst nur hier.'):(sync==='cloud'?'Dein Fortschritt ist gesichert und auf jedem Gerät da.':'Dein Fortschritt liegt nur in diesem Browser.');
 function cacheLocal(){try{localStorage.setItem('tl.state',JSON.stringify(S))}catch(e){}}
 function touch(){S.ts=Date.now();cacheLocal();clearTimeout(saveT);saveT=setTimeout(flush,1500)}
 async function flush(){
-  if(!dbh)return;if(inflight){again=true;return}
+  if(!dbh&&!CFG)return;if(inflight){again=true;return}
   inflight=true;
-  try{await dbh.set({json:JSON.stringify(S),ts:S.ts});sync='cloud'}catch(e){sync='local'}
+  try{if(dbh)await dbh.set({json:JSON.stringify(S),ts:S.ts});if(CFG)await cloudSync();sync='cloud'}catch(e){sync='local'}
   inflight=false;paintSync();
   if(again){again=false;flush()}
 }
-function paintSync(){const n=document.getElementById('sync');if(n)n.textContent=sync==='cloud'?'Dein Fortschritt ist gesichert und auf jedem Gerät da.':'Dein Fortschritt liegt nur in diesem Browser.'}
+function paintSync(){const n=document.getElementById('sync');if(n)n.textContent=syncText()}
 async function initStore(){
   try{if(navigator.storage&&navigator.storage.persist)navigator.storage.persist()}catch(e){}
   try{const raw=localStorage.getItem('tl.state');if(raw)S=merge(JSON.parse(raw))}catch(e){}
   render();
+  if(CFG)flush();
+  document.addEventListener('visibilitychange',()=>{if(!document.hidden&&CFG&&!SESS)flush()});
   try{
     const cl=window.claude;if(!cl||!cl.use)return;
     const [user,db]=await Promise.all([cl.use('user'),cl.use('db')]);
@@ -545,7 +575,7 @@ function activity(){
 }
 function grade(id,ok,hinted,key,isNew){
   const c=S.cards[id]||(S.cards[id]={box:0,due:0,r:0,w:0});
-  ok?c.r++:c.w++;
+  ok?c.r++:c.w++;c.t=Date.now();
   if(ok&&c.box>0&&c.due>today()){activity();touch();return}
   if(ok&&!hinted)c.box=Math.min(5,c.box+1);else if(ok)c.box=Math.max(1,c.box);else c.box=1;
   c.due=today()+INT[c.box];
@@ -575,8 +605,14 @@ function buildPhrases(){
   fresh.forEach((p,n)=>q.splice(Math.min(q.length,n*3),0,{id:p.id,k:'intro'}));
   return q;
 }
+let lastExtra=[];
 function buildExtra(pool){
-  return pool.filter(i=>S.cards[i.id]&&S.cards[i.id].box>0).sort((a,b)=>S.cards[a.id].box-S.cards[b.id].box).slice(0,8).map(i=>({id:i.id,k:'rec'}));
+  const begun=pool.filter(i=>S.cards[i.id]&&S.cards[i.id].box>0);
+  let cand=begun.filter(i=>!lastExtra.includes(i.id));
+  if(cand.length<8)cand=begun;
+  const pick=shuffle(cand.map(i=>({i,k:S.cards[i.id].box+Math.random()*3.5}))).sort((a,b)=>a.k-b.k).slice(0,10).map(x=>x.i);
+  lastExtra=pick.map(i=>i.id);
+  return shuffle(pick).map(i=>({id:i.id,k:'rec'}));
 }
 
 /* ---------- Zustand der Oberfläche ---------- */
@@ -686,8 +722,9 @@ function renderHome(){
 <button class="mini" data-act="phr"><span class="chip">Sprechen</span><h3>Redewendungen</h3><p>${ps.due+ps.fresh?`${ps.due} fällig, ${ps.fresh} neu`:'Alles gelernt'}</p></button></div>`;
     }
   });
-  h+=`<div class="foot"><span id="sync">${sync==='cloud'?'Dein Fortschritt ist gesichert und auf jedem Gerät da.':'Dein Fortschritt liegt nur in diesem Browser.'}</span>
-<div class="row" style="margin:0"><button class="btn" data-act="export">Fortschritt sichern</button><button class="btn" data-act="import">Fortschritt laden</button></div>
+  h+=`<div class="foot"><span id="sync">${syncText()}</span>
+<div class="row" style="margin:0"><button class="btn" data-act="export">Fortschritt sichern</button><button class="btn" data-act="import">Fortschritt laden</button><button class="btn" data-act="syncopen">Geräte abgleichen</button></div>
+${ui.syncOpen?syncPanel():''}
 <input type="file" id="impf" accept="application/json,.json" hidden>
 ${ui.confirm?`<div class="row" style="margin:0"><button class="btn" data-act="reset2">Ja, alles zurücksetzen</button><button class="btn" data-act="reset0">Abbrechen</button></div>`:`<button class="btn" data-act="reset1">Fortschritt zurücksetzen</button>`}</div>`;
   return h;
@@ -926,11 +963,31 @@ function act(a,d){
     case 'opt':chooseOpt(+d.i);break;
     case 'speak':speak(d.t,d.l);break;
     case 'export':exportState();break;
+    case 'syncopen':ui.syncOpen=!ui.syncOpen;ui.syncMsg='';render();break;
+    case 'synccon':syncConnect();break;
+    case 'syncoff':CFG=null;try{localStorage.removeItem('tl.sync')}catch(e){}sync='local';ui.syncMsg='Getrennt. Dein Stand bleibt auf diesem Gerät.';render();break;
     case 'import':document.getElementById('impf').click();break;
     case 'reset1':ui.confirm=true;render();break;
     case 'reset0':ui.confirm=false;render();break;
-    case 'reset2':S=def();ui.confirm=false;touch();render();break;
+    case 'reset2':S=def();S.epoch=Date.now();ui.confirm=false;touch();render();break;
   }
+}
+function randCode(){const a=new Uint8Array(12);crypto.getRandomValues(a);return Array.from(a,x=>'abcdefghijkmnpqrstuvwxyz23456789'[x%32]).join('')}
+function syncPanel(){
+  const u=CFG?esc(CFG.url):'',c=esc(CFG?CFG.code:(ui.newCode||(ui.newCode=randCode())));
+  return `<div class="note" style="text-align:left;margin:12px 0"><b>Geräte abgleichen</b><p class="meta">Trage auf jedem Gerät dieselbe Adresse und denselben Code ein. Den Code erzeugst du einmal, auf dem zweiten Gerät gibst du ihn genauso ein. Wer den Code kennt, kann deinen Lernstand lesen, behalte ihn also für dich.</p>
+<label class="meta">Adresse der Firebase-Datenbank<input id="sdb" type="url" value="${u}" placeholder="https://…firebasedatabase.app" style="width:100%;padding:10px;border-radius:12px;border:1.5px solid var(--line);margin:4px 0 10px;font:inherit"></label>
+<label class="meta">Abgleich-Code<input id="scode" type="text" value="${c}" autocapitalize="off" autocomplete="off" style="width:100%;padding:10px;border-radius:12px;border:1.5px solid var(--line);margin:4px 0 10px;font:inherit"></label>
+<div class="row" style="margin:0"><button class="btn primary" data-act="synccon">${CFG?'Speichern und abgleichen':'Verbinden'}</button>${CFG?'<button class="btn" data-act="syncoff">Trennen</button>':''}<button class="btn" data-act="syncopen">Schließen</button></div>
+${ui.syncMsg?`<p class="meta">${esc(ui.syncMsg)}</p>`:''}</div>`;
+}
+async function syncConnect(){
+  const url=(document.getElementById('sdb').value||'').trim().replace(/\/+$/,''),code=(document.getElementById('scode').value||'').trim();
+  if(!/^(https:\/\/|http:\/\/(127\.0\.0\.1|localhost))[^\s]+$/.test(url)||code.length<10){ui.syncMsg='Bitte gib eine https-Adresse und einen Code mit mindestens 10 Zeichen ein.';render();return}
+  CFG={url,code};try{localStorage.setItem('tl.sync',JSON.stringify(CFG))}catch(e){}
+  ui.syncMsg='Verbinde …';render();
+  try{await cloudSync();sync='cloud';ui.syncMsg='Verbunden. Dein Stand wurde zusammengeführt.'}catch(e){sync='local';ui.syncMsg='Das hat nicht geklappt ('+(e.message||'Netzwerk')+'). Prüfe Adresse und Regeln der Datenbank.'}
+  render();
 }
 function exportState(){
   const blob=new Blob([JSON.stringify(S)],{type:'application/json'}),u=URL.createObjectURL(blob),a=document.createElement('a');
@@ -938,7 +995,7 @@ function exportState(){
 }
 document.addEventListener('change',e=>{
   if(!e.target||e.target.id!=='impf')return;const f=e.target.files&&e.target.files[0];if(!f)return;
-  f.text().then(t=>{const r=JSON.parse(t);if(!r||typeof r!=='object'||!r.cards)throw 0;S=merge(r);S.ts=Date.now();cacheLocal();ui.view='home';render();clearTimeout(saveT);saveT=setTimeout(flush,500)}).catch(()=>alert('Die Datei konnte nicht gelesen werden.'));
+  f.text().then(t=>{const r=JSON.parse(t);if(!r||typeof r!=='object'||!r.cards)throw 0;S=merge(r);S.epoch=Date.now();S.ts=Date.now();cacheLocal();ui.view='home';render();clearTimeout(saveT);saveT=setTimeout(flush,500)}).catch(()=>alert('Die Datei konnte nicht gelesen werden.'));
   e.target.value='';
 });
 document.addEventListener('click',e=>{const b=e.target.closest('[data-act]');if(!b)return;act(b.dataset.act,b.dataset)});

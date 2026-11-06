@@ -1,0 +1,532 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Bildbeschreibung-Werkstatt</title>
+<style>
+:root{
+  --bg:#f3f2ee;--surface:#fff;--ink:#1d1d1f;--muted:#6b6b72;--line:#e2e0d9;--acc:#1f6f5c;--acc2:#e3f1ec;--bad:#c4412f;--ok:#2e8b57;
+  --r-haupt:#e8833a;--r-komp:#3b82c4;--r-persp:#8a63d2;--r-licht:#d9a400;--r-farbe:#d6456f;--r-technik:#3d9a5b;--r-text:#1f9aa6;
+  --shadow:0 1px 2px rgba(0,0,0,.05),0 10px 28px -14px rgba(0,0,0,.25);
+  --font:-apple-system,BlinkMacSystemFont,"SF Pro Text","Segoe UI",Inter,system-ui,sans-serif;
+  --display:-apple-system,BlinkMacSystemFont,"SF Pro Display","Segoe UI",Inter,system-ui,sans-serif;
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html{-webkit-text-size-adjust:100%}
+body{margin:0;background:var(--bg);color:var(--ink);font:400 16px/1.5 var(--font);-webkit-font-smoothing:antialiased;padding:56px 0 96px}
+.zurueck{position:fixed;left:12px;top:max(10px,env(safe-area-inset-top));z-index:30;font:600 14px var(--font);color:#fff;background:rgba(40,40,45,.72);-webkit-backdrop-filter:blur(12px);backdrop-filter:blur(12px);text-decoration:none;padding:8px 14px;border-radius:999px}
+#app{max-width:680px;margin:0 auto;padding:0 16px}
+h1{font:800 30px/1.1 var(--display);letter-spacing:-.03em;margin:6px 0 6px}
+h2{font:750 20px/1.2 var(--display);letter-spacing:-.02em;margin:0 0 8px}
+h3{font:700 16px/1.25 var(--display);margin:0 0 6px}
+p{margin:0 0 10px}.muted{color:var(--muted)}.small{font-size:13px}
+.card{background:var(--surface);border-radius:22px;padding:18px;box-shadow:var(--shadow);margin:14px 0}
+.btn{appearance:none;border:0;cursor:pointer;font:650 16px var(--font);padding:13px 20px;border-radius:999px;background:var(--acc);color:#fff;touch-action:manipulation;transition:transform .12s}
+.btn:active{transform:scale(.96)}
+.btn.soft{background:var(--acc2);color:var(--acc)}.btn.ghost{background:#ecebe6;color:var(--ink)}
+.btn.wide{width:100%}.btn.sm{padding:9px 14px;font-size:14px}
+.btn:disabled{opacity:.4}
+.row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.view{display:none}.view.on{display:block}
+/* Tabs */
+#tabs{position:fixed;left:0;right:0;bottom:0;z-index:20;display:flex;justify-content:center;gap:4px;padding:8px 10px max(10px,env(safe-area-inset-bottom));background:rgba(243,242,238,.82);-webkit-backdrop-filter:blur(18px) saturate(1.5);backdrop-filter:blur(18px) saturate(1.5);border-top:1px solid var(--line)}
+#tabs button{flex:1;max-width:150px;appearance:none;border:0;background:transparent;color:var(--muted);font:600 11.5px var(--font);display:flex;flex-direction:column;align-items:center;gap:3px;padding:6px 4px;border-radius:14px;cursor:pointer}
+#tabs button svg{width:24px;height:24px;stroke:currentColor;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+#tabs button.on{color:var(--acc);background:var(--acc2)}
+/* Upload */
+.drop{border:2px dashed #c9c6bb;border-radius:20px;padding:26px 16px;text-align:center;background:#faf9f6}
+.drop.over{border-color:var(--acc);background:var(--acc2)}
+.thumb{width:100%;max-height:260px;object-fit:contain;border-radius:14px;background:#111;display:block}
+.facts{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:12px}
+.fact{background:#f6f5f1;border-radius:14px;padding:10px 12px}.fact b{display:block;font-size:12px;color:var(--muted);font-weight:650}.fact span{font-weight:650}
+.fld{display:block;margin:0 0 12px}.fld>span{display:block;font:650 13px var(--font);margin-bottom:4px}.fld small{display:block;color:var(--muted);font-weight:400;margin-bottom:4px}
+.in,textarea{width:100%;font:500 16px var(--font);padding:12px 14px;border-radius:14px;border:1.5px solid var(--line);background:#fff;color:var(--ink)}
+.in:focus,textarea:focus{outline:2px solid var(--acc);border-color:transparent}
+textarea{resize:vertical;min-height:90px;line-height:1.5}
+/* Stage */
+#stage{position:relative;overflow:hidden;touch-action:none;border-radius:20px;background:#17171a;margin:10px 0 8px;user-select:none;-webkit-user-select:none}
+#pan{position:absolute;left:0;top:0;transform-origin:0 0}
+#pan img{display:block;max-width:none;pointer-events:none}
+#pan.gray img{filter:grayscale(1) contrast(1.35)}
+#grid{position:absolute;inset:0;pointer-events:none;display:none}
+#grid.on{display:block}
+#grid i{position:absolute;background:rgba(255,255,255,.85);box-shadow:0 0 0 1px rgba(0,0,0,.35)}
+#marks{position:absolute;inset:0;pointer-events:none}
+.mk{position:absolute;width:30px;height:30px;margin:-15px 0 0 -15px;border-radius:50%;background:var(--c);border:3px solid #fff;box-shadow:0 2px 8px rgba(0,0,0,.45);color:#fff;font:800 13px/24px var(--font);text-align:center;transform:scale(var(--inv,1))}
+.tools{display:flex;gap:8px;flex-wrap:wrap}
+.tool{appearance:none;border:1.5px solid var(--line);background:#fff;color:var(--ink);font:650 14px var(--font);padding:8px 13px;border-radius:999px;cursor:pointer}
+.tool[aria-pressed=true]{background:var(--ink);color:#fff;border-color:transparent}
+.hint{font-size:13px;color:var(--muted);margin:6px 2px}
+.swatches{display:flex;gap:6px;margin:10px 0 4px}
+.sw{flex:1;border-radius:12px;min-height:54px;padding:6px;font:650 11px/1.2 var(--font);display:flex;align-items:flex-end;justify-content:center;text-shadow:0 0 3px rgba(0,0,0,.6);color:#fff}
+.badges{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin:6px 0}
+.badge{border-radius:16px;background:#f1f0eb;padding:10px 4px;text-align:center;font:650 11.5px/1.2 var(--font);color:var(--muted);position:relative}
+.badge i{display:block;width:34px;height:34px;border-radius:50%;margin:0 auto 5px;border:3px solid var(--c);background:#fff}
+.badge.on i{background:var(--c)}.badge.on{color:var(--ink);background:#fff;box-shadow:var(--shadow)}
+.badge.star::after{content:"★";position:absolute;right:8px;top:4px;color:#e0a800;font-size:15px}
+.note{display:flex;gap:10px;align-items:flex-start;padding:10px 0;border-top:1px solid var(--line);cursor:pointer;width:100%;text-align:left;background:none;border-left:0;border-right:0;border-bottom:0;font:inherit;color:inherit}
+.note:first-child{border-top:0}
+.note .n{flex:none;width:26px;height:26px;border-radius:50%;background:var(--c);color:#fff;font:800 12px/26px var(--font);text-align:center}
+.note small{display:block;color:var(--muted);font-weight:650}
+/* Sheet */
+#shade{position:fixed;inset:0;background:rgba(0,0,0,.4);z-index:40;display:none}
+#sheet{position:fixed;left:0;right:0;bottom:0;z-index:41;max-height:88vh;overflow:auto;background:var(--surface);border-radius:26px 26px 0 0;padding:18px 18px max(22px,env(safe-area-inset-bottom));display:none;box-shadow:0 -10px 40px rgba(0,0,0,.25)}
+#sheet .in{margin-bottom:10px}
+.chips{display:flex;flex-wrap:wrap;gap:7px;margin:8px 0 12px}
+.chip{appearance:none;border:2px solid var(--c,#ccc);background:#fff;color:var(--ink);font:650 13.5px var(--font);padding:7px 12px;border-radius:999px;cursor:pointer}
+.chip[aria-pressed=true]{background:var(--c);color:#fff}
+.qs{background:#f6f5f1;border-radius:14px;padding:10px 14px;margin:0 0 12px;font-size:14px}.qs ul{margin:4px 0 0;padding-left:18px}
+/* Spiele */
+.seg{display:flex;background:#e8e7e1;border-radius:999px;padding:4px;margin:0 0 6px}
+.seg button{flex:1;appearance:none;border:0;background:transparent;font:650 14px var(--font);padding:9px 8px;border-radius:999px;color:var(--muted);cursor:pointer}
+.seg button.on{background:#fff;color:var(--ink);box-shadow:0 1px 4px rgba(0,0,0,.12)}
+.prog{height:8px;border-radius:99px;background:#e6e4dc;overflow:hidden;margin:6px 0 14px}.prog i{display:block;height:100%;background:var(--acc);border-radius:99px;transition:width .25s}
+.stmt{font:650 20px/1.35 var(--display);letter-spacing:-.01em;padding:22px 18px;background:#fff;border-radius:22px;box-shadow:var(--shadow);min-height:130px;display:flex;align-items:center}
+.ans{display:grid;gap:8px;margin-top:12px}
+.ans button{appearance:none;border:2px solid var(--line);background:#fff;font:650 16px var(--font);padding:14px;border-radius:18px;cursor:pointer;text-align:left}
+.ans button small{display:block;font-weight:500;color:var(--muted);font-size:12.5px}
+.ans button.ok{border-color:var(--ok);background:#e8f5ee}.ans button.no{border-color:var(--bad);background:#fbebe8}
+.fb{border-radius:16px;padding:12px 14px;margin-top:12px;font-size:15px}.fb.ok{background:#e8f5ee}.fb.no{background:#fbebe8}
+.ord{display:grid;gap:8px;margin:12px 0}
+.ordb{appearance:none;display:flex;gap:10px;align-items:flex-start;text-align:left;border:2px solid var(--line);background:#fff;border-radius:16px;padding:12px;font:500 15px/1.4 var(--font);cursor:pointer;color:var(--ink)}
+.ordb .p{flex:none;width:26px;height:26px;border-radius:50%;background:#ecebe6;color:var(--muted);font:800 13px/26px var(--font);text-align:center}
+.ordb.picked{border-color:var(--acc);background:var(--acc2)}.ordb.picked .p{background:var(--acc);color:#fff}
+.ordb.ok{border-color:var(--ok);background:#e8f5ee}.ordb.ok .p{background:var(--ok);color:#fff}
+.ordb.no{border-color:var(--bad);background:#fbebe8}.ordb.no .p{background:var(--bad);color:#fff}
+.score{font:800 44px/1 var(--display);letter-spacing:-.03em}
+/* Schreiben */
+.cov{display:flex;flex-wrap:wrap;gap:6px;margin:8px 0}
+.cv{font:650 12px var(--font);padding:5px 10px;border-radius:999px;background:#ecebe6;color:var(--muted);border:2px solid transparent}
+.cv.on{background:#fff;color:var(--ink);border-color:var(--c)}
+.flag{border-left:4px solid var(--bad);background:#fbf1ef;border-radius:10px;padding:8px 12px;margin:8px 0;font-size:14px}
+.flag.g{border-color:var(--ok);background:#eef7f1}
+.flag b{display:block;font-size:12px;margin-bottom:2px}
+.foot{font-size:12px;color:var(--muted);text-align:center;margin:26px 0 0}
+#ptext{display:none}
+@media print{body>*:not(#ptext){display:none!important}#ptext{display:block;font:14pt/1.5 Georgia,serif;white-space:pre-wrap;padding:0}}
+@media (max-width:420px){.badges{grid-template-columns:repeat(4,1fr)}h1{font-size:26px}}
+</style>
+</head>
+<body>
+<a class="zurueck" href="index.html">← Übersicht</a>
+<main id="app">
+
+<!-- BILD -->
+<section class="view on" id="v-bild">
+  <h1>Bildbeschreibung-Werkstatt</h1>
+  <p class="muted">Lade ein Bild, sammle Beobachtungen, übe das genaue Hinsehen und schreibe deine eigene Bildbeschreibung. Dein Bild bleibt dabei auf deinem Gerät. Es wird nichts hochgeladen.</p>
+  <div class="card">
+    <div class="drop" id="drop">
+      <p><b>Wähle ein Bild</b><br><span class="muted small">Foto aufnehmen, Datei wählen oder hierher ziehen</span></p>
+      <button class="btn" id="pick" type="button">Bild laden</button>
+      <input type="file" id="file" accept="image/*" hidden>
+    </div>
+    <div id="loaded" hidden>
+      <img id="thumb" class="thumb" alt="Dein geladenes Bild">
+      <div class="facts" id="facts"></div>
+      <div class="row" style="margin-top:12px"><button class="btn" id="goBeob" type="button">Weiter zum Beobachten</button><button class="btn ghost" id="other" type="button">Anderes Bild</button></div>
+    </div>
+    <p class="hint" id="restore" hidden>Deine Notizen sind noch gespeichert. Lade dasselbe Bild noch einmal, dann erscheinen die Markierungen wieder.</p>
+  </div>
+  <div class="card">
+    <h2>Bildinformationen</h2>
+    <p class="muted small">Trage ein, was du über das Bild weißt. Was du nicht weißt, lässt du frei oder schreibst es unten auf.</p>
+    <label class="fld"><span>Wer hat das Bild gemacht?</span><input class="in" data-i="wer" placeholder="Künstler, Künstlerin, Fotograf …"></label>
+    <label class="fld"><span>Titel</span><input class="in" data-i="titel" placeholder="falls vorhanden"></label>
+    <label class="fld"><span>Was ist es, und mit welcher Technik?</span><input class="in" data-i="was" placeholder="z. B. Öl auf Leinwand, Fotografie, KI-Bild"></label>
+    <label class="fld"><span>Bildtyp</span><input class="in" data-i="typ" placeholder="z. B. Porträt, Landschaft, Pressefoto"></label>
+    <label class="fld"><span>Format</span><small>Erst die Höhe, dann die Breite</small><input class="in" data-i="format" placeholder="z. B. 92 × 73 cm"></label>
+    <label class="fld"><span>Wann wurde es gemacht?</span><input class="in" data-i="wann" placeholder="Jahr oder Epoche"></label>
+    <label class="fld"><span>Wo befindet es sich oder wurde es veröffentlicht?</span><input class="in" data-i="wo" placeholder="z. B. Museum, Buch, Instagram"></label>
+    <label class="fld"><span>Was ist nicht bekannt?</span><input class="in" data-i="unbekannt" placeholder="z. B. Technik und Entstehungsjahr"></label>
+  </div>
+</section>
+
+<!-- BEOBACHTEN -->
+<section class="view" id="v-beob">
+  <h1>Beobachten</h1>
+  <p class="muted">Tippe auf eine Stelle im Bild und halte fest, was du dort siehst. Ordne jede Beobachtung einer Rubrik zu. Zwei Notizen in einer Rubrik bringen einen Stern.</p>
+  <div id="noimg" class="card" hidden><p>Lade zuerst ein Bild.</p><button class="btn" data-go="bild" type="button">Zum Bild</button></div>
+  <div id="beobMain">
+    <div id="stage"><div id="pan"><img id="bild" alt="Dein Bild"><div id="grid"></div><div id="marks"></div></div></div>
+    <div class="tools">
+      <button class="tool" id="tGrid" aria-pressed="false" type="button">Raster</button>
+      <button class="tool" id="tGray" aria-pressed="false" type="button">Hell und Dunkel</button>
+      <button class="tool" id="tIn" type="button">Zoom +</button>
+      <button class="tool" id="tOut" type="button">Zoom −</button>
+      <button class="tool" id="tFit" type="button">Ganzes Bild</button>
+    </div>
+    <p class="hint">Tippen setzt eine Markierung. Mit zwei Fingern zoomen, mit einem Finger verschieben. Wer die Lupe braucht, zoomt auf Pinselstriche oder Pixel.</p>
+    <div class="card"><h3>Messwerte zum Bild</h3><p class="muted small">Das Programm misst, du beschreibst. Nutze die Werte als Hilfe für Farbigkeit und Licht.</p><div id="meas"></div></div>
+    <div class="card"><h3>Deine Rubriken</h3><div class="badges" id="badges"></div><div id="won"></div></div>
+    <div class="card" id="notesCard"><h3>Deine Notizen</h3><div id="notes"></div></div>
+  </div>
+</section>
+
+<!-- ÜBEN -->
+<section class="view" id="v-ueben">
+  <h1>Üben</h1>
+  <p class="muted">Zwei kurze Spiele, die zeigen, worauf es bei einer Beschreibung ankommt. Sie funktionieren ohne dein Bild.</p>
+  <div class="seg" id="uMode"><button class="on" data-m="sd" type="button">Sehen oder deuten</button><button data-m="ord" type="button">Reihenfolge</button></div>
+  <div id="game"></div>
+</section>
+
+<!-- SCHREIBEN -->
+<section class="view" id="v-schr">
+  <h1>Schreiben</h1>
+  <p class="muted">Schreibe vom Großen zum Kleinen, vom Wichtigen zum weniger Wichtigen und im Bild von vorne nach hinten. Tippe auf eine Rubrik für Satzanfänge, oder auf eine Notiz, um sie einzufügen.</p>
+  <div class="card">
+    <div class="chips" id="sChips"></div>
+    <div id="sStarters"></div>
+    <div class="row" style="margin:8px 0"><button class="btn soft sm" id="insInfo" type="button">Bildinfos als Satz einfügen</button></div>
+    <textarea id="txt" rows="12" placeholder="Hier beginnt deine Bildbeschreibung …"></textarea>
+    <div class="small muted" id="wc" style="margin:6px 2px"></div>
+    <div class="row"><button class="btn sm" id="copy" type="button">Kopieren</button><button class="btn ghost sm" id="print" type="button">Drucken</button><button class="btn ghost sm" id="clr" type="button">Leeren</button></div>
+  </div>
+  <div class="card"><h3>Was schon vorkommt</h3><p class="muted small">Das Programm sucht Signalwörter. Das sind Hinweise und keine Bewertung. Entscheidend bleibt dein Text.</p><div class="cov" id="cov"></div></div>
+  <div class="card"><h3>Beschreibung oder Deutung?</h3><div id="flags"><p class="muted small">Sobald du schreibst, markiere ich Sätze, die eher eine Deutung sind.</p></div></div>
+  <div class="card" id="myNotes"><h3>Deine Notizen</h3><div id="insNotes"></div></div>
+</section>
+
+<p class="foot">Angelehnt an die Checkliste zum Verfassen einer Bildbeschreibung von ahs-aba.at („Bildern auf der Spur“). Rubriken, Fragen und Übungen sind eigene Formulierungen.</p>
+</main>
+
+<nav id="tabs">
+  <button class="on" data-go="bild" type="button"><svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="16" rx="3"/><circle cx="9" cy="10" r="1.8"/><path d="M4 18l5-5 4 4 3-3 4 4"/></svg>Bild</button>
+  <button data-go="beob" type="button"><svg viewBox="0 0 24 24"><path d="M2 12s4-7 10-7 10 7 10 7-4 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></svg>Beobachten</button>
+  <button data-go="ueben" type="button"><svg viewBox="0 0 24 24"><path d="M12 3l2.4 5.6L20 11l-5.6 2.4L12 19l-2.4-5.6L4 11l5.6-2.4z"/></svg>Üben</button>
+  <button data-go="schr" type="button"><svg viewBox="0 0 24 24"><path d="M4 20l1-4L16 5l3 3L8 19z"/><path d="M14 7l3 3"/></svg>Schreiben</button>
+</nav>
+<div id="shade"></div><div id="sheet"></div>
+<div id="ptext"></div>
+
+<script>
+(()=>{
+"use strict";
+const $=s=>document.querySelector(s), $$=s=>[...document.querySelectorAll(s)];
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const RUB=[
+ {id:'haupt',n:'Hauptmotiv',c:'var(--r-haupt)',q:['Was ist hauptsächlich dargestellt?','Ist das Größte im Bild wirklich das Wichtigste?'],s:['Das Hauptmotiv ist …','Im Zentrum des Bildes steht …','Dargestellt ist …']},
+ {id:'komp',n:'Komposition',c:'var(--r-komp)',q:['Wo im Bild sitzt das Hauptmotiv?','Wo ist viel zu sehen, wo wenig?','Wie groß sind die Elemente im Verhältnis zueinander?'],s:['Das Hauptmotiv befindet sich …','In der linken (rechten) Bildhälfte …','Im Vordergrund …, im Mittelgrund …, im Hintergrund …','Den größten Teil der Fläche nimmt … ein.']},
+ {id:'persp',n:'Perspektive',c:'var(--r-persp)',q:['Sehen wir die Dinge von oben, von unten oder auf Augenhöhe?','Folgen Elemente einer gemeinsamen Linie oder bilden eine Form, etwa ein Dreieck?'],s:['Wir blicken von oben (unten) auf …','Die Blickrichtung führt von … zu …','Mehrere Linien laufen auf … zu.']},
+ {id:'licht',n:'Licht & Schatten',c:'var(--r-licht)',q:['Was ist hell, was ist dunkel?','Wie verhalten sich helle und dunkle Stellen zueinander?'],s:['Am hellsten ist …','Dunkel sind …','Das Licht fällt von … auf …']},
+ {id:'farbe',n:'Farbigkeit',c:'var(--r-farbe)',q:['Welche Farben kommen vor, und wo?','Sind es wenige oder viele Farbtöne, leuchtend oder gedeckt?','Sticht eine Farbe hervor, und wohin lenkt sie den Blick?'],s:['Vorherrschend sind die Farben …','Die Farben wirken leuchtend (gedeckt), denn …','Hervor sticht …']},
+ {id:'technik',n:'Technik',c:'var(--r-technik)',q:['Sind Pinselstriche, Linien oder Pixel zu erkennen?','Sind die Konturen klar oder verschwommen?'],s:['Zu erkennen sind …','Die Konturen sind …','Die Linien sind dicht (locker) gesetzt.']},
+ {id:'text',n:'Text',c:'var(--r-text)',q:['Gibt es Text im oder am Bild? Wo steht er, wie sieht er aus?'],s:['Im Bild steht der Text …','Die Schrift ist …','Es gibt keinen Text.']}
+];
+const RB=Object.fromEntries(RUB.map(r=>[r.id,r]));
+const KEY='bb.v1';
+let S={info:{},notes:[],text:'',stats:{sd:0,ord:0},last:'haupt',img:false};
+try{Object.assign(S,JSON.parse(localStorage.getItem(KEY)||'{}'))}catch(e){}
+const save=()=>{try{localStorage.setItem(KEY,JSON.stringify(S))}catch(e){}};
+
+/* ---------- Tabs ---------- */
+function go(v){
+  $$('.view').forEach(x=>x.classList.toggle('on',x.id==='v-'+v));
+  $$('#tabs button').forEach(b=>b.classList.toggle('on',b.dataset.go===v));
+  window.scrollTo(0,0);
+  if(v==='beob'){layout();renderBeob()}
+  if(v==='schr')renderSchr();
+  if(v==='ueben')renderGame();
+}
+document.addEventListener('click',e=>{const b=e.target.closest('[data-go]');if(b)go(b.dataset.go)});
+
+/* ---------- Bild laden ---------- */
+const bild=$('#bild'),stage=$('#stage'),pan=$('#pan');
+let IW=0,IH=0,V={s:1,x:0,y:0,s0:1};
+$('#pick').onclick=()=>$('#file').click();
+$('#other').onclick=()=>$('#file').click();
+$('#file').onchange=e=>{const f=e.target.files&&e.target.files[0];if(f)ladeBild(f)};
+const drop=$('#drop');
+['dragover','dragenter'].forEach(t=>drop.addEventListener(t,e=>{e.preventDefault();drop.classList.add('over')}));
+['dragleave','drop'].forEach(t=>drop.addEventListener(t,e=>{e.preventDefault();drop.classList.remove('over')}));
+drop.addEventListener('drop',e=>{const f=e.dataTransfer.files&&e.dataTransfer.files[0];if(f)ladeBild(f)});
+window.addEventListener('paste',e=>{const it=[...(e.clipboardData||{items:[]}).items].find(i=>i.type.startsWith('image/'));if(it)ladeBild(it.getAsFile())});
+function ladeBild(f){
+  if(!f.type.startsWith('image/'))return;
+  const url=URL.createObjectURL(f);
+  const im=new Image();
+  im.onload=()=>{
+    IW=im.naturalWidth;IH=im.naturalHeight;
+    bild.src=url;bild.width=IW;bild.height=IH;$('#thumb').src=url;
+    S.img=true;$('#drop').hidden=true;$('#loaded').hidden=false;$('#restore').hidden=true;$('#noimg').hidden=true;$('#beobMain').hidden=false;
+    analyse(im);layout();
+    // Bild ändert sich: bestehende Notizen bleiben, gehören aber zum alten Bild
+  };
+  im.onerror=()=>alert('Dieses Bild konnte nicht gelesen werden.');
+  im.src=url;
+}
+
+/* ---------- Analyse ---------- */
+function colName(r,g,b){
+  const mx=Math.max(r,g,b),mn=Math.min(r,g,b),d=mx-mn,l=(mx+mn)/510;
+  if(mx<45)return 'schwarz';if(mn>215)return 'weiß';
+  if(d<28)return l<.35?'dunkelgrau':l>.7?'hellgrau':'grau';
+  let h=0;if(mx===r)h=((g-b)/d+6)%6;else if(mx===g)h=(b-r)/d+2;else h=(r-g)/d+4;h*=60;
+  const s=d/(mx||1);
+  if(h<15||h>=345)return l>.7?'rosa':(l<.3?'dunkelrot':'rot');
+  if(h<40)return l<.45?'braun':'orange';if(h<65)return l<.4?'olivbraun':'gelb';
+  if(h<165)return l<.3?'dunkelgrün':'grün';if(h<200)return 'türkis';if(h<255)return l<.3?'dunkelblau':'blau';
+  if(h<290)return 'violett';return 'rosa';
+}
+function analyse(im){
+  const w=64,h=Math.max(8,Math.round(64*IH/IW)),c=document.createElement('canvas');c.width=w;c.height=h;
+  const x=c.getContext('2d',{willReadFrequently:true});x.drawImage(im,0,0,w,h);
+  const d=x.getImageData(0,0,w,h).data,n=w*h,bk={};let dark=0,light=0,sat=0;
+  for(let i=0;i<d.length;i+=4){
+    const r=d[i],g=d[i+1],b=d[i+2],mx=Math.max(r,g,b),mn=Math.min(r,g,b),lum=.299*r+.587*g+.114*b;
+    if(lum<70)dark++;if(lum>195)light++;sat+=mx?(mx-mn)/mx:0;
+    const k=(r>>5)*64+(g>>5)*8+(b>>5);(bk[k]||(bk[k]={n:0,r:0,g:0,b:0})).n++;const o=bk[k];o.r+=r;o.g+=g;o.b+=b;
+  }
+  const cols=Object.values(bk).sort((a,b)=>b.n-a.n),pick=[];
+  for(const o of cols){const c={r:o.r/o.n,g:o.g/o.n,b:o.b/o.n,p:o.n/n};
+    if(pick.every(q=>Math.hypot(q.r-c.r,q.g-c.g,q.b-c.b)>70))pick.push(c);if(pick.length>=6)break}
+  const as=sat/n;
+  const ratio=IW/IH,form=Math.abs(ratio-1)<.06?'Quadrat':(ratio>1?'Querformat':'Hochformat');
+  const dp=Math.round(dark/n*100),lp=Math.round(light/n*100);
+  const hell=dp>=55?'überwiegend dunkel':(lp>=45?'überwiegend hell':'Hell und Dunkel halten sich die Waage');
+  const farb=as>.5?'eher leuchtend':(as<.22?'eher gedeckt':'mittel');
+  $('#facts').innerHTML=`<div class="fact"><b>Bildformat</b><span>${form}, ${IW} × ${IH} Pixel</span></div><div class="fact"><b>Seitenverhältnis</b><span>${(Math.max(IW,IH)/Math.min(IW,IH)).toFixed(2).replace('.',',')} zu 1</span></div>`;
+  $('#meas').innerHTML=`<div class="swatches">${pick.map(c=>`<div class="sw" style="background:rgb(${c.r|0},${c.g|0},${c.b|0})">${Math.round(c.p*100)} %</div>`).join('')}</div>
+   <p class="small muted" style="margin:2px 0 10px">Häufigste Farben: ${pick.map(c=>colName(c.r,c.g,c.b)).join(', ')}</p>
+   <div class="facts"><div class="fact"><b>Hell und Dunkel</b><span>${hell}</span><small class="muted" style="display:block">${dp} % dunkel, ${lp} % hell</small></div><div class="fact"><b>Farbigkeit</b><span>${farb}</span><small class="muted" style="display:block">Sättigung ${Math.round(as*100)} %</small></div></div>`;
+}
+
+/* ---------- Stage: Zoom, Pan, Tippen ---------- */
+function layout(){
+  if(!IW)return;
+  const SW=stage.clientWidth||Math.min(648,window.innerWidth-32);
+  const SH=Math.round(Math.max(240,Math.min(SW*IH/IW,innerHeight*.6)));
+  stage.style.height=SH+'px';
+  V.s0=Math.min(SW/IW,SH/IH);
+  if(!V.set){V.s=V.s0;V.x=(SW-IW*V.s)/2;V.y=(SH-IH*V.s)/2;V.set=true}
+  pan.style.width=IW+'px';pan.style.height=IH+'px';
+  apply();drawGrid();
+}
+function clampV(){
+  const SW=stage.clientWidth,SH=stage.clientHeight,w=IW*V.s,h=IH*V.s;
+  V.x=w<=SW?(SW-w)/2:Math.min(0,Math.max(SW-w,V.x));
+  V.y=h<=SH?(SH-h)/2:Math.min(0,Math.max(SH-h,V.y));
+}
+function apply(){clampV();pan.style.transform=`translate(${V.x}px,${V.y}px) scale(${V.s})`;pan.style.setProperty('--inv',(1/V.s).toFixed(4))}
+function zoomAt(f,cx,cy){const ns=Math.max(V.s0,Math.min(V.s0*8,V.s*f));f=ns/V.s;V.x=cx-(cx-V.x)*f;V.y=cy-(cy-V.y)*f;V.s=ns;apply()}
+$('#tIn').onclick=()=>zoomAt(1.5,stage.clientWidth/2,stage.clientHeight/2);
+$('#tOut').onclick=()=>zoomAt(1/1.5,stage.clientWidth/2,stage.clientHeight/2);
+$('#tFit').onclick=()=>{V.set=false;layout()};
+$('#tGray').onclick=e=>{const on=e.currentTarget.getAttribute('aria-pressed')!=='true';e.currentTarget.setAttribute('aria-pressed',on);pan.classList.toggle('gray',on)};
+$('#tGrid').onclick=e=>{const on=e.currentTarget.getAttribute('aria-pressed')!=='true';e.currentTarget.setAttribute('aria-pressed',on);$('#grid').classList.toggle('on',on)};
+function drawGrid(){
+  const g=$('#grid');let h='';
+  for(let i=1;i<3;i++){h+=`<i style="left:${i*33.333}%;top:0;bottom:0;width:${2/V.s}px"></i><i style="top:${i*33.333}%;left:0;right:0;height:${2/V.s}px"></i>`}
+  g.innerHTML=h;
+}
+const ptr=new Map();let drag=null,pinch=null;
+stage.addEventListener('pointerdown',e=>{if(!IW)return;stage.setPointerCapture(e.pointerId);ptr.set(e.pointerId,{x:e.clientX,y:e.clientY});
+  if(ptr.size===1)drag={sx:e.clientX,sy:e.clientY,vx:V.x,vy:V.y,moved:false,t:Date.now()};
+  if(ptr.size===2){const p=[...ptr.values()];pinch={d:Math.hypot(p[0].x-p[1].x,p[0].y-p[1].y),s:V.s};drag=null}});
+stage.addEventListener('pointermove',e=>{if(!ptr.has(e.pointerId))return;ptr.set(e.pointerId,{x:e.clientX,y:e.clientY});
+  if(pinch&&ptr.size>=2){const p=[...ptr.values()],d=Math.hypot(p[0].x-p[1].x,p[0].y-p[1].y),r=stage.getBoundingClientRect();
+    const cx=(p[0].x+p[1].x)/2-r.left,cy=(p[0].y+p[1].y)/2-r.top;zoomAt((pinch.s*d/pinch.d)/V.s,cx,cy);return}
+  if(drag){const dx=e.clientX-drag.sx,dy=e.clientY-drag.sy;if(Math.hypot(dx,dy)>7)drag.moved=true;if(drag.moved){V.x=drag.vx+dx;V.y=drag.vy+dy;apply()}}});
+const up=e=>{if(!ptr.has(e.pointerId))return;ptr.delete(e.pointerId);
+  if(drag&&!drag.moved&&ptr.size===0&&e.type==='pointerup'){tap(e.clientX,e.clientY)}
+  if(ptr.size<2)pinch=null;if(ptr.size===0)drag=null};
+stage.addEventListener('pointerup',up);stage.addEventListener('pointercancel',up);
+stage.addEventListener('wheel',e=>{e.preventDefault();const r=stage.getBoundingClientRect();zoomAt(e.deltaY<0?1.15:1/1.15,e.clientX-r.left,e.clientY-r.top)},{passive:false});
+function tap(cx,cy){
+  const r=stage.getBoundingClientRect(),px=cx-r.left,py=cy-r.top,ix=(px-V.x)/V.s,iy=(py-V.y)/V.s;
+  if(ix<0||iy<0||ix>IW||iy>IH)return;
+  const hit=S.notes.find(n=>Math.hypot(n.x*IW*V.s+V.x-px,n.y*IH*V.s+V.y-py)<22);
+  if(hit)openSheet(hit);else openSheet({id:null,x:ix/IW,y:iy/IH,r:S.last,t:''});
+}
+
+/* ---------- Notizen-Sheet ---------- */
+let cur=null;
+function openSheet(n){
+  cur=Object.assign({},n);
+  const sh=$('#sheet');
+  sh.innerHTML=`<h2>${n.id?'Notiz bearbeiten':'Was siehst du hier?'}</h2>
+   <div class="chips" id="rc">${RUB.map(r=>`<button class="chip" style="--c:${r.c}" data-r="${r.id}" aria-pressed="${cur.r===r.id}" type="button">${r.n}</button>`).join('')}</div>
+   <div class="qs" id="rq"></div>
+   <textarea class="in" id="nt" rows="3" placeholder="Beschreibe, was du siehst, nicht was es bedeutet.">${esc(n.t||'')}</textarea>
+   <div class="row"><button class="btn" id="nsave" type="button">Speichern</button>${n.id?'<button class="btn ghost" id="ndel" type="button">Löschen</button>':''}<button class="btn ghost" id="ncancel" type="button">Abbrechen</button></div>`;
+  $('#shade').style.display='block';sh.style.display='block';
+  const q=()=>{const r=RB[cur.r];$('#rq').innerHTML='<b>Hilfreiche Fragen</b><ul>'+r.q.map(x=>`<li>${esc(x)}</li>`).join('')+'</ul>'};q();
+  $('#rc').onclick=e=>{const b=e.target.closest('[data-r]');if(!b)return;cur.r=b.dataset.r;$$('#rc .chip').forEach(c=>c.setAttribute('aria-pressed',c===b));q()};
+  $('#ncancel').onclick=closeSheet;$('#shade').onclick=closeSheet;
+  $('#nsave').onclick=()=>{const t=$('#nt').value.trim();if(!t){$('#nt').focus();return}
+    cur.t=t;S.last=cur.r;
+    if(cur.id){const i=S.notes.findIndex(x=>x.id===cur.id);S.notes[i]=cur}else{cur.id=Date.now();S.notes.push(cur)}
+    save();closeSheet();renderBeob()};
+  if(n.id)$('#ndel').onclick=()=>{S.notes=S.notes.filter(x=>x.id!==n.id);save();closeSheet();renderBeob()};
+  setTimeout(()=>{try{$('#nt').focus({preventScroll:true})}catch(e){}},50);
+}
+function closeSheet(){$('#sheet').style.display='none';$('#shade').style.display='none';cur=null}
+
+function renderBeob(){
+  const has=!!IW;$('#noimg').hidden=has;$('#beobMain').hidden=!has;
+  $('#marks').innerHTML=S.notes.map((n,i)=>`<div class="mk" style="left:${n.x*IW}px;top:${n.y*IH}px;background:${RB[n.r].c}">${i+1}</div>`).join('');
+  $('#badges').innerHTML=RUB.map(r=>{const c=S.notes.filter(n=>n.r===r.id).length;return `<div class="badge${c?' on':''}${c>=2?' star':''}" style="--c:${r.c}"><i></i>${r.n}</div>`}).join('');
+  const done=RUB.filter(r=>S.notes.some(n=>n.r===r.id)).length;
+  $('#won').innerHTML=done===RUB.length?'<p style="margin:10px 0 0"><b>Alle Rubriken gesammelt.</b> Jetzt kannst du mit dem Schreiben beginnen.</p>':`<p class="muted small" style="margin:8px 0 0">${done} von ${RUB.length} Rubriken. Tippe auf eine Stelle im Bild, um weiterzusammeln.</p>`;
+  $('#notes').innerHTML=S.notes.length?S.notes.map((n,i)=>`<button class="note" data-n="${n.id}" type="button"><span class="n" style="--c:${RB[n.r].c}">${i+1}</span><span><small>${RB[n.r].n}</small>${esc(n.t)}</span></button>`).join(''):'<p class="muted small">Noch keine Notizen. Tippe auf das Bild.</p>';
+  $$('#notes .note').forEach(b=>b.onclick=()=>openSheet(S.notes.find(n=>n.id==b.dataset.n)));
+}
+
+/* ---------- Bildinfos ---------- */
+$$('[data-i]').forEach(i=>{i.value=(S.info||{})[i.dataset.i]||'';i.addEventListener('input',()=>{S.info[i.dataset.i]=i.value;save()})});
+
+/* ---------- Üben ---------- */
+const SD=[
+ ['Im Vordergrund liegen drei rote Äpfel auf einem Holztisch.','sehen','Reine Beobachtung mit Ort, Zahl und Farbe.'],
+ ['Die obere Bildhälfte ist fast vollständig dunkelblau.','sehen','Du nennst Ort und Farbe, mehr nicht.'],
+ ['Mehrere Linien verlaufen von rechts unten zur Bildmitte.','sehen','Linien und Richtung lassen sich prüfen.'],
+ ['Das Gemälde ist 92 cm hoch und 73 cm breit.','sehen','Eine Angabe zum Format, erst die Höhe, dann die Breite.'],
+ ['Die Umrisse der Figur sind unscharf.','sehen','Das ist eine Beobachtung zur Technik.'],
+ ['Am unteren Bildrand steht in weißen Großbuchstaben das Wort „HAFEN“.','sehen','Text wird genau wiedergegeben, mit Ort und Aussehen.'],
+ ['Die Figur nimmt etwa ein Drittel der Bildfläche ein.','sehen','Ein Größenverhältnis, das jeder nachmessen kann.'],
+ ['Das Gesicht ist hell beleuchtet, der Hintergrund ist dunkel.','sehen','Hell und Dunkel werden gegenübergestellt.'],
+ ['Die Pinselstriche sind grob, einzelne Striche sind erkennbar.','sehen','Beobachtung zur Technik.'],
+ ['Wir blicken von oben auf die Dächer der Stadt.','sehen','Der Blickwinkel ist sichtbar und keine Meinung.'],
+ ['Im Hintergrund erheben sich graue Berge.','sehen','Ein Ort im Bild (Hintergrund), eine Farbe, ein Motiv.'],
+ ['Das Foto ist schwarz-weiß.','sehen','Eine Aussage über die Farbigkeit.'],
+ ['Die Frau ist sehr traurig.','deuten','Gefühle sieht man nicht, man schließt auf sie. Beschreibe stattdessen, was du siehst, etwa die gesenkten Mundwinkel.'],
+ ['Der Maler wollte zeigen, wie einsam Menschen in der Großstadt sind.','deuten','Das ist eine Vermutung über die Absicht. Sie gehört nicht in die Beschreibung.'],
+ ['Das Bild steht für die Vergänglichkeit des Lebens.','deuten','Eine Bedeutung wird zugeschrieben. Das kommt erst bei der Interpretation.'],
+ ['Der Mann ist wütend auf seinen Nachbarn.','deuten','Weder Gefühl noch Beziehung sind im Bild sichtbar.'],
+ ['Das ist ein schönes Bild.','deuten','Ein Urteil ohne Begründung. Es sagt nichts darüber, was zu sehen ist.'],
+ ['Die Menschen feiern ein Fest.','deuten','Schon „Fest“ ist eine Deutung. Neutral wäre: Mehrere Menschen sitzen an einem Tisch, auf dem Gläser stehen.'],
+ ['Das Lächeln des Kindes zeigt, dass es glücklich ist.','deuten','„Lächeln“ und „glücklich“ sind Deutungen. Beschreibe die Form des Mundes.'],
+ ['Der Künstler hat vermutlich lange an diesem Bild gearbeitet.','deuten','Eine Vermutung über die Entstehung, die man dem Bild nicht ansieht.'],
+ ['Das Bild wirkt bedrohlich.','deuten','Eine Einschätzung ohne Begründung. Mit „weil …“ wäre sie erlaubt.'],
+ ['Das Gemälde ist kitschig.','deuten','Ein Urteil ohne Begründung.'],
+ ['Auf mich wirkt das Bild ruhig, weil nur wenige gedeckte Blautöne vorkommen.','begruendet','Erlaubt, weil du dein Gefühl mit etwas Sichtbarem begründest. Am besten am Schluss der Beschreibung.'],
+ ['Das Bild wirkt bedrohlich, weil der dunkle Himmel fast den ganzen oberen Teil einnimmt.','begruendet','Eine Einschätzung mit Grund, der im Bild zu sehen ist.'],
+ ['Ich finde die Stimmung fröhlich, weil leuchtendes Gelb und Orange überwiegen.','begruendet','Persönlich, aber mit Begründung. Das ist erlaubt.'],
+ ['Das Gemälde erscheint unruhig, weil die kurzen Pinselstriche in viele Richtungen laufen.','begruendet','Das Gefühl wird an einer Beobachtung festgemacht.']
+];
+const SDN={sehen:'Beschreibung',deuten:'Deutung',begruendet:'Einschätzung mit Grund'};
+const ORD=[
+ {t:'Vom Großen zum Kleinen',h:'Ordne vom Allgemeinen zu den Details.',a:[
+  'Das Bild ist ein Ölgemälde im Hochformat und zeigt eine Küstenlandschaft.',
+  'Den größten Teil der Fläche nimmt ein bewegtes Meer ein.',
+  'Im rechten Bilddrittel steht ein kleines Segelboot.',
+  'Am Mast hängt ein weißes Segel mit mehreren Flicken.',
+  'In einem Flicken sind feine, helle Stiche zu erkennen.']},
+ {t:'Von vorne nach hinten',h:'Beschreibe den Raum: Vordergrund, Mittelgrund, Hintergrund.',a:[
+  'Im Vordergrund liegen große, moosbedeckte Steine am Ufer.',
+  'Dahinter fließt ein schmaler Fluss, den eine Holzbrücke überspannt.',
+  'Auf der anderen Seite stehen Häuser mit roten Dächern.',
+  'Dahinter erheben sich blaue Hügel.',
+  'Den oberen Rand füllt ein heller Himmel mit wenigen Wolken.']},
+ {t:'Aufbau einer Beschreibung',h:'Welche Reihenfolge ist sinnvoll? Von den Bildinfos bis zur eigenen Einschätzung.',a:[
+  'Das Gemälde „Der Leuchtturm“ wurde 1912 gemalt und ist 60 cm hoch und 80 cm breit.',
+  'Hauptmotiv ist ein weißer Leuchtturm auf einer Klippe.',
+  'Er steht im linken Drittel, der Rest der Fläche ist Meer und Himmel.',
+  'Das Licht kommt von rechts, die Klippe liegt im Schatten.',
+  'Die Farben sind gedeckt, nur das Dach des Turms leuchtet rot.',
+  'Auf mich wirkt das Bild einsam, weil nur ein einziges Gebäude zu sehen ist.']}
+];
+let UM='sd',G=null;
+$('#uMode').onclick=e=>{const b=e.target.closest('button');if(!b)return;UM=b.dataset.m;$$('#uMode button').forEach(x=>x.classList.toggle('on',x===b));G=null;renderGame()};
+const shuf=a=>{a=a.slice();for(let i=a.length-1;i>0;i--){const j=Math.random()*(i+1)|0;[a[i],a[j]]=[a[j],a[i]]}return a};
+function renderGame(){UM==='sd'?renderSD():renderOrd()}
+function renderSD(){
+  const g=$('#game');
+  if(!G){G={q:shuf(SD).slice(0,10),i:0,ok:0,miss:[],done:false,ans:null}}
+  if(G.done){
+    g.innerHTML=`<div class="card" style="text-align:center"><p class="muted small">Dein Ergebnis</p><div class="score">${G.ok} von ${G.q.length}</div>
+    <p>${G.ok>=9?'Genau gesehen.':G.ok>=7?'Schon sicher, schau dir die Fehler an.':'Hier lohnt eine zweite Runde.'}</p>
+    ${G.miss.length?'<div style="text-align:left"><h3>Das war knifflig</h3>'+G.miss.map(m=>`<div class="flag"><b>${SDN[m[1]]}</b>${esc(m[0])}<br><span class="muted">${esc(m[2])}</span></div>`).join('')+'</div>':''}
+    <button class="btn wide" id="again" type="button">Neue Runde</button></div>`;
+    $('#again').onclick=()=>{G=null;renderSD()};return}
+  const q=G.q[G.i];
+  g.innerHTML=`<div class="prog"><i style="width:${G.i/G.q.length*100}%"></i></div>
+   <p class="muted small">Aussage ${G.i+1} von ${G.q.length}. Was ist das, wenn man sie über ein Bild schreibt?</p>
+   <div class="stmt">${esc(q[0])}</div>
+   <div class="ans" id="ans">
+    <button data-a="sehen" type="button">Beschreibung<small>Ich kann es im Bild sehen und prüfen.</small></button>
+    <button data-a="deuten" type="button">Deutung<small>Das schließe ich aus dem Bild, es gehört nicht in die Beschreibung.</small></button>
+    <button data-a="begruendet" type="button">Einschätzung mit Grund<small>Persönlicher Eindruck, mit sichtbarer Begründung.</small></button></div><div id="fbk"></div>`;
+  $('#ans').onclick=e=>{const b=e.target.closest('[data-a]');if(!b||G.ans)return;G.ans=b.dataset.a;
+    const ok=G.ans===q[1];if(ok)G.ok++;else G.miss.push(q);
+    $$('#ans button').forEach(x=>{if(x.dataset.a===q[1])x.classList.add('ok');else if(x===b)x.classList.add('no')});
+    $('#fbk').innerHTML=`<div class="fb ${ok?'ok':'no'}"><b>${ok?'Richtig.':'Nicht ganz.'}</b> ${esc(q[2])}</div><button class="btn wide" id="next" type="button" style="margin-top:12px">${G.i+1<G.q.length?'Weiter':'Ergebnis'}</button>`;
+    $('#next').onclick=()=>{G.i++;G.ans=null;if(G.i>=G.q.length){G.done=true;S.stats.sd=Math.max(S.stats.sd||0,G.ok);save()}renderSD()}};
+}
+let OS=0;
+function renderOrd(){
+  const g=$('#game');
+  if(!G){const s=ORD[OS%ORD.length];G={s,k:shuf(s.a.map((t,i)=>({t,i}))),pick:[],res:false}}
+  const s=G.s;
+  g.innerHTML=`<div class="card"><h2>${esc(s.t)}</h2><p class="muted">${esc(s.h)} Tippe die Sätze in der richtigen Reihenfolge an.</p>
+   <div class="ord" id="ord">${G.k.map((o,j)=>{const p=G.pick.indexOf(j);let c='ordb';let num='';
+     if(G.res){const ok=G.pick[o.i]===undefined?false:true;}
+     if(p>=0){c+=' picked';num=p+1}
+     if(G.res){c=c.replace(' picked','');c+=(p===o.i)?' ok':' no'}
+     return `<button class="${c}" data-j="${j}" type="button"><span class="p">${num||''}</span><span>${esc(o.t)}</span></button>`}).join('')}</div>
+   ${G.res?`<div class="fb ${G.pick.every((j,p)=>G.k[j].i===p)?'ok':'no'}"><b>${G.pick.every((j,p)=>G.k[j].i===p)?'Alles an der richtigen Stelle.':'Grün steht richtig, rot nicht.'}</b> Die richtige Reihenfolge, von oben nach unten, ist:<ol style="margin:6px 0 0;padding-left:20px">${s.a.map(t=>`<li>${esc(t)}</li>`).join('')}</ol></div>`:''}
+   <div class="row" style="margin-top:12px">${G.res?'<button class="btn" id="onext" type="button">Nächste Übung</button>':`<button class="btn" id="ochk" type="button" ${G.pick.length<G.k.length?'disabled':''}>Prüfen</button><button class="btn ghost" id="orst" type="button">Zurücksetzen</button>`}</div></div>`;
+  if(G.res){$('#onext').onclick=()=>{OS++;G=null;renderOrd()};return}
+  $('#ord').onclick=e=>{const b=e.target.closest('[data-j]');if(!b)return;const j=+b.dataset.j,p=G.pick.indexOf(j);if(p>=0)G.pick.splice(p,1);else G.pick.push(j);renderOrd()};
+  $('#orst').onclick=()=>{G.pick=[];renderOrd()};
+  $('#ochk').onclick=()=>{G.res=true;renderOrd()};
+}
+
+/* ---------- Schreiben ---------- */
+const txt=$('#txt');
+txt.value=S.text||'';
+$('#sChips').innerHTML=RUB.map(r=>`<button class="chip" style="--c:${r.c}" data-r="${r.id}" aria-pressed="false" type="button">${r.n}</button>`).join('');
+$('#sChips').onclick=e=>{const b=e.target.closest('[data-r]');if(!b)return;const on=b.getAttribute('aria-pressed')!=='true';
+  $$('#sChips .chip').forEach(c=>c.setAttribute('aria-pressed',false));b.setAttribute('aria-pressed',on);
+  $('#sStarters').innerHTML=on?'<div class="qs"><b>Satzanfänge</b><div class="chips">'+RB[b.dataset.r].s.map(s=>`<button class="tool" data-ins="${esc(s)}" type="button">${esc(s)}</button>`).join('')+'</div></div>':''};
+function insert(s){const a=txt.selectionStart??txt.value.length,b=txt.selectionEnd??a,pre=txt.value.slice(0,a),sep=pre&&!/[\s]$/.test(pre)?' ':'';
+  txt.value=pre+sep+s+txt.value.slice(b);txt.focus();const p=(pre+sep+s).length;txt.setSelectionRange(p,p);onText()}
+document.addEventListener('click',e=>{const b=e.target.closest('[data-ins]');if(b)insert(b.dataset.ins)});
+$('#insInfo').onclick=()=>{const i=S.info||{},p=[];
+  if(i.titel||i.was||i.wer){let s='Das Bild';if(i.titel)s+=` „${i.titel}“`;if(i.wer)s+=` stammt von ${i.wer}`;else s+=' ist'
+    if(i.wann)s+=(i.wer?' und':'')+` entstand ${/^\d{3,4}$/.test(i.wann.trim())?'im Jahr ':''}${i.wann}`;
+    if(i.was)s+=`. Es handelt sich um ${i.was}`;if(i.format)s+=` im Format ${i.format}`;s+='.';p.push(s.replace('ist.','ist.'))}
+  if(i.typ)p.push(`Der Bildtyp ist ${i.typ}.`);if(i.wo)p.push(`Es befindet sich bzw. wurde veröffentlicht: ${i.wo}.`);if(i.unbekannt)p.push(`Nicht bekannt ist ${i.unbekannt}.`);
+  if(!p.length){alert('Trage zuerst auf dem Reiter Bild ein paar Informationen ein.');return}insert(p.join(' '))};
+const COV={
+ info:/\b(titel|gemalt|entstand|jahr|museum|format|stammt von|künstler|fotograf|\d{4})\b/i,
+ haupt:/\b(hauptmotiv|zu sehen|dargestellt|zeigt|im zentrum)\b/i,
+ komp:/\b(links|rechts|mitte|mittig|vordergrund|mittelgrund|hintergrund|oben|unten|bildhälfte|drittel|neben|dahinter)\b/i,
+ persp:/\b(blickwinkel|perspektive|von oben|von unten|augenhöhe|blickrichtung|linien?)\b/i,
+ licht:/\b(hell|dunkel|licht|schatten|beleuchtet)\b/i,
+ farbe:/\b(farbe|farben|farbig|rot|blau|gelb|grün|braun|schwarz|weiß|grau|orange|violett|rosa|farbton|farbtöne|leuchtend|gedeckt)\b/i,
+ technik:/\b(pinsel|strich|striche|öl|leinwand|pixel|kontur|konturen|zeichnung|fotografie|aquarell|technik|druck)\b/i,
+ text:/\b(text|schrift|beschriftung|unterschrift|buchstaben|schriftzug)\b/i};
+const COVN={info:['Bildinfos','#8c8c93'],haupt:['Hauptmotiv','var(--r-haupt)'],komp:['Komposition','var(--r-komp)'],persp:['Perspektive','var(--r-persp)'],licht:['Licht','var(--r-licht)'],farbe:['Farbe','var(--r-farbe)'],technik:['Technik','var(--r-technik)'],text:['Text','var(--r-text)']};
+const DEUT=/\b(wirkt|wirken|wirkte|scheint|scheinen|vermutlich|wahrscheinlich|vielleicht|traurig|fröhlich|glücklich|einsam|bedrohlich|friedlich|wütend|symbolisiert|bedeutet|steht für|erinnert an|soll|will zeigen|schön|hässlich|toll|kitschig|ausdrucksstark|lächeln|lächelt|fest|stimmung|meiner meinung|ich finde|ich denke)\b/i;
+function sentences(t){return t.replace(/\s+/g,' ').match(/[^.!?]+[.!?]?/g)||[]}
+function onText(){
+  S.text=txt.value;save();
+  const t=txt.value,w=(t.trim().match(/\S+/g)||[]).length;
+  $('#wc').textContent=w?`${w} Wörter`:'';
+  $('#cov').innerHTML=Object.keys(COV).map(k=>`<span class="cv${COV[k].test(t)?' on':''}" style="--c:${COVN[k][1]}">${COVN[k][0]}</span>`).join('');
+  const fl=[];
+  sentences(t).forEach(s=>{s=s.trim();if(s.length<4||!DEUT.test(s))return;
+    const gr=/\b(weil|da|denn)\b/i.test(s);fl.push(`<div class="flag${gr?' g':''}"><b>${gr?'Einschätzung mit Grund, am besten ans Ende':'Das klingt nach Deutung'}</b>${esc(s)}</div>`)});
+  $('#flags').innerHTML=fl.length?fl.join('')+'<p class="muted small">Prüfe, ob du stattdessen beschreiben kannst, was du siehst.</p>':(t.trim()?'<p class="muted small">Keine auffälligen Deutungswörter gefunden. Lies deinen Text trotzdem noch einmal mit der Frage, ob alles im Bild zu sehen ist.</p>':'<p class="muted small">Sobald du schreibst, markiere ich Sätze, die eher eine Deutung sind.</p>');
+}
+txt.addEventListener('input',onText);
+function renderSchr(){
+  $('#insNotes').innerHTML=S.notes.length?S.notes.map(n=>`<button class="note" data-ins="${esc(n.t)}" type="button"><span class="n" style="--c:${RB[n.r].c}">+</span><span><small>${RB[n.r].n}</small>${esc(n.t)}</span></button>`).join(''):'<p class="muted small">Noch keine Notizen. Sammle sie auf dem Reiter Beobachten.</p>';
+  onText();
+}
+$('#copy').onclick=async()=>{try{await navigator.clipboard.writeText(txt.value)}catch(e){txt.select();document.execCommand('copy')}$('#copy').textContent='Kopiert';setTimeout(()=>$('#copy').textContent='Kopieren',1400)};
+$('#print').onclick=()=>{$('#ptext').textContent=txt.value;window.print()};
+$('#clr').onclick=()=>{if(!txt.value||confirm('Text wirklich leeren?')){txt.value='';onText()}};
+
+/* ---------- Start ---------- */
+if(S.notes.length||(S.info&&Object.values(S.info).some(Boolean)))$('#restore').hidden=!S.notes.length;
+$('#beobMain').hidden=true;$('#noimg').hidden=false;
+window.addEventListener('resize',()=>{if($('#v-beob').classList.contains('on')){V.set=false;layout();renderBeob()}});
+window.__bb={S,go,renderGame,get V(){return V}};
+})();
+</script>
+</body>
+</html>

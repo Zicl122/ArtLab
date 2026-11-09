@@ -55,13 +55,14 @@ paletten = WELTEN.map((_, i) => palette(i));
 
 /* ---------- Wellenfeld ---------- */
 const cv = document.getElementById('c'), ctx = cv.getContext('2d');
-let W, H, DPR, SP, L, M, OFF, VEL, STEP, t = 0, energie = 0, gleichzeitig = [];
+let W, H, DPR, SP, L, M, PAD, OFF, VEL, STEP, t = 0, energie = 0, gleichzeitig = [];
 function aufbauen() {
   DPR = Math.min(2, window.devicePixelRatio || 1);
   W = innerWidth; H = innerHeight;
   cv.width = Math.round(W * DPR); cv.height = Math.round(H * DPR);
   SP = Math.max(11, Math.min(22, H / 46));
-  L = Math.ceil(H / SP) + 6;               // Linien, auch über den Rand hinaus
+  PAD = 19;                                  // Extra-Linien oben und unten, damit die Wellen nie vor dem Rand enden
+  L = Math.ceil(H / SP) + 2 * PAD;
   STEP = Math.max(7, W / 130);
   M = Math.ceil((W + 40) / STEP) + 1;
   OFF = new Float32Array(L * M); VEL = new Float32Array(L * M);
@@ -95,7 +96,7 @@ function schieben(z) {
   const dx = z.x - z.px, dy = z.y - z.py, tempo = Math.hypot(dx, dy);
   const R = Math.max(110, Math.min(W, H) * .30), j0 = Math.max(0, Math.floor((z.x - R) / STEP)), j1 = Math.min(M - 1, Math.ceil((z.x + R) / STEP));
   for (let i = 0; i < L; i++) {
-    const yb = (i - 3) * SP;
+    const yb = (i - PAD) * SP;
     if (Math.abs(yb - z.y) > R * 2.6) continue;
     for (let j = j0; j <= j1; j++) {
       const x = j * STEP - 20, y = yb + warp(x, i) + OFF[i * M + j];
@@ -144,13 +145,21 @@ function frame() {
   if (jetztMs - wechselZeit > 14000) naechsteWelt();
   mischung = Math.min(1, mischung + .004);
   const mf = mischung * mischung * (3 - 2 * mischung), PA = paletten[vonWelt], PB = paletten[welt];
-  const P = PA.map((a, k) => [a[0] + (PB[k][0] - a[0]) * mf, a[1] + (PB[k][1] - a[1]) * mf, a[2] + (PB[k][2] - a[2]) * mf]);
+  const ang = t * .079, cs = Math.cos(ang), sn = Math.sin(ang);   // Farben drehen sich langsam, etwa eine Runde in zwei Minuten
+  const m0 = .213 + cs * .787 - sn * .213, m1 = .715 - cs * .715 - sn * .715, m2 = .072 - cs * .072 + sn * .928,
+        m3 = .213 - cs * .213 + sn * .143, m4 = .715 + cs * .285 + sn * .140, m5 = .072 - cs * .072 - sn * .283,
+        m6 = .213 - cs * .213 - sn * .787, m7 = .715 - cs * .715 + sn * .715, m8 = .072 + cs * .928 + sn * .072;
+  const cl = v => v < 0 ? 0 : v > 255 ? 255 : v;
+  const P = PA.map((a, k) => {
+    const r = a[0] + (PB[k][0] - a[0]) * mf, g = a[1] + (PB[k][1] - a[1]) * mf, b = a[2] + (PB[k][2] - a[2]) * mf;
+    return [cl(r * m0 + g * m1 + b * m2), cl(r * m3 + g * m4 + b * m5), cl(r * m6 + g * m7 + b * m8)];
+  });
   for (let b = 0; b < STUFEN; b++) buckets[b] = new Path2D();
   const nb = new Float32Array(M);
   for (let j = 0; j < M; j++) nb[j] = naht(j * STEP - 20);
   const brei = SP * 8.5;
   for (let i = 0; i < L; i++) {
-    const r = i * M, yb = (i - 3) * SP;
+    const r = i * M, yb = (i - PAD) * SP;
     let px = -20, py = yb + warp(px, i) + OFF[r], vb = -1;
     for (let j = 1; j < M; j++) {
       const x = j * STEP - 20, y = yb + warp(x, i) + OFF[r + j];
@@ -266,13 +275,13 @@ function klangBewegung(z, tempo) {
   const j = Math.max(0, Math.min(M - 1, Math.round((x + 20) / STEP)));
   let beste = 0, dmin = 1e9;
   for (let i = 0; i < L; i++) {
-    const y = (i - 3) * SP + warp(j * STEP - 20, i) + OFF[i * M + j];
+    const y = (i - PAD) * SP + warp(j * STEP - 20, i) + OFF[i * M + j];
     const d = Math.abs(y - z.y); if (d < dmin) { dmin = d; beste = i; }
   }
   const jetzt = performance.now();
   if (z.idx !== null && beste !== z.idx && jetzt - z.tn > 38) {
     // unten = tief, oben = hoch
-    const n = Math.max(0, Math.min(TON_ANZAHL - 1, Math.floor((L - 1 - beste) / (L - 1) * TON_ANZAHL)));
+    const n = Math.max(0, Math.min(TON_ANZAHL - 1, Math.floor((1 - z.y / H) * TON_ANZAHL)));
     zupfen(n, .16 + .3 * Math.min(1, tempo / 40), (z.x / W) * 2 - 1);
     z.tn = jetzt;
   }

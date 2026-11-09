@@ -260,7 +260,16 @@ const PROJEKTE = [
     prompt: "Baue mir eine einzelne HTML-Datei im Vollbild auf schwarzem Grund, die auf dem Handy flüssig läuft, ohne Server und ohne Konto. Etwa fünfzig leuchtende Neonlinien laufen als Wellen quer über den Bildschirm, wie auf einem Foto mit Lichtwellen. Oben sind sie leuchtend rot und orange, unten blau und violett, dazwischen verläuft eine helle rosa-weiße Naht, die sich langsam bewegt. Jede Linie wird dreifach gezeichnet (breiter Schein, mittlerer Schein, feiner heller Kern) mit additivem Mischen. Jede Linie ist eine Saite mit Federn zu ihren Nachbarn, sodass Berührungen Wellen auslösen, die über den Bildschirm laufen. Dazu soll es Klang geben, komplett im Browser mit Web Audio erzeugt. Wer eine Linie überquert, zupft eine Saite an, wie bei einer Harfe oder einer tiefen Gitarre (Karplus-Strong im Browser berechnet, E-Dur-Pentatonik von E2 aufwärts, unten tief, oben hoch, Stereoposition nach links und rechts), mit Echo und Hall. Im Hintergrund schwebt ein sehr leiser Klangteppich, ohne Rauschen. Die Farben wechseln von selbst sanft zwischen drei Farbwelten (Glut und Eis, Aurora, Abendglut), ein Knopf springt zur nächsten. Auf dem iPhone gibt erst ein Antippen den Ton frei, deshalb braucht es einen Knopf „Ton einschalten“, der nach dem Start verschwindet.",
     bild: "vorschau/neonwellen.jpg",
     alt: "Rote und blau-violette Neonwellen auf schwarzem Grund mit heller Naht"
-  }
+  },
+  {
+    titel: "Kunstglobus",
+    text: "Eine drehbare Erdkugel mit 100 berühmten Kunstwerken. Ein Tipp auf ein Werk spannt einen leuchtenden Bogen von der Entstehung bis zum heutigen Standort. Mit Infotext, Mehr-wissen-Teil und Ratespiel.",
+    seite: "kunstglobus.html",
+    bereiche: "rezeption,produktion",
+    prompt: "Baue eine einzelne HTML-Datei ohne externe Bibliotheken. Eine drehbare Erdkugel im Ausschnitt (WebGL, orthografische Projektion, Fragment-Shader mit Tag-, Nacht- und Mischansicht, Sternen und Atmosphärenglühen) mit 100 gemeinfreien Kunstwerken als leuchtende Marker. Tippt man ein Werk an, spannt sich ein animierter Lichtbogen entlang des Großkreises vom Entstehungsort zum heutigen Standort, danach erscheint eine Karte mit Bild, kurzem Text, Beobachtungsfrage und aufklappbarem Mehr-wissen-Teil. Dazu ein Ratespiel mit zehn Runden (Wo hängt das Werk, Welche Epoche) mit lokal gespeicherter Bestleistung. Sehr leiser Klang erst nach dem Tippen auf einen Ton-Knopf. Handy zuerst, Zurück-Link zur Übersicht.",
+    bild: "vorschau/kunstglobus.jpg",
+    alt: "Dunkle Erdkugel mit leuchtenden Städten und einem goldenen Lichtbogen von Ägypten nach Berlin"
+  },
 ];
 
 function qrSvg(adresse) {

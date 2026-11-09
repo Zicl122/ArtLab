@@ -1,0 +1,321 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
+<title>Neonwellen</title>
+<style>
+  :root { color-scheme: dark; --bg: #000; }
+  html, body { margin: 0; height: 100%; background: var(--bg); overflow: hidden; overscroll-behavior: none; }
+  canvas { display: block; width: 100vw; height: 100vh; touch-action: none; }
+  #hint { position: fixed; left: 0; right: 0; bottom: 0; text-align: center; padding: 0 24px calc(26px + env(safe-area-inset-bottom, 0px));
+    font: 300 17px/1.4 Georgia, "Times New Roman", serif; letter-spacing: .02em; color: rgba(255,255,255,.72); pointer-events: none; transition: opacity 2.4s ease; text-shadow: 0 0 12px #000; }
+  #hint.weg { opacity: 0; }
+  .pille { position: fixed; z-index: 9998; font: 400 15px/1 Georgia, "Times New Roman", serif; letter-spacing: .02em; color: #f4f1fa;
+    background: rgba(10,6,24,.55); border: 1px solid rgba(255,255,255,.28); border-radius: 999px; padding: 11px 18px;
+    -webkit-backdrop-filter: blur(6px); backdrop-filter: blur(6px); touch-action: manipulation; -webkit-tap-highlight-color: transparent; transition: opacity .8s ease; }
+  #tonKnopf { left: 50%; transform: translateX(-50%); bottom: calc(84px + env(safe-area-inset-bottom, 0px)); padding: 13px 22px; font-size: 16px; }
+  #tonKnopf.weg { opacity: 0; pointer-events: none; }
+  #farbKnopf { top: max(12px, env(safe-area-inset-top)); right: max(12px, env(safe-area-inset-right)); }
+  .zurueck { position: fixed; top: max(12px, env(safe-area-inset-top)); left: max(12px, env(safe-area-inset-left)); z-index: 9999; font: 400 14px/1 Georgia, serif; color: #f1f0f7;
+    background: rgba(9,10,28,.55); border: 1px solid rgba(255,255,255,.22); border-radius: 999px; padding: 9px 14px; text-decoration: none;
+    -webkit-backdrop-filter: blur(6px); backdrop-filter: blur(6px); touch-action: manipulation; }
+  .zurueck:focus-visible, .pille:focus-visible { outline: 2px solid #8fd3ff; outline-offset: 3px; }
+</style>
+</head>
+<body>
+<a class="zurueck" href="index.html" aria-label="Zurück zur Übersicht">← Übersicht</a>
+<button id="farbKnopf" class="pille" type="button">Glut und Eis</button>
+<canvas id="c" aria-label="Leuchtende Wellenlinien, die auf Berührung reagieren"></canvas>
+<button id="tonKnopf" class="pille" type="button">Ton einschalten</button>
+<div id="hint">Streiche quer über die Wellen. Jede Linie ist eine Saite.</div>
+
+<script>
+/* ---------- Farbwelten ---------- */
+// Stützpunkte von oben (u = -1) über die helle Naht (u = 0) nach unten (u = 1)
+const WELTEN = [
+  [[-1,255,70,40],[-.55,240,60,70],[-.15,255,105,175],[0,255,232,250],[.15,205,115,255],[.55,125,80,255],[1,55,70,255]],   // Glut und Eis
+  [[-1,170,255,110],[-.55,60,235,170],[-.15,120,245,225],[0,235,255,245],[.15,90,190,255],[.55,90,100,255],[1,150,70,255]],  // Aurora
+  [[-1,255,215,70],[-.55,255,130,40],[-.15,255,85,110],[0,255,240,225],[.15,255,70,190],[.55,170,60,230],[1,90,60,220]]       // Abendglut
+];
+const NAMEN = ['Glut und Eis', 'Aurora', 'Abendglut'];
+const STUFEN = 28;
+let welt = 0, vonWelt = 0, mischung = 1, wechselZeit = performance.now(), paletten = [];
+function palette(w) {
+  const st = WELTEN[w], out = [];
+  for (let b = 0; b < STUFEN; b++) {
+    const u = -1 + 2 * b / (STUFEN - 1);
+    let k = 0; while (k < st.length - 2 && u > st[k + 1][0]) k++;
+    const a = st[k], c = st[k + 1], f = Math.max(0, Math.min(1, (u - a[0]) / (c[0] - a[0])));
+    out.push([a[1] + (c[1] - a[1]) * f, a[2] + (c[2] - a[2]) * f, a[3] + (c[3] - a[3]) * f].map(Math.round));
+  }
+  return out;
+}
+paletten = WELTEN.map((_, i) => palette(i));
+
+/* ---------- Wellenfeld ---------- */
+const cv = document.getElementById('c'), ctx = cv.getContext('2d');
+let W, H, DPR, SP, L, M, OFF, VEL, STEP, t = 0, energie = 0, gleichzeitig = [];
+function aufbauen() {
+  DPR = Math.min(2, window.devicePixelRatio || 1);
+  W = innerWidth; H = innerHeight;
+  cv.width = Math.round(W * DPR); cv.height = Math.round(H * DPR);
+  SP = Math.max(11, Math.min(22, H / 46));
+  L = Math.ceil(H / SP) + 6;               // Linien, auch über den Rand hinaus
+  STEP = Math.max(7, W / 130);
+  M = Math.ceil((W + 40) / STEP) + 1;
+  OFF = new Float32Array(L * M); VEL = new Float32Array(L * M);
+}
+aufbauen();
+addEventListener('resize', aufbauen);
+
+function warp(x, i) {                       // Grundbewegung mit tiefen Tälern, ständig in Bewegung
+  return SP * (
+    6.5 * Math.sin(x * .0023 + t * .42 + i * .012) +
+    3.6 * Math.sin(x * .0051 - t * .55 + i * .035) +
+    2.2 * Math.sin(x * .0105 + t * .8 + i * .07) +
+    1.1 * Math.sin(x * .021 - t * 1.2 + i * .15) +
+    .6 * Math.sin(x * .04 + t * 1.7 - i * .22) +
+    2.6 * Math.sin(i * .11 + t * .35) * Math.sin(x * .004 - t * .3));
+}
+function naht(x) {                          // Verlauf der hellen Grenze zwischen den Farbfeldern
+  return H * (.62 - .14 * (x / W)) + H * .09 * Math.sin(x * .0035 - t * .27) + H * .035 * Math.sin(x * .011 + t * .6);
+}
+
+/* ---------- Eingaben ---------- */
+const zeiger = new Map();
+function pos(e) { return { x: e.clientX, y: e.clientY }; }
+cv.addEventListener('pointerdown', e => { cv.setPointerCapture(e.pointerId); const p = pos(e); zeiger.set(e.pointerId, { x: p.x, y: p.y, px: p.x, py: p.y, idx: null, tn: 0 }); document.getElementById('hint').classList.add('weg'); e.preventDefault(); });
+cv.addEventListener('pointermove', e => { const z = zeiger.get(e.pointerId); if (!z) return; const p = pos(e); z.x = p.x; z.y = p.y; e.preventDefault(); });
+['pointerup', 'pointercancel'].forEach(n => cv.addEventListener(n, e => zeiger.delete(e.pointerId)));
+cv.addEventListener('lostpointercapture', e => zeiger.delete(e.pointerId));
+['touchstart', 'touchmove'].forEach(n => cv.addEventListener(n, e => e.preventDefault(), { passive: false }));
+
+function schieben(z) {
+  const dx = z.x - z.px, dy = z.y - z.py, tempo = Math.hypot(dx, dy);
+  const R = Math.max(110, Math.min(W, H) * .30), j0 = Math.max(0, Math.floor((z.x - R) / STEP)), j1 = Math.min(M - 1, Math.ceil((z.x + R) / STEP));
+  for (let i = 0; i < L; i++) {
+    const yb = (i - 3) * SP;
+    if (Math.abs(yb - z.y) > R * 2.6) continue;
+    for (let j = j0; j <= j1; j++) {
+      const x = j * STEP - 20, y = yb + warp(x, i) + OFF[i * M + j];
+      const ax = x - z.x, ay = y - z.y, d2 = ax * ax + ay * ay;
+      if (d2 > R * R) continue;
+      const q = 1 - Math.sqrt(d2) / R, g = q * q * (3 - 2 * q);
+      // Die Linien werden zum Finger gezogen und von der Bewegung mitgerissen
+      VEL[i * M + j] += (-ay * .012 + dy * .35) * g;
+    }
+  }
+  return tempo;
+}
+
+/* ---------- Zeichnen ---------- */
+const buckets = Array.from({ length: STUFEN }, () => new Path2D());
+function frame() {
+  t += .011;
+  const c = ctx; c.setTransform(DPR, 0, 0, DPR, 0, 0);
+  c.globalCompositeOperation = 'source-over'; c.fillStyle = '#000'; c.fillRect(0, 0, W, H);
+
+  // Eingaben
+  let tempoMax = 0;
+  for (const z of zeiger.values()) {
+    const tempo = schieben(z); tempoMax = Math.max(tempoMax, tempo);
+    try { klangBewegung(z, tempo); } catch (e) {}
+    z.px = z.x; z.py = z.y;
+  }
+
+  // Federn: jede Linie ist eine Saite, die Nachbarn nehmen Wellen mit
+  let sum = 0;
+  for (let i = 0; i < L; i++) {
+    const r = i * M;
+    for (let j = 0; j < M; j++) {
+      const k = r + j, o = OFF[k];
+      const l = j > 0 ? OFF[k - 1] : o, rr = j < M - 1 ? OFF[k + 1] : o;
+      const u = i > 0 ? OFF[k - M] : o, d = i < L - 1 ? OFF[k + M] : o;
+      VEL[k] += (l + rr - 2 * o) * .24 + (u + d - 2 * o) * .07 - o * .007;
+      VEL[k] *= .982;
+    }
+  }
+  for (let k = 0; k < OFF.length; k++) { OFF[k] += VEL[k]; sum += Math.abs(VEL[k]); }
+  energie += (Math.min(1, sum / OFF.length * 6) - energie) * .1;
+
+  // Wege in Farbstufen sortieren
+  const jetztMs = performance.now();
+  if (jetztMs - wechselZeit > 14000) naechsteWelt();
+  mischung = Math.min(1, mischung + .004);
+  const mf = mischung * mischung * (3 - 2 * mischung), PA = paletten[vonWelt], PB = paletten[welt];
+  const P = PA.map((a, k) => [a[0] + (PB[k][0] - a[0]) * mf, a[1] + (PB[k][1] - a[1]) * mf, a[2] + (PB[k][2] - a[2]) * mf]);
+  for (let b = 0; b < STUFEN; b++) buckets[b] = new Path2D();
+  const nb = new Float32Array(M);
+  for (let j = 0; j < M; j++) nb[j] = naht(j * STEP - 20);
+  const brei = SP * 8.5;
+  for (let i = 0; i < L; i++) {
+    const r = i * M, yb = (i - 3) * SP;
+    let px = -20, py = yb + warp(px, i) + OFF[r], vb = -1;
+    for (let j = 1; j < M; j++) {
+      const x = j * STEP - 20, y = yb + warp(x, i) + OFF[r + j];
+      const um = ((y + py) / 2 - nb[j]) / brei;
+      const b = Math.max(0, Math.min(STUFEN - 1, Math.round((Math.max(-1, Math.min(1, um)) + 1) / 2 * (STUFEN - 1))));
+      if (b !== vb) { buckets[b].moveTo(px, py); vb = b; }
+      buckets[b].lineTo(x, y);
+      px = x; py = y;
+    }
+  }
+  c.globalCompositeOperation = 'lighter'; c.lineCap = 'butt'; c.lineJoin = 'round';
+  const sk = Math.max(.7, SP / 24), durchgaenge = [[10 * sk, .10], [5 * sk, .22], [2.1 * sk, .95]];
+  for (const [lw, a] of durchgaenge) {
+    c.lineWidth = lw;
+    for (let b = 0; b < STUFEN; b++) {
+      const f = P[b], hell = lw < 3 ? 1 : 1;
+      c.strokeStyle = `rgba(${f[0]},${f[1]},${f[2]},${a * hell})`;
+      c.stroke(buckets[b]);
+    }
+  }
+  c.globalCompositeOperation = 'source-over';
+  try { klangLauf(); } catch (e) {}
+  requestAnimationFrame(frame);
+}
+
+/* ---------- Klang: Wellenharfe ---------- */
+// Jede Linie ist eine Saite. Wer sie überquert, schlägt einen Ton wie eine Kalimba an.
+// Gezupfte Saiten (Karplus-Strong), wie eine Harfe oder eine tiefe Gitarre, dazu ein sehr leises Klangbett.
+let ac = null, bus = null, entsperrt = false, letzter = 0;
+const PENTA = [0, 2, 4, 7, 9];
+const TON_ANZAHL = 18;
+const frequenz = n => 82.41 * Math.pow(2, (Math.floor(n / 5) * 12 + PENTA[n % 5]) / 12);   // ab E2, gut drei Oktaven
+
+function audioBauen() {
+  const AC = window.AudioContext || window.webkitAudioContext; if (!AC) return null;
+  const k = new AC();
+  // Hall
+  const n = Math.floor(k.sampleRate * 3.2), ib = k.createBuffer(2, n, k.sampleRate);
+  for (let c = 0; c < 2; c++) { const d = ib.getChannelData(c); for (let i = 0; i < n; i++) d[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / n, 2.6); }
+  const hall = k.createConvolver(); hall.buffer = ib;
+  const nass = k.createGain(); nass.gain.value = .55;
+  const trocken = k.createGain(); trocken.gain.value = .8;
+  // Echo
+  const del = k.createDelay(1.2); del.delayTime.value = .34;
+  const fb = k.createGain(); fb.gain.value = .36;
+  const df = k.createBiquadFilter(); df.type = 'lowpass'; df.frequency.value = 2600;
+  del.connect(df); df.connect(fb); fb.connect(del);
+  const echoAus = k.createGain(); echoAus.gain.value = .5; df.connect(echoAus);
+  const filt = k.createBiquadFilter(); filt.type = 'lowpass'; filt.frequency.value = 7000; filt.Q.value = .3;
+  const comp = k.createDynamicsCompressor();
+  const b = k.createGain();
+  b.connect(trocken); b.connect(hall); b.connect(del); hall.connect(nass); echoAus.connect(hall);
+  trocken.connect(filt); nass.connect(filt); echoAus.connect(filt); filt.connect(comp); comp.connect(k.destination);
+  // Klangbett, drei weiche Töne, die langsam gegeneinander schweben
+  for (const [f, vol] of [[82.41, .022], [123.47, .014], [164.81, .01]]) {
+    for (const verst of [-2.5, 2.5]) {
+      const o = k.createOscillator(), l = k.createOscillator(), lg = k.createGain(), g = k.createGain();
+      o.type = 'sine'; o.frequency.value = f; o.detune.value = verst;
+      l.frequency.value = .04 + Math.random() * .08; lg.gain.value = vol * .6;
+      g.gain.value = 0; g.gain.setTargetAtTime(vol, k.currentTime, 1.2);
+      l.connect(lg); lg.connect(g.gain); o.connect(g); g.connect(b); o.start(); l.start();
+    }
+  }
+  ac = k; bus = b;
+  return k;
+}
+function audioBereit() {
+  try { if (navigator.audioSession) navigator.audioSession.type = 'playback'; } catch (e) {}
+  try {
+    if (!ac) audioBauen();
+    if (!ac) return false;
+    if (ac.state !== 'running') { const p = ac.resume(); if (p && p.catch) p.catch(() => {}); }
+    if (!entsperrt && ac.state === 'running') {
+      const s = ac.createBufferSource(); s.buffer = ac.createBuffer(1, 1, 22050); s.connect(ac.destination); s.start(0); entsperrt = true;
+    }
+  } catch (e) { return false; }
+  return true;
+}
+const saiten = new Map();
+function saite(n) {                          // Karplus-Strong, einmal berechnen und merken
+  if (saiten.has(n)) return saiten.get(n);
+  const sr = ac.sampleRate, f = frequenz(n), N = Math.max(2, Math.round(sr / f));
+  const dauer = f < 200 ? 4.2 : f < 400 ? 3.2 : 2.4, len = Math.floor(sr * dauer);
+  const buf = ac.createBuffer(1, len, sr), out = buf.getChannelData(0), d = new Float32Array(N);
+  let last = 0;
+  for (let i = 0; i < N; i++) { const r = Math.random() * 2 - 1; last += (r - last) * .55; d[i] = last; }   // weiches Anzupfen
+  const verlust = f < 200 ? .9996 : f < 400 ? .9993 : .999;
+  let p = 0;
+  for (let i = 0; i < len; i++) {
+    const q = (p + 1) % N, v = d[p];
+    out[i] = v;
+    d[p] = (v + d[q]) * .5 * verlust;
+    p = q;
+  }
+  const aus = Math.floor(sr * .35); for (let i = 0; i < aus; i++) out[len - 1 - i] *= i / aus;
+  let m = 0; for (let i = 0; i < len; i++) m = Math.max(m, Math.abs(out[i])); if (m > 0) for (let i = 0; i < len; i++) out[i] /= m;
+  saiten.set(n, buf); return buf;
+}
+function zupfen(n, vol, pan) {
+  if (!ac || !bus || ac.state !== 'running') return;
+  const src = ac.createBufferSource(); src.buffer = saite(n);
+  const g = ac.createGain(); g.gain.value = vol;
+  const tp = ac.createBiquadFilter(); tp.type = 'lowpass'; tp.frequency.value = 3800; tp.Q.value = .3;
+  const p = ac.createStereoPanner ? ac.createStereoPanner() : null;
+  src.connect(tp); tp.connect(g);
+  if (p) { p.pan.value = pan; g.connect(p); p.connect(bus); } else g.connect(bus);
+  src.start(ac.currentTime + .005);
+}
+function klangBewegung(z, tempo) {
+  if (tempo < 1.5) { z.idx = null; return; }
+  // Welche Saite liegt unter dem Finger?
+  const x = Math.max(-20, Math.min(W + 20, z.x));
+  const j = Math.max(0, Math.min(M - 1, Math.round((x + 20) / STEP)));
+  let beste = 0, dmin = 1e9;
+  for (let i = 0; i < L; i++) {
+    const y = (i - 3) * SP + warp(j * STEP - 20, i) + OFF[i * M + j];
+    const d = Math.abs(y - z.y); if (d < dmin) { dmin = d; beste = i; }
+  }
+  const jetzt = performance.now();
+  if (z.idx !== null && beste !== z.idx && jetzt - z.tn > 38) {
+    // unten = tief, oben = hoch
+    const n = Math.max(0, Math.min(TON_ANZAHL - 1, Math.floor((L - 1 - beste) / (L - 1) * TON_ANZAHL)));
+    zupfen(n, .16 + .3 * Math.min(1, tempo / 40), (z.x / W) * 2 - 1);
+    z.tn = jetzt;
+  }
+  z.idx = beste;
+}
+function klangLauf() {}
+['pointerdown', 'pointerup', 'touchstart', 'touchend', 'mousedown', 'mouseup', 'click', 'keydown'].forEach(n => addEventListener(n, () => audioBereit(), { capture: true, passive: true }));
+document.addEventListener('visibilitychange', () => { if (!ac) return; if (document.hidden) ac.suspend(); else ac.resume(); });
+
+(function () {
+  const k = document.getElementById('tonKnopf');
+  function an(e) {
+    if (e) { e.preventDefault(); e.stopPropagation(); }
+    audioBereit();
+    setTimeout(() => { try { if (ac && ac.state === 'running') { zupfen(2, .3, -.3); setTimeout(() => zupfen(6, .28, .3), 160); setTimeout(() => zupfen(9, .28, 0), 320); setTimeout(() => zupfen(12, .26, .2), 480); } } catch (x) {} }, 200);
+  }
+  ['touchstart', 'pointerdown', 'mousedown'].forEach(n => k.addEventListener(n, e => e.stopPropagation(), { passive: true }));
+  k.addEventListener('touchend', an, { passive: false });
+  k.addEventListener('click', an);
+  setInterval(() => { if (ac && ac.state === 'running') k.classList.add('weg'); else k.classList.remove('weg'); }, 300);
+})();
+const fk = document.getElementById('farbKnopf');
+function naechsteWelt() {
+  // aktuelle Mischung als Ausgangspunkt, damit nichts springt
+  if (mischung < 1) vonWelt = mischung > .5 ? welt : vonWelt;
+  vonWelt = welt; welt = (welt + 1) % WELTEN.length; mischung = 0; wechselZeit = performance.now(); fk.textContent = NAMEN[welt];
+}
+function farbwechsel(e) { if (e) { e.preventDefault(); e.stopPropagation(); } naechsteWelt(); }
+['touchstart', 'pointerdown', 'mousedown'].forEach(n => fk.addEventListener(n, e => e.stopPropagation(), { passive: true }));
+fk.addEventListener('touchend', farbwechsel, { passive: false }); fk.addEventListener('click', farbwechsel);
+
+// Zurück-Link zuverlässig auf dem Handy
+(function () {
+  var a = document.querySelector('.zurueck'); if (!a) return;
+  var ziel = a.getAttribute('href'), unterwegs = false, start = false;
+  function gehe() { if (unterwegs) return; unterwegs = true; location.href = ziel; }
+  function drin(x, y) { var r = a.getBoundingClientRect(), p = 14; return x >= r.left - p && x <= r.right + p && y >= r.top - p && y <= r.bottom + p; }
+  addEventListener('touchstart', function (e) { var q = e.touches[0]; start = !!q && drin(q.clientX, q.clientY); }, { capture: true, passive: true });
+  addEventListener('touchend', function (e) { if (!start) return; start = false; var q = e.changedTouches[0]; if (q && drin(q.clientX, q.clientY)) { e.preventDefault(); gehe(); } }, { capture: true, passive: false });
+  a.addEventListener('click', function (e) { e.preventDefault(); gehe(); });
+})();
+window.__klang = () => ({ zustand: ac && ac.state });
+requestAnimationFrame(frame);
+</script>
+</body>
+</html>

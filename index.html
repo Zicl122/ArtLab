@@ -235,15 +235,6 @@ const PROJEKTE = [
     alt: "Die Startseite eines Vokabeltrainers mit der Überschrift Tre Lingue und einer grünen Karte für Italienisch"
   },
   {
-    titel: "Bildbeschreibung-Werkstatt",
-    text: "Eigene Bilder genau beschreiben lernen. Beobachtungen im Bild markieren und Rubriken zuordnen, mit zwei Spielen zwischen Beschreiben und Deuten üben und anschließend einen eigenen Text schreiben. Das Bild bleibt auf dem Gerät.",
-    seite: "bildbeschreibung.html",
-    bereiche: "rezeption,produktion",
-    prompt: "Baue mir eine Lern-App als einzelne HTML-Datei, mit der Schülerinnen und Schüler der Klasse 10 und der Oberstufe einzeln am Handy oder Tablet eine Bildbeschreibung einüben. Sie laden ein eigenes Bild, es bleibt im Browser und wird nirgends hochgeladen, und eine KI ist nicht beteiligt. Unten gibt es vier Reiter. Bild: Bild laden, Bildinformationen eintragen (Urheber, Titel, Technik, Bildtyp, Format erst Höhe dann Breite, Entstehung, Ort, was unbekannt ist). Beobachten: Das Bild lässt sich zoomen und verschieben, ein Tipp setzt eine nummerierte Markierung, die man einer Rubrik zuordnet (Hauptmotiv, Komposition, Perspektive, Licht und Schatten, Farbigkeit, Technik, Text) und mit einer Notiz versieht, dazu Hilfsfragen je Rubrik. Hilfen sind ein Dritteleraster, ein Schwarz-Weiß-Modus für Hell und Dunkel und eine aus dem Bild berechnete Farbpalette. Abzeichen zeigen die Rubriken, zwei Notizen bringen einen Stern. Üben: Ein Spiel sortiert Aussagen in Beschreibung, Deutung und Einschätzung mit Begründung, mit kurzer Erklärung, und ein zweites Spiel bringt Beschreibungssätze in die richtige Reihenfolge, vom Großen zum Kleinen und von vorne nach hinten. Schreiben: Ein Textfeld mit Satzanfängen je Rubrik, die Notizen lassen sich einfügen, eine Anzeige zeigt, welche Rubriken schon vorkommen, und Sätze mit Deutungswörtern wie wirkt oder traurig werden sanft markiert, außer sie sind mit weil begründet. Kopieren und Drucken gehören dazu. Notizen und Text bleiben im Browser gespeichert. Das Design soll wie eine schöne Apple-App wirken, mit systemeigener Schrift, hellem Hintergrund, runden Karten und einer Tableiste unten. Die Rubriken orientieren sich lose an der Checkliste von ahs-aba.at, mit eigenen Formulierungen.",
-    bild: "vorschau/bildbeschreibung.jpg",
-    alt: "Ein Bild mit farbigen Markierungen und darunter die Rubriken Hauptmotiv, Komposition und Farbigkeit der Bildbeschreibung-Werkstatt"
-  },
-  {
     titel: "Immunlabor, Immunologie in Klasse 9",
     text: "Acht Missionen zum Immunsystem mit Schulbuchtexten, bunten Abbildungen, drei Lernwegen, Lernspielen und Selbstkontrolle. Von Bakterien und Viren über Impfung und Antibiotika bis zur Allergie.",
     seite: "immunlabor.html",
@@ -251,6 +242,24 @@ const PROJEKTE = [
     prompt: "Baue mir ein Lernmaterial als einzelne HTML-Datei für den Biologieunterricht in Klasse 9 zum Thema Immunbiologie, das sich wie ein buntes, modernes Schulbuch liest. Es gibt acht Missionen mit je einer Doppelstunde. Diese sind Erreger (Bakterien und Viren), Übertragungswege, angeborene Abwehr, gezielte Abwehr mit Antikörpern und Gedächtnis, Impfung, Antibiotika und Resistenz, Allergie und Transplantation, und eine Fallanalyse. Jede Mission hat eine Alltagsszene als Einstieg, einen Forscherauftrag, ausführliche Erklärtexte mit Zwischenüberschriften, Merkkästen, Wusstest-du-Kästen, Tabellen und Fachbegriffen und mehrere selbst gezeichnete SVG-Abbildungen im Stil eines Schulbuchs (Aufbau eines Bakteriums und eines Virus, Fresszelle, Antikörper nach dem Schlüssel-Schloss-Prinzip, Antikörperkurve, Resistenz in Petrischalen und so weiter), mit klarer Beschriftung. Dazu gehören drei Lernwege Förder, Basis und Erweitert mit Arbeitsblättern und Textfeldern, deren Antworten im Browser gespeichert werden, ein Lernspiel mit drei Fragen und Rückmeldung, eine Selbstkontrolle und ein Exit-Ticket. Jede Mission bekommt eine eigene kräftige Farbe, oben gibt es eine Navigation und einen Fortschrittsbalken. Das Design soll schülergerecht, bunt und mit großer Schrift am Handy gut lesbar sein, ohne Server und ohne Konto.",
     bild: "vorschau/immunlabor.jpg",
     alt: "Die Startseite des Immunlabors mit farbigem Titel und den acht Missionskarten"
+  },
+  {
+    titel: "Werbung lesen, Beispiel Lieferando",
+    text: "Eine Anzeige in vier Schritten auseinandernehmen. W-Fragen beantworten, AIDA direkt im Bild aufleuchten lassen, Gestaltungsmittel per Spiel zuordnen, kritisch reflektieren und danach eine eigene Anzeige analysieren.",
+    seite: "lieferando.html",
+    bereiche: "rezeption,produktion",
+    prompt: "Baue mir ein Lernmaterial als einzelne HTML-Datei für den Kunstunterricht (Klasse 9 bis 10) zur Analyse von Werbung am Beispiel einer Lieferando-Anzeige (Burger auf rotem Grund, Überschrift „Ich will ein Rind von dir!“). Es gibt fünf Abschnitte. Erstens die Anzeige mit einem Feld für den ersten Eindruck. Zweitens die W-Fragen Wer, Wen, Wovon, Wie, bei denen die Lernenden zuerst selbst schreiben und dann einen Vorschlag aufdecken. Drittens eine AIDA-Leiste mit vier Pfeilen, bei der ein Tipp auf einen Schritt die passende Stelle in der Anzeige hervorhebt (restliches Bild abgedunkelt) und erklärt, wodurch Attention, Interest, Desire und Action erreicht werden. Viertens ein Zuordnungsspiel, bei dem zehn Gestaltungsmittel (zum Beispiel Rot als Signalfarbe, Wortspiel, Zahl 10.000, Burger in der Bildmitte, Logo unten rechts) per Tipp den vier AIDA-Stufen zugeordnet werden, mit Rückmeldung, dazu Reflexionsfragen mit Vorschlägen und kritische Fragen. Fünftens eine eigene Analyse einer selbst gewählten Anzeige mit Textfeldern, Bild-Vorschau nur auf dem Gerät, Kopieren und Drucken. Eingaben werden im Browser gespeichert. Das Design soll warm, rot und handytauglich sein, ohne Server und ohne Konto.",
+    bild: "vorschau/lieferando.jpg",
+    alt: "Die Startseite zur Lieferando-Anzeige mit rotem Titel und der Anzeige mit Burger"
+  },
+  {
+    titel: "Neonwellen",
+    text: "Leuchtende Wellenlinien in Rot und Blau, jede Linie ist eine Saite. Beim Überstreichen erklingt eine Harfe, tief wie eine Gitarre.",
+    seite: "neonwellen.html",
+    bereiche: "produktion",
+    prompt: "Baue mir eine einzelne HTML-Datei im Vollbild auf schwarzem Grund, die auf dem Handy flüssig läuft, ohne Server und ohne Konto. Etwa fünfzig leuchtende Neonlinien laufen als Wellen quer über den Bildschirm, wie auf einem Foto mit Lichtwellen. Oben sind sie leuchtend rot und orange, unten blau und violett, dazwischen verläuft eine helle rosa-weiße Naht, die sich langsam bewegt. Jede Linie wird dreifach gezeichnet (breiter Schein, mittlerer Schein, feiner heller Kern) mit additivem Mischen. Jede Linie ist eine Saite mit Federn zu ihren Nachbarn, sodass Berührungen Wellen auslösen, die über den Bildschirm laufen. Dazu soll es Klang geben, komplett im Browser mit Web Audio erzeugt. Wer eine Linie überquert, zupft eine Saite an, wie bei einer Harfe oder einer tiefen Gitarre (Karplus-Strong im Browser berechnet, E-Dur-Pentatonik von E2 aufwärts, unten tief, oben hoch, Stereoposition nach links und rechts), mit Echo und Hall. Im Hintergrund schwebt ein sehr leiser Klangteppich, ohne Rauschen. Die Farben wechseln von selbst sanft zwischen drei Farbwelten (Glut und Eis, Aurora, Abendglut), ein Knopf springt zur nächsten. Auf dem iPhone gibt erst ein Antippen den Ton frei, deshalb braucht es einen Knopf „Ton einschalten“, der nach dem Start verschwindet.",
+    bild: "vorschau/neonwellen.jpg",
+    alt: "Rote und blau-violette Neonwellen auf schwarzem Grund mit heller Naht"
   }
 ];
 

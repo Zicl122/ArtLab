@@ -180,6 +180,16 @@
   #lupe .lzu { position:absolute; top:max(12px,env(safe-area-inset-top)); right:12px; width:46px; height:46px; border-radius:50%; border:1.5px solid var(--kante); background:rgba(3,26,32,.8); color:#fff; font:700 26px/1 var(--sans); z-index:2; }
   #lupe .ltext { position:absolute; left:0; right:0; bottom:0; margin:0; padding:14px 16px calc(14px + env(safe-area-inset-bottom,0px)); background:linear-gradient(0deg,rgba(1,10,12,.9),rgba(1,10,12,0)); font:700 14px/1.35 var(--sans); color:var(--soft); text-align:center; pointer-events:none; }
   #lupe .ltext b { color:#fff; font:800 18px/1.2 var(--kopf); display:block; }
+  #ergebnis { padding-top:14px; }
+  .urteil .mini { width:52px; height:52px; border-radius:14px; object-fit:cover; flex:none; background:#0a2a33; border:2px solid var(--sonne); }
+  .urteil .uk { display:flex; flex-direction:column; min-width:0; }
+  .urteil .uk .gross { font-size:25px; }
+  .urteil .uk .tn { font:700 14px/1.2 var(--sans); color:var(--soft); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; margin-top:3px; }
+  .urteil .pk { font-size:32px; }
+  #ergebnis .abstand { margin:8px 0 0; font-size:14px; line-height:1.35; }
+  #ergebnis .wusstest { margin:8px 0 12px; padding:9px 12px; font-size:13.5px; line-height:1.45; }
+  #ergebnis .wusstest strong { display:inline; font-size:10.5px; margin:0 4px 0 0; }
+  .ezeile { display:flex; gap:10px; } .ezeile .knopf { flex:1; padding-top:13px; padding-bottom:11px; font-size:18px; } .ezeile .knopf.leise { flex:none; font-size:15px; }
   #fehler { position:fixed; inset:0; z-index:80; display:none; align-items:center; justify-content:center; text-align:center; padding:32px; background:var(--bg); }
   @media (min-width:700px) { #tippen { font-size:17px; } .frage h2 { font-size:30px; } }
   @media (prefers-reduced-motion:reduce) { *, *::before, *::after { animation-duration:.01ms !important; transition-duration:.01ms !important; } }
@@ -525,7 +535,7 @@ function frage() {
   $('rtxt').textContent = (game.r < game.n ? `Runde ${game.r + 1} von ${game.n}` : `Bonusrunde ${game.r + 1 - game.n}`) + (game.kat === 'a' ? '' : ' · ' + EPN[+game.kat]); punkteZeile();
   $('frage').innerHTML = `<img src="${BILD + w.key}_k.jpg" alt="${esc(w.t)}" data-lupe="${w.i}"><div><small>Wo lebt dieses Tier?</small><h2>${esc(w.t)}</h2><div class="chips"><span class="chip">${esc(EPN[w.e])}</span><span class="chip"><i style="background:rgb(${LR[w.h].c})"></i>${LR[w.h].n}</span></div></div>`;
   $('frage').style.animation = 'none'; void $('frage').offsetWidth; $('frage').style.animation = '';
-  zeige('ergebnis', false); zeige('tippen', true); zeige('zoom', true);
+  zeige('ergebnis', false); zeige('frage', true); zeige('tippen', true); zeige('zoom', true);
   layout(false); setZoom(1);
 }
 function tippe(u) {
@@ -542,10 +552,12 @@ function tippe(u) {
   klang(p >= 900 ? 'top' : p >= 400 ? 'gut' : 'schade'); if (p >= 900) konfetti();
   const urteil = p >= 900 ? 'Volltreffer!' : p >= 700 ? 'Sehr nah dran' : p >= 400 ? 'Ganz gut' : p >= 150 ? 'Noch ein Stück weg' : 'Weit daneben';
   const letzte = game.r === game.n - 1 && !game.bonus, bonus = game.bonus;
-  $('ergebnis').innerHTML = `<div class="urteil"><span class="gross">${urteil}</span><span class="pk">+${zahl(p)}<small>Punkte</small></span></div>
-    <p class="abstand">${d < 1 ? 'Du hast mitten ins <b>Verbreitungsgebiet</b> getippt.' : `Dein Tipp lag <b>${kmText(d)}</b> vom Verbreitungsgebiet entfernt.`} Hier lebt es: ${esc(w.d.v)}.</p>
-    <div class="wusstest"><strong>Wusstest du?</strong>${esc(kurz(w.d.x))}</div>
-    <button type="button" class="knopf voll" id="weiter">${letzte ? 'Ergebnis ansehen' : bonus ? 'Nächste Bonusrunde' : 'Nächste Runde'}</button>${bonus ? '<button type="button" class="knopf leise voll" id="beenden" style="margin-top:10px">Beenden und Ergebnis ansehen</button>' : ''}`;
+  const satz = (String(w.d.x).match(/[^.!?]+[.!?]+/) || [w.d.x])[0].trim();
+  $('ergebnis').innerHTML = `<div class="urteil"><img class="mini" src="${BILD + w.key}_k.jpg" alt="${esc(w.t)}" data-lupe="${w.i}"><div class="uk"><span class="gross">${urteil}</span><span class="tn">${esc(w.t)}</span></div><span class="pk">+${zahl(p)}<small>Punkte</small></span></div>
+    <p class="abstand">${d < 1 ? 'Mitten ins <b>Verbreitungsgebiet</b> getippt.' : `<b>${kmText(d)}</b> daneben.`} Verbreitung: ${esc(w.d.v)}.</p>
+    <p class="wusstest"><strong>Wusstest du?</strong> ${esc(satz)}</p>
+    <div class="ezeile">${bonus ? '<button type="button" class="knopf leise" id="beenden">Beenden</button>' : ''}<button type="button" class="knopf" id="weiter">${letzte ? 'Ergebnis ansehen' : bonus ? 'Nächste Bonusrunde' : 'Nächste Runde'}</button></div>`;
+  zeige('frage', false);
   zeige('tippen', false); zeige('ergebnis', true); zeige('zoom', false);
   $('weiter').onclick = () => { klang('tap'); if (letzte) schlussBild(); else { game.r++; if (!game.order[game.r]) ziehe(); frage(); } };
   if ($('beenden')) $('beenden').onclick = () => { klang('tap'); schlussBild(); };

@@ -5,213 +5,184 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
 <title>Tierglobus</title>
 <!--
-  Tierglobus, eine ArtLab-Kachel. Tierarten auf einer drehbaren Erdkugel (Tag und Nacht nach echter Uhrzeit) mit Verbreitungsgebieten, Wanderrouten, Touren, Spielen und Sammlung.
-  Schwesterkachel zum Kunstglobus, von dem Kugel, Bedienung und Spielrahmen stammen. Stand: Gerüst mit 20 Probearten.
-  Benötigt den Ordner tierglobus-bilder neben dieser Datei (Tierbilder und hochaufgelöste Erdbilder), später auch tierglobus-toene.
+  Tierglobus, eine ArtLab-Kachel. Eine drehbare Erdkugel mit 210 Tierarten. Zwei Wege, nämlich Spielen (Ort des Tieres raten) und Lernen (Tiere antippen und kennenlernen).
+  Benötigt den Ordner tierglobus-bilder neben dieser Datei (Tierbilder und hochaufgelöste Erdbilder).
   Erdbilder: NASA Blue Marble und NASA Earth at Night (über Wikimedia Commons), Wolken aus NASA-Daten wie im Repository mrdoob/three.js
   unter examples/textures/planets/. Tierbilder von Wikimedia Commons, Nachweis je Bild in der Karte.
 -->
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,600;1,9..144,500&family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@600;700;800&family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
 <style>
-  :root { color-scheme: dark; --bg:#02030a; --text:#f1f0f7; --soft:rgba(241,240,247,.7); --gold:#d6b46e; --tuerkis:#7fe3d2; --gruen:#9be8a5; --rot:#f39b9b; --blau:#96dcff; --glas:rgba(17,14,24,.93); --linie:rgba(255,255,255,.2); --leiste:64px; --sans:"DM Sans",system-ui,-apple-system,"Helvetica Neue",Arial,sans-serif; --serif:"Fraunces",Georgia,serif; }
+  :root { color-scheme: dark;
+    --bg:#031a20; --tief:#06262e; --panel:#0c3a45; --panel2:#115062; --kante:rgba(255,255,255,.10);
+    --text:#f3fbfa; --soft:rgba(243,251,250,.74); --mint:#3fe3c2; --mintd:#14a88c; --sonne:#ffc233; --sonned:#c98300; --koralle:#ff6b57; --korad:#c23c2b; --gruen:#5fe08a; --blau:#7cc8ff;
+    --kopf:"Baloo 2","Nunito",system-ui,sans-serif; --sans:"Nunito",system-ui,-apple-system,"Segoe UI",Roboto,sans-serif; }
   * { box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
-  html, body { margin:0; height:100%; background:var(--bg); color:var(--text); overflow:hidden; overscroll-behavior:none; font:400 15.5px/1.55 var(--sans); }
+  html, body { margin:0; height:100%; background:var(--bg); color:var(--text); overflow:hidden; overscroll-behavior:none; font:600 16px/1.45 var(--sans); }
   canvas { position:fixed; left:0; top:0; width:100%; height:100%; display:block; touch-action:none; }
-  #ov { z-index:1; }
-  #konf { z-index:26; pointer-events:none; }
-  button { font-family:inherit; color:inherit; }
-  .zurueck{position:fixed;top:max(12px,env(safe-area-inset-top));left:max(12px,env(safe-area-inset-left));z-index:15;font:400 14px/1 var(--sans);color:#f1f0f7;background:rgba(17,14,26,.55);border:1px solid rgba(255,255,255,.22);border-radius:999px;padding:9px 14px;text-decoration:none;-webkit-backdrop-filter:blur(6px);backdrop-filter:blur(6px);touch-action:manipulation}.zurueck:focus-visible{outline:2px solid #8fd3ff;outline-offset:3px}
-  button:focus-visible, input:focus-visible { outline:2px solid #8fd3ff; outline-offset:3px; }
-  .pille { font:400 14px/1 var(--sans); color:var(--text); background:rgba(17,14,26,.55); border:1px solid var(--linie); border-radius:999px; padding:9px 13px; -webkit-backdrop-filter:blur(6px); backdrop-filter:blur(6px); touch-action:manipulation; cursor:pointer; }
-  #oben { position:fixed; z-index:10; top:max(12px,env(safe-area-inset-top)); right:max(12px,env(safe-area-inset-right)); display:flex; gap:6px; }
-  #tagwerk { position:fixed; z-index:9; left:50%; transform:translateX(-50%); top:calc(max(12px,env(safe-area-inset-top)) + 46px); display:flex; align-items:center; gap:8px; padding:5px 12px 5px 5px; max-width:calc(100vw - 32px); white-space:nowrap; transition:opacity .4s; }
-  #tagwerk img { width:30px; height:30px; border-radius:50%; object-fit:cover; flex:none; }
-  #tagwerk span { overflow:hidden; text-overflow:ellipsis; }
-  #tagwerk small { color:var(--gold); font-size:11px; letter-spacing:.06em; text-transform:uppercase; display:block; line-height:1.1; }
-  body.mitkarte #tagwerk, body.mitmenue #tagwerk { opacity:0; pointer-events:none; }
-  #zoom { position:fixed; z-index:10; right:max(12px,env(safe-area-inset-right)); top:44%; transform:translateY(-50%); display:flex; flex-direction:column; gap:8px; }
-  #zoom button { width:44px; height:44px; border-radius:50%; border:1px solid var(--linie); background:rgba(17,14,26,.6); color:var(--text); font:400 24px/1 var(--sans); cursor:pointer; touch-action:manipulation; -webkit-backdrop-filter:blur(6px); backdrop-filter:blur(6px); }
-  #hint { position:fixed; z-index:5; left:0; right:0; bottom:calc(150px + env(safe-area-inset-bottom,0px)); text-align:center; padding:0 24px; pointer-events:none; color:var(--soft); font-size:15px; transition:opacity 1.6s ease; text-shadow:0 1px 8px #000; }
-  #hint.weg { opacity:0; }
-  #hint i { font-style:normal; color:var(--gold); } #hint em { font-style:normal; color:var(--tuerkis); }
-  #fehler { position:fixed; inset:0; z-index:80; display:none; align-items:center; justify-content:center; text-align:center; padding:32px; background:var(--bg); }
-  /* Leiste unten */
-  #unten { position:fixed; z-index:10; left:0; right:0; bottom:0; padding:0 10px calc(8px + env(safe-area-inset-bottom,0px)); transition:transform .4s cubic-bezier(.2,.7,.2,1); pointer-events:none; }
-  #unten > * { pointer-events:auto; }
-  body.mitkarte #unten { transform:translateY(130%); }
-  body.mitmenue #unten { z-index:31; }
-  body.mitmenue #filter { display:none; }
-  @media (orientation:landscape) and (min-width:640px) { body.mitkarte #unten { transform:none; right:min(480px,46vw); } }
-  #zeit { display:flex; align-items:center; gap:10px; max-width:640px; margin:0 auto 8px; padding:8px 10px; border-radius:16px; background:rgba(17,14,26,.7); border:1px solid var(--linie); -webkit-backdrop-filter:blur(8px); backdrop-filter:blur(8px); }
-  #zplay { flex:none; width:38px; height:38px; border-radius:50%; border:0; background:var(--gold); color:#1a1405; font-size:15px; cursor:pointer; touch-action:manipulation; }
-  .zr { flex:1; min-width:0; }
-  #zregler { width:100%; margin:0; accent-color:var(--gold); height:24px; touch-action:pan-y; }
-  #zskala { position:relative; height:13px; margin:-2px 8px 3px; font-size:9.5px; color:var(--soft); letter-spacing:.02em; }
-  #zskala span { position:absolute; top:0; transform:translateX(-50%); white-space:nowrap; }
-  #zskala span::before { content:''; position:absolute; left:50%; top:-5px; width:1px; height:4px; background:var(--soft); }
-  .zfuss { display:flex; align-items:center; gap:8px; margin-top:2px; }
-  .zfuss #zlabel { flex:1; min-width:0; }
-  #zlabel { font-size:12.5px; color:var(--soft); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; line-height:1.2; }
-  #zlabel b { color:var(--text); }
-  #artwahl { flex:none; display:flex; border:1px solid var(--linie); border-radius:10px; overflow:hidden; }
-  #artwahl button { border:0; background:none; color:var(--soft); font-size:11.5px; padding:5px 8px; cursor:pointer; touch-action:manipulation; }
-  #artwahl button[aria-pressed="true"] { background:var(--gold); color:#1a1405; font-weight:700; }
-  #leiste { display:flex; max-width:640px; margin:0 auto; border-radius:18px; background:rgba(17,14,26,.82); border:1px solid var(--linie); -webkit-backdrop-filter:blur(10px); backdrop-filter:blur(10px); overflow:hidden; }
-  #leiste button { flex:1; border:0; background:none; padding:8px 4px 7px; font-size:12.5px; color:var(--soft); cursor:pointer; touch-action:manipulation; line-height:1.15; position:relative; }
-  #leiste button i { display:block; height:22px; margin-bottom:3px; }
-  #leiste svg { width:22px; height:22px; fill:none; stroke:currentColor; stroke-width:1.5; stroke-linecap:round; stroke-linejoin:round; }
-  #leiste svg .v { fill:currentColor; stroke:none; }
-  #leiste button[aria-pressed="true"] i { color:var(--gold); }
-  #leiste button[aria-pressed="true"] { color:var(--text); background:rgba(214,180,110,.12); }
-  #leiste .punkt { position:absolute; top:6px; left:calc(50% + 10px); width:8px; height:8px; border-radius:50%; background:var(--rot); }
-  /* Karte */
-  #karte { position:fixed; z-index:20; left:0; right:0; bottom:0; max-height:66vh; max-height:66dvh; overflow-y:auto; -webkit-overflow-scrolling:touch; overscroll-behavior:contain;
-    background:var(--glas); -webkit-backdrop-filter:blur(14px); backdrop-filter:blur(14px); border-top:1px solid var(--linie); border-radius:20px 20px 0 0;
-    padding:12px 16px 0; transform:translateY(105%); transition:transform .45s cubic-bezier(.2,.7,.2,1); visibility:hidden; }
-  #karte.offen { transform:none; visibility:visible; }
-  #karte.kompakt { max-height:46vh; max-height:46dvh; }
-  @media (orientation:landscape) and (min-width:640px) {
-    #karte, #karte.kompakt { left:auto; top:0; bottom:0; right:0; width:min(480px,46vw); max-height:none; border-radius:20px 0 0 20px; border-top:0; border-left:1px solid var(--linie);
-      padding-top:calc(12px + env(safe-area-inset-top,0px)); transform:translateX(105%); }
-    #karte.offen { transform:none; }
-    body.mitkarte #oben, body.mitkarte #zoom { right:calc(min(480px,46vw) + 12px); }
-  }
-  .kopfzeile { display:flex; align-items:center; gap:8px; min-height:38px; margin-bottom:6px; }
-  .kopfzeile .runde { flex:1; margin:0; }
-  .x { flex:none; width:38px; height:38px; border:0; border-radius:50%; background:rgba(255,255,255,.1); color:var(--text); font:300 24px/1 var(--sans); cursor:pointer; touch-action:manipulation; margin-left:auto; }
-  .bild { position:relative; display:block; width:100%; padding:0; border:0; background:#000; border-radius:12px; overflow:hidden; cursor:zoom-in; touch-action:manipulation; }
-  .bild img { display:block; width:100%; height:auto; max-height:38vh; max-height:38dvh; object-fit:contain; margin:0 auto; }
-  @media (orientation:landscape) and (min-width:640px) { .bild img { max-height:50vh; } }
-  #karte.kompakt .bild img { max-height:20vh; max-height:20dvh; }
-  .bild .lupe { position:absolute; right:8px; bottom:8px; padding:6px 10px; border-radius:999px; background:rgba(0,0,0,.6); color:#fff; font-size:13px; }
-  .detail { position:relative; width:100%; aspect-ratio:4/3; max-height:38vh; border-radius:12px; overflow:hidden; background:#000; }
-  .detail img { position:absolute; max-width:none; transition:all .6s ease; }
-  h2 { margin:12px 0 4px; font:600 24px/1.12 var(--serif); letter-spacing:-.005em; }
-  .info { display:grid; grid-template-columns:auto 1fr; gap:4px 12px; margin:8px 0 0; font-size:15px; line-height:1.35; }
-  .info dt { color:var(--soft); font-size:13px; padding-top:1px; }
-  .info dd { margin:0; }
-  .info dt.heute { color:var(--blau); } .info dt.her { color:var(--gold); }
-  .marken { display:flex; flex-wrap:wrap; gap:6px; margin-top:10px; }
-  .marke { padding:3px 9px; border:1px solid rgba(214,180,110,.5); border-radius:999px; color:var(--gold); font-size:12.5px; }
-  .marke.bau { border-color:rgba(127,227,210,.55); color:var(--tuerkis); }
-  .marke.ok { border-color:rgba(140,230,150,.6); color:var(--gruen); }
-  .marke.grau { border-color:var(--linie); color:var(--soft); }
-  .text { margin:14px 0 0; font-size:16px; line-height:1.66; }
-  .unten { position:sticky; bottom:0; margin:14px -16px 0; padding:10px 16px calc(12px + env(safe-area-inset-bottom,0px)); background:linear-gradient(rgba(17,14,24,0),rgba(17,14,24,.97) 30%); display:flex; gap:8px; align-items:center; }
-  .knopf { flex:1; padding:12px 12px; font:700 15px/1.2 var(--sans); color:#1a1405; background:var(--gold); border:0; border-radius:12px; cursor:pointer; touch-action:manipulation; }
-  .knopf:disabled { opacity:.38; cursor:default; }
-  .knopf.leise { color:var(--text); background:rgba(255,255,255,.1); font-weight:400; }
-  .knopf.klein { flex:none; width:52px; font-size:20px; }
-  .knopf.gelernt { color:#08210c; background:var(--gruen); }
-  .frage { margin:12px 0 0; font-size:17px; font-weight:700; }
-  .antworten { display:grid; gap:8px; margin-top:10px; }
-  .antworten button { text-align:left; padding:12px 13px; font:400 15px/1.3 var(--sans); color:var(--text); background:rgba(255,255,255,.08); border:1px solid var(--linie); border-radius:12px; cursor:pointer; touch-action:manipulation; transition:background .2s, border-color .2s, transform .15s; }
-  .antworten button:active { transform:scale(.98); }
-  .antworten button small { display:block; color:var(--soft); font-size:12.5px; }
-  .antworten button.richtig { background:rgba(120,220,140,.25); border-color:var(--gruen); }
-  .antworten button.falsch { background:rgba(240,110,110,.22); border-color:var(--rot); animation:wackeln .35s; }
-  @keyframes wackeln { 25%{transform:translateX(-5px)} 75%{transform:translateX(5px)} }
-  .reihe { display:grid; gap:8px; margin-top:10px; }
-  .reihe button { display:flex; align-items:center; gap:10px; text-align:left; padding:6px 10px 6px 6px; border:1px solid var(--linie); border-radius:12px; background:rgba(255,255,255,.06); cursor:pointer; touch-action:manipulation; font-size:14.5px; line-height:1.25; }
-  .reihe img { width:48px; height:48px; border-radius:8px; object-fit:cover; flex:none; }
-  .reihe .nr { flex:none; width:30px; height:30px; border-radius:50%; display:grid; place-items:center; border:2px dashed rgba(255,255,255,.3); font-weight:700; color:var(--soft); }
-  .reihe button.gesetzt .nr { border:0; background:var(--gold); color:#1a1405; }
-  .reihe button.richtig { border-color:var(--gruen); background:rgba(120,220,140,.14); }
-  .reihe button.falsch { border-color:var(--rot); background:rgba(240,110,110,.12); }
-  .reihe .jahr { margin-left:auto; color:var(--gold); white-space:nowrap; font-size:13px; }
-  .runde { color:var(--soft); font-size:11px; letter-spacing:.12em; font-weight:500; text-transform:uppercase; }
-  .hinweis { color:var(--soft); margin:10px 0 0; font-size:15px; }
-  .punkte { font:600 28px/1.1 var(--serif); color:var(--gold); margin:10px 0 0; }
-  .punktreihe { display:flex; gap:4px; margin:0 0 10px; }
-  .punktreihe i { flex:1; height:5px; border-radius:9px; background:rgba(255,255,255,.14); }
-  .punktreihe i.r { background:var(--gruen); } .punktreihe i.f { background:var(--rot); } .punktreihe i.j { background:var(--gold); }
-  .rueckmeldung { margin:0 0 12px; padding:11px 13px; border-radius:12px; font-weight:700; font-size:16px; animation:auf .35s ease; }
-  .rueckmeldung small { display:block; font-weight:400; font-size:14px; margin-top:2px; }
-  .rueckmeldung.gut { background:rgba(120,220,140,.18); color:#c8f5cd; border:1px solid rgba(155,232,165,.5); }
-  .rueckmeldung.schlecht { background:rgba(240,110,110,.15); color:#ffd0d0; border:1px solid rgba(243,155,155,.5); }
-  @keyframes auf { from{opacity:0;transform:translateY(6px)} to{opacity:1;transform:none} }
-  /* Menue */
-  #menue { position:fixed; inset:0; z-index:30; display:none; align-items:center; justify-content:center; padding:16px; background:rgba(2,3,10,.62); -webkit-backdrop-filter:blur(4px); backdrop-filter:blur(4px); }
-  #menue.offen { display:flex; }
-  .kasten { width:min(540px,100%); max-height:100%; overflow:auto; overscroll-behavior:contain; padding:18px 18px 22px; background:rgba(19,16,27,.97); border:1px solid var(--linie); border-radius:22px; animation:auf .3s ease; }
-  .kasten h2 { margin:0; font:600 28px/1.1 var(--serif); }
-  .kasten h3 { margin:22px 0 8px; font:700 13px/1.2 var(--sans); letter-spacing:.06em; text-transform:uppercase; color:var(--soft); }
-  .unterzeile { margin:2px 0 0; color:var(--soft); font-size:15px; }
-  .modi, .liste { display:grid; gap:8px; }
-  .liste { grid-template-columns:repeat(auto-fill,minmax(150px,1fr)); }
-  .modus, .zeile { display:block; width:100%; text-align:left; padding:12px 13px; border:1px solid var(--linie); border-radius:14px; background:rgba(255,255,255,.06); color:var(--text); font-size:15px; line-height:1.3; cursor:pointer; touch-action:manipulation; }
-  .modus b, .zeile b { display:block; color:var(--gold); }
-  .modus small, .zeile small { display:block; color:var(--soft); font-size:12.5px; margin-top:3px; }
-  .zeile .mini { height:4px; margin-top:7px; }
-  .gross { display:flex; gap:12px; align-items:center; padding:10px; border:1px solid rgba(214,180,110,.5); border-radius:16px; background:rgba(214,180,110,.07); margin-top:12px; cursor:pointer; width:100%; text-align:left; }
-  .gross img { width:76px; height:76px; border-radius:12px; object-fit:cover; flex:none; }
-  .gross b { display:block; font:600 19px/1.15 var(--serif); } .gross small { display:block; color:var(--soft); font-size:13px; }
-  .gross .r { color:var(--gold); font-size:12px; letter-spacing:.06em; text-transform:uppercase; }
-  .quadrate { font-size:26px; letter-spacing:4px; margin:8px 0 0; }
-  .seg { display:flex; border:1px solid var(--linie); border-radius:12px; overflow:hidden; margin-top:10px; }
-  .seg button { flex:1; padding:10px 6px; border:0; background:none; color:var(--soft); font-size:14px; cursor:pointer; touch-action:manipulation; }
-  .seg button[aria-pressed="true"] { background:var(--gold); color:#1a1405; font-weight:700; }
-  .seg button:disabled { opacity:.35; }
-  .abz { display:grid; grid-template-columns:repeat(auto-fill,minmax(92px,1fr)); gap:8px; }
-  .abz div { text-align:center; padding:9px 4px 8px; border:1px solid rgba(255,255,255,.1); border-radius:12px; font-size:12px; line-height:1.25; color:rgba(241,240,247,.45); }
-  .abz .sym { display:grid; place-items:center; width:38px; height:38px; margin:0 auto 5px; border-radius:50%; border:1.5px dashed rgba(255,255,255,.25); font:700 14px/1 var(--sans); }
-  .abz div.hat { border-color:rgba(214,180,110,.5); color:var(--text); background:rgba(214,180,110,.06); }
-  .abz .hat .sym { border:0; background:linear-gradient(135deg,#e6cb8c,#b08a48); color:#1a1405; }
-  .abz small { display:block; color:var(--soft); font-size:11px; margin-top:2px; }
-  .sterne { color:var(--gold); letter-spacing:1px; white-space:nowrap; }
-  .sterne i { font-style:normal; color:rgba(255,255,255,.22); }
-  .grosssterne { font-size:46px; line-height:1.1; text-align:center; color:var(--gold); letter-spacing:8px; margin:6px 0; }
-  .grosssterne span { display:inline-block; animation:stern .5s backwards; }
-  .grosssterne span:nth-child(2) { animation-delay:.25s; } .grosssterne span:nth-child(3) { animation-delay:.5s; }
-  .grosssterne i { font-style:normal; color:rgba(255,255,255,.18); }
-  @keyframes stern { from{transform:scale(0) rotate(-90deg);opacity:0} 70%{transform:scale(1.3)} to{transform:none;opacity:1} }
-  .album { display:grid; grid-template-columns:repeat(auto-fill,minmax(62px,1fr)); gap:6px; }
-  .kachel { position:relative; aspect-ratio:1; border-radius:10px; overflow:hidden; border:2px solid rgba(255,255,255,.12); background:#14162c; padding:0; cursor:pointer; touch-action:manipulation; }
-  .kachel img { width:100%; height:100%; object-fit:cover; display:block; }
-  .kachel.neu { border-color:rgba(255,255,255,.06); }
-  .kachel.neu img { filter:grayscale(1) brightness(.5); opacity:.75; transition:filter .3s, opacity .3s; }
-  .kachel.neu:hover img { filter:none; opacity:1; }
-  .kachel.hat { border-color:var(--gold); } .kachel.hat.bau { border-color:var(--tuerkis); }
-  .kachel .hak { position:absolute; right:3px; top:3px; width:17px; height:17px; border-radius:50%; background:var(--gruen); color:#08210c; font:700 10px/17px var(--sans); text-align:center; }
-  .kachel .hak.f { background:var(--rot); color:#2a0808; }
-  .balken { height:8px; border-radius:99px; background:rgba(255,255,255,.12); overflow:hidden; margin-top:6px; }
-  .balken i { display:block; height:100%; background:var(--gruen); border-radius:99px; }
-  .klein-link { background:none; border:0; color:var(--soft); text-decoration:underline; font-size:13px; padding:8px 0; cursor:pointer; }
-  .stand { display:flex; gap:10px; margin-top:12px; }
-  .stand div { flex:1; padding:10px; border-radius:12px; background:rgba(255,255,255,.05); text-align:center; font-size:12.5px; color:var(--soft); }
-  .stand b { display:block; font-size:22px; color:var(--text); }
-  /* Toast */
-  #toast { position:fixed; z-index:70; left:50%; top:max(14px,env(safe-area-inset-top)); transform:translate(-50%,-160%); transition:transform .5s cubic-bezier(.2,.8,.2,1.2); background:rgba(14,16,38,.98); border:1px solid var(--gold); border-radius:14px; padding:10px 16px; width:max-content; max-width:min(92vw,420px); text-align:center; font-size:15px; box-shadow:0 8px 30px rgba(0,0,0,.5); pointer-events:none; }
-  #toast.zeigen { transform:translate(-50%,0); }
-  #toast b { color:var(--gold); display:block; font-size:12px; letter-spacing:.06em; text-transform:uppercase; }
-  /* Lupe */
-  #lupe { position:fixed; inset:0; z-index:50; display:none; background:rgba(0,0,0,.96); }
-  #lupe.offen { display:block; }
-  #lupe .scroller { position:absolute; inset:0; overflow:auto; display:flex; align-items:center; justify-content:center; touch-action:pan-x pan-y; -webkit-overflow-scrolling:touch; }
-  #lupe img { max-width:100vw; max-height:100vh; max-height:100dvh; object-fit:contain; cursor:zoom-in; }
-  #lupe.gross .scroller { display:block; }
-  #lupe.gross img { max-width:none; max-height:none; width:240vw; cursor:zoom-out; }
-  #lupe .zu { position:fixed; top:max(12px,env(safe-area-inset-top)); right:max(12px,env(safe-area-inset-right)); z-index:2; width:44px; height:44px; border-radius:50%; border:1px solid var(--linie); background:rgba(0,0,0,.6); color:#fff; font:300 26px/1 var(--sans); cursor:pointer; }
-  #lupe .unterschrift { position:fixed; left:0; right:0; bottom:0; z-index:2; padding:10px 16px calc(12px + env(safe-area-inset-bottom,0px)); background:linear-gradient(rgba(0,0,0,0),rgba(0,0,0,.85)); font-size:14px; color:var(--soft); text-align:center; pointer-events:none; }
-  @media (prefers-reduced-motion: reduce) { #karte, #hint, #toast, #unten { transition:none; } .kasten, .rueckmeldung, .grosssterne span, .antworten button.falsch { animation:none; } }
-  /* Tierglobus */
-  #filter { display:flex; gap:6px; max-width:640px; margin:0 auto 8px; overflow-x:auto; scrollbar-width:none; }
+  #ov { z-index:1; } #konf { z-index:60; pointer-events:none; }
+  button { font-family:inherit; color:inherit; cursor:pointer; touch-action:manipulation; }
+  button:focus-visible, a:focus-visible { outline:3px solid var(--blau); outline-offset:3px; }
+  [hidden] { display:none !important; }
+
+  /* Oben */
+  .zurueck { position:fixed; top:max(10px,env(safe-area-inset-top)); left:max(10px,env(safe-area-inset-left)); z-index:30; font:700 14px/1 var(--sans); color:var(--text); background:rgba(3,26,32,.62); border:1.5px solid var(--kante); border-radius:999px; padding:10px 15px; text-decoration:none; -webkit-backdrop-filter:blur(8px); backdrop-filter:blur(8px); }
+  #oben { position:fixed; z-index:30; top:max(10px,env(safe-area-inset-top)); right:max(10px,env(safe-area-inset-right)); display:flex; gap:8px; }
+  .rund { height:40px; min-width:40px; padding:0 14px; border-radius:999px; border:1.5px solid var(--kante); background:rgba(3,26,32,.62); color:var(--text); font:800 14px/1 var(--sans); -webkit-backdrop-filter:blur(8px); backdrop-filter:blur(8px); }
+  #zoom { position:fixed; z-index:20; right:max(10px,env(safe-area-inset-right)); top:50%; transform:translateY(-50%); display:flex; flex-direction:column; gap:8px; }
+  #zoom button { width:42px; height:42px; border-radius:50%; border:1.5px solid var(--kante); background:rgba(3,26,32,.62); color:var(--text); font:700 24px/1 var(--sans); -webkit-backdrop-filter:blur(8px); backdrop-filter:blur(8px); }
+
+  /* Bausteine */
+  .tafel { background:linear-gradient(180deg,var(--panel2),var(--panel) 40%,var(--tief)); border:2px solid var(--kante); border-radius:24px; box-shadow:0 10px 30px rgba(0,0,0,.45), inset 0 1.5px 0 rgba(255,255,255,.14); }
+  .knopf { display:inline-flex; align-items:center; justify-content:center; gap:10px; border:0; border-radius:999px; padding:15px 26px 13px; font:800 20px/1 var(--kopf); letter-spacing:.04em; text-transform:uppercase; color:#1a1200; background:linear-gradient(180deg,#ffe07a,var(--sonne)); box-shadow:0 5px 0 var(--sonned), 0 12px 22px rgba(0,0,0,.4); transition:transform .08s, box-shadow .08s; position:relative; }
+  .knopf:active { transform:translateY(4px); box-shadow:0 1px 0 var(--sonned), 0 6px 12px rgba(0,0,0,.4); }
+  .knopf.mint { color:#03251f; background:linear-gradient(180deg,#8cf2dc,var(--mint)); box-shadow:0 5px 0 var(--mintd), 0 12px 22px rgba(0,0,0,.4); }
+  .knopf.mint:active { box-shadow:0 1px 0 var(--mintd), 0 6px 12px rgba(0,0,0,.4); }
+  .knopf.leise { color:var(--text); background:linear-gradient(180deg,#1a6177,#124a5c); box-shadow:0 5px 0 #0a3040, 0 10px 18px rgba(0,0,0,.35); font-size:16px; padding:13px 20px 11px; }
+  .knopf.leise:active { box-shadow:0 1px 0 #0a3040, 0 5px 10px rgba(0,0,0,.35); }
+  .knopf svg { width:22px; height:22px; flex:none; }
+  .chip { display:inline-flex; align-items:center; gap:6px; padding:5px 11px; border-radius:999px; background:rgba(255,255,255,.09); border:1px solid var(--kante); font:700 13px/1.1 var(--sans); color:var(--soft); }
+  .chip i { width:9px; height:9px; border-radius:50%; flex:none; }
+  .chip.rot { color:#ffc2b8; border-color:rgba(255,107,87,.5); } .chip.gut { color:#b9f5cb; border-color:rgba(95,224,138,.45); }
+
+  /* Startbild */
+  #start { position:fixed; inset:0; z-index:10; pointer-events:none; display:flex; flex-direction:column; justify-content:space-between; align-items:center; padding:calc(max(10px,env(safe-area-inset-top)) + 58px) 18px calc(18px + env(safe-area-inset-bottom,0px)); }
+  #start > * { pointer-events:auto; }
+  .logo { text-align:center; pointer-events:none !important; filter:drop-shadow(0 6px 14px rgba(0,0,0,.55)); }
+  .logo b { display:block; font:800 clamp(44px,15vw,76px)/.92 var(--kopf); letter-spacing:.015em; color:#fff; text-transform:uppercase; -webkit-text-stroke:0; text-shadow:0 4px 0 var(--korad), 0 0 0 #000; transform:rotate(-2deg); }
+  .logo b em { font-style:normal; color:var(--sonne); text-shadow:0 4px 0 var(--sonned); }
+  .logo span { display:inline-block; margin-top:12px; padding:5px 15px; border-radius:999px; background:rgba(3,26,32,.72); border:1.5px solid var(--kante); font:700 15px/1.2 var(--sans); color:var(--soft); }
+  #startunten { width:100%; max-width:440px; padding:16px 16px 14px; text-align:center; }
+  #startunten .zeile { display:flex; gap:12px; }
+  #startunten .zeile .knopf { flex:1; padding-left:10px; padding-right:10px; }
+  #startunten p { margin:12px 0 0; font:600 14px/1.3 var(--sans); color:var(--soft); }
+  #startunten .best { color:var(--sonne); font-weight:800; }
+
+  /* Spiel, Kopf */
+  #hudbox { position:fixed; z-index:15; left:0; right:0; top:calc(max(10px,env(safe-area-inset-top)) + 52px); padding:0 12px; display:flex; flex-direction:column; align-items:center; gap:8px; pointer-events:none; }
+  #hudbox > * { pointer-events:auto; width:100%; max-width:520px; }
+  .hud { display:flex; align-items:center; gap:12px; padding:10px 14px 10px 16px; }
+  .hud small { display:block; font:800 11px/1 var(--sans); letter-spacing:.12em; text-transform:uppercase; color:var(--mint); margin-bottom:6px; }
+  .punkte { display:flex; gap:5px; }
+  .punkte i { width:14px; height:14px; border-radius:50%; background:rgba(255,255,255,.14); border:2px solid rgba(255,255,255,.2); transition:background .3s; }
+  .punkte i.jetzt { border-color:var(--sonne); box-shadow:0 0 0 3px rgba(255,194,51,.3); background:rgba(255,194,51,.35); }
+  .punkte i.ok { background:var(--gruen); border-color:#b8f5ca; } .punkte i.nah { background:var(--sonne); border-color:#ffe39a; } .punkte i.weit { background:var(--koralle); border-color:#ffb3a8; }
+  .hud .r { margin-left:auto; text-align:right; }
+  .hud .r small { color:var(--sonne); }
+  #score { font:800 34px/.9 var(--kopf); color:#fff; text-shadow:0 3px 0 rgba(0,0,0,.35); font-variant-numeric:tabular-nums; display:inline-block; transition:transform .2s; }
+  #score.hoch { transform:scale(1.18); color:var(--sonne); }
+  .hud .aus { width:36px; height:36px; border-radius:50%; border:0; background:rgba(255,255,255,.1); color:var(--text); font:700 18px/1 var(--sans); }
+  .frage { display:flex; align-items:center; gap:14px; padding:10px 14px 10px 10px; animation:rein .4s cubic-bezier(.2,.8,.2,1); }
+  .frage img { width:84px; height:84px; border-radius:18px; object-fit:cover; flex:none; background:#0a2a33; border:2px solid rgba(255,255,255,.2); }
+  .frage small { display:block; font:800 11px/1 var(--sans); letter-spacing:.12em; text-transform:uppercase; color:var(--mint); }
+  .frage h2 { margin:3px 0 7px; font:800 26px/1 var(--kopf); }
+  .frage .chips { display:flex; flex-wrap:wrap; gap:6px; }
+  @keyframes rein { from { opacity:0; transform:translateY(-10px) scale(.97); } to { opacity:1; transform:none; } }
+  #tippen { position:fixed; z-index:15; left:50%; transform:translateX(-50%); bottom:calc(18px + env(safe-area-inset-bottom,0px)); padding:12px 20px; border-radius:999px; background:rgba(3,26,32,.82); border:2px solid var(--mint); font:800 15px/1.2 var(--sans); color:#fff; white-space:nowrap; animation:puls 1.8s ease-in-out infinite; pointer-events:none; }
+  @keyframes puls { 50% { box-shadow:0 0 0 8px rgba(63,227,194,.2); } }
+
+  /* Unten, Blätter */
+  .blatt { position:fixed; z-index:18; left:50%; bottom:0; width:100%; max-width:560px; transform:translateX(-50%); padding:16px 16px calc(14px + env(safe-area-inset-bottom,0px)); border-radius:26px 26px 0 0; border-bottom:0; max-height:62vh; max-height:62dvh; overflow-y:auto; overscroll-behavior:contain; animation:hoch .42s cubic-bezier(.2,.8,.2,1); }
+  @keyframes hoch { from { transform:translate(-50%,40%); opacity:0; } to { transform:translate(-50%,0); opacity:1; } }
+  .urteil { display:flex; align-items:center; gap:12px; }
+  .urteil .gross { font:800 30px/1 var(--kopf); }
+  .urteil .pk { margin-left:auto; text-align:right; font:800 38px/.9 var(--kopf); color:var(--sonne); text-shadow:0 3px 0 rgba(0,0,0,.35); font-variant-numeric:tabular-nums; }
+  .urteil .pk small { display:block; font:800 11px/1 var(--sans); letter-spacing:.12em; color:var(--soft); margin-top:5px; text-transform:uppercase; }
+  .abstand { margin:8px 0 0; font:700 15px/1.35 var(--sans); color:var(--soft); }
+  .abstand b { color:#fff; }
+  .wusstest { margin:12px 0 14px; padding:12px 14px; border-radius:16px; background:rgba(0,0,0,.22); border-left:5px solid var(--mint); font:600 14.5px/1.5 var(--sans); }
+  .wusstest strong { display:block; font:800 11px/1 var(--sans); letter-spacing:.12em; text-transform:uppercase; color:var(--mint); margin-bottom:6px; }
+  .blatt .knopf.voll { width:100%; }
+
+  /* Lernen */
+  #lernoben { position:fixed; z-index:15; left:0; right:0; top:calc(max(10px,env(safe-area-inset-top)) + 54px); display:flex; flex-direction:column; gap:8px; pointer-events:none; }
+  #lernoben > * { pointer-events:auto; }
+  #lernoben .tafel { margin:0 12px; padding:10px 14px; border-radius:18px; font:700 14.5px/1.35 var(--sans); max-width:520px; align-self:center; }
+  #lernoben .tafel b { color:var(--mint); }
+  #filter { display:flex; gap:8px; overflow-x:auto; padding:2px 12px 4px; scrollbar-width:none; }
   #filter::-webkit-scrollbar { display:none; }
-  #filter::before, #filter::after { content:''; margin:auto; }
-  #filter button { flex:none; font:400 13px/1 var(--sans); color:var(--text); background:rgba(17,14,26,.72); border:1px solid var(--linie); border-radius:999px; padding:9px 12px; cursor:pointer; touch-action:manipulation; -webkit-backdrop-filter:blur(6px); backdrop-filter:blur(6px); white-space:nowrap; }
-  #filter button[aria-pressed="true"] { background:var(--gold); border-color:var(--gold); color:#1a1405; font-weight:700; }
-  .wiss { margin:0; color:var(--soft); font:italic 500 16px/1.3 var(--serif); }
-  .niveau { margin-top:14px; }
-  .text.vert { border-left:3px solid var(--gold); padding-left:12px; }
-  .frageb { margin:14px 0 0; padding:11px 13px; border-radius:12px; background:rgba(150,220,255,.08); border:1px solid rgba(150,220,255,.3); font-size:15.5px; line-height:1.5; }
-  .frageb b { display:block; color:var(--blau); font-size:11.5px; letter-spacing:.08em; text-transform:uppercase; margin-bottom:2px; }
-  .tonknopf { width:100%; margin-top:12px; }
-  .quelle { margin:12px 0 0; color:var(--soft); font-size:12px; }
-  .marke .pkt { display:inline-block; width:9px; height:9px; border-radius:50%; margin-right:6px; }
-  .marke.rot { border-color:rgba(243,155,155,.6); color:var(--rot); }
-  .marke.neo { border-color:rgba(255,150,100,.6); color:#ffb089; }
-  .info dt.neo { color:#ffb089; }
+  #filter button { flex:none; padding:9px 14px; border-radius:999px; border:1.5px solid var(--kante); background:rgba(3,26,32,.72); font:800 14px/1 var(--sans); color:var(--soft); -webkit-backdrop-filter:blur(8px); backdrop-filter:blur(8px); }
+  #filter button[aria-pressed="true"] { background:var(--mint); color:#03251f; border-color:var(--mint); }
+  #lernunten { position:fixed; z-index:15; left:0; right:0; bottom:calc(14px + env(safe-area-inset-bottom,0px)); display:flex; justify-content:center; gap:10px; padding:0 12px; pointer-events:none; }
+  #lernunten > * { pointer-events:auto; }
+  .kbild { position:relative; margin:-2px -2px 12px; border-radius:18px; overflow:hidden; background:#0a2a33; aspect-ratio:16/10; }
+  .kbild img { width:100%; height:100%; object-fit:cover; display:block; }
+  .kbild h2 { position:absolute; left:0; right:0; bottom:0; margin:0; padding:30px 14px 10px; font:800 30px/1 var(--kopf); background:linear-gradient(0deg,rgba(2,18,22,.92),rgba(2,18,22,0)); }
+  .kbild h2 small { display:block; font:italic 600 14px/1.3 var(--sans); color:var(--soft); margin-top:3px; }
+  .zu { position:absolute; top:10px; right:10px; width:38px; height:38px; border-radius:50%; border:0; background:rgba(3,26,32,.72); color:#fff; font:700 22px/1 var(--sans); }
+  .chips { display:flex; flex-wrap:wrap; gap:6px; margin:0 0 12px; }
+  .fakten { display:grid; grid-template-columns:1fr 1fr; gap:8px; margin:0 0 12px; }
+  .fakten div { padding:9px 11px; border-radius:14px; background:rgba(0,0,0,.22); }
+  .fakten div.breit { grid-column:1 / -1; }
+  .fakten dt { font:800 10.5px/1 var(--sans); letter-spacing:.1em; text-transform:uppercase; color:var(--mint); margin:0 0 4px; }
+  .fakten dd { margin:0; font:700 14px/1.3 var(--sans); }
+  .blatt .text { margin:0 0 12px; font:600 15px/1.55 var(--sans); }
+  .blatt .text.vert { color:var(--soft); }
+  .schau { margin:0 0 12px; padding:12px 14px; border-radius:16px; background:rgba(255,194,51,.1); border-left:5px solid var(--sonne); font:600 14.5px/1.5 var(--sans); }
+  .schau b { display:block; font:800 11px/1 var(--sans); letter-spacing:.12em; text-transform:uppercase; color:var(--sonne); margin-bottom:6px; }
+  .niveau { display:flex; margin:0 0 12px; border-radius:999px; overflow:hidden; border:1.5px solid var(--kante); }
+  .niveau button { flex:1; border:0; background:none; padding:9px; font:800 13.5px/1 var(--sans); color:var(--soft); }
+  .niveau button[aria-pressed="true"] { background:var(--mint); color:#03251f; }
+  .quelle { margin:0; font:600 11.5px/1.4 var(--sans); color:rgba(243,251,250,.5); }
+
+  /* Schluss */
+  #schluss { position:fixed; inset:0; z-index:40; display:flex; align-items:flex-end; justify-content:center; padding:12px; background:rgba(2,14,18,.55); -webkit-backdrop-filter:blur(3px); backdrop-filter:blur(3px); }
+  #schluss .tafel { width:100%; max-width:520px; max-height:92vh; max-height:92dvh; overflow-y:auto; padding:20px 18px 18px; animation:hoch2 .5s cubic-bezier(.2,.8,.2,1); margin-bottom:max(0px,env(safe-area-inset-bottom,0px)); }
+  @keyframes hoch2 { from { transform:translateY(60px); opacity:0; } to { transform:none; opacity:1; } }
+  #schluss h2 { margin:0; text-align:center; font:800 30px/1 var(--kopf); }
+  .summe { text-align:center; margin:8px 0 4px; font:800 64px/1 var(--kopf); color:var(--sonne); text-shadow:0 4px 0 rgba(0,0,0,.35); font-variant-numeric:tabular-nums; }
+  .summe small { display:block; font:800 12px/1 var(--sans); letter-spacing:.14em; text-transform:uppercase; color:var(--soft); margin-top:6px; text-shadow:none; }
+  .sterne { text-align:center; font-size:34px; letter-spacing:.1em; margin:2px 0 6px; }
+  .sterne i { font-style:normal; opacity:.25; filter:grayscale(1); } .sterne i.an { opacity:1; filter:none; }
+  .bestzeile { text-align:center; margin:0 0 12px; font:700 14.5px/1.3 var(--sans); color:var(--soft); }
+  .bestzeile b { color:var(--sonne); }
+  .liste { display:grid; gap:6px; margin:0 0 14px; }
+  .liste div { display:flex; align-items:center; gap:10px; padding:6px 10px 6px 6px; border-radius:14px; background:rgba(0,0,0,.22); }
+  .liste img { width:38px; height:38px; border-radius:11px; object-fit:cover; flex:none; background:#0a2a33; }
+  .liste span { flex:1; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; font:700 14.5px/1.2 var(--sans); }
+  .liste em { font:800 16px/1 var(--kopf); font-style:normal; font-variant-numeric:tabular-nums; }
+  .liste .a { color:var(--gruen); } .liste .b { color:var(--sonne); } .liste .c { color:#ff9b8c; }
+  .schlussknoepfe { display:grid; gap:10px; }
+  .schlussknoepfe .zeile { display:flex; gap:10px; } .schlussknoepfe .zeile .knopf { flex:1; padding-left:8px; padding-right:8px; }
+
+  @media (min-width:900px) and (min-aspect-ratio:3/2) {
+    body.seit #hudbox { right:auto; left:12px; width:460px; padding:0; }
+    body.seit #hudbox > * { max-width:none; }
+    body.seit .blatt { left:12px; transform:none; width:460px; max-width:460px; bottom:12px; padding-bottom:16px; border-radius:26px; border-bottom:2px solid var(--kante); max-height:calc(100vh - 80px); max-height:calc(100dvh - 80px); animation:hoch3 .42s cubic-bezier(.2,.8,.2,1); }
+    body.seit #tippen { left:calc(484px + (100vw - 484px) / 2); }
+    body.seit #lernoben { right:auto; left:0; width:484px; }
+    body.seit #filter { flex-wrap:wrap; overflow:visible; }
+    body.seit #lernunten { right:auto; left:12px; width:460px; justify-content:flex-start; padding:0; }
+  }
+  @keyframes hoch3 { from { transform:translateY(30px); opacity:0; } to { transform:none; opacity:1; } }
+  body.m-spiel .tafel { background:linear-gradient(180deg,#5b4410,#392b09 50%,#201905); border-color:rgba(255,194,51,.55); }
+  body.m-spiel .hud small, body.m-spiel .frage small, body.m-spiel .wusstest strong { color:var(--sonne); }
+  body.m-spiel .frage img { border-color:var(--sonne); }
+  body.m-spiel .wusstest { border-left-color:var(--sonne); }
+  body.m-spiel #tippen { border-color:var(--sonne); background:rgba(32,25,5,.9); }
+  body.m-spiel .punkte i { background:rgba(255,255,255,.12); }
+  body.m-lernen .tafel { border-color:rgba(63,227,194,.4); }
+  .vertiefung { margin:0 0 12px; padding:12px 14px; border-radius:16px; background:rgba(124,200,255,.10); border-left:5px solid var(--blau); }
+  .vertiefung b { display:block; font:800 11px/1 var(--sans); letter-spacing:.12em; text-transform:uppercase; color:var(--blau); margin-bottom:6px; }
+  .vertiefung p { margin:0; font:600 14.5px/1.55 var(--sans); }
+  .wiss { margin:0 0 10px; font:italic 600 14px/1.3 var(--sans); color:var(--soft); }
+  .karteweiter { position:sticky; bottom:-14px; margin:4px -16px -14px; padding:14px 16px calc(14px + env(safe-area-inset-bottom,0px)); display:flex; gap:10px; background:linear-gradient(0deg,var(--tief) 72%,rgba(6,38,46,0)); }
+  .karteweiter .knopf { flex:1; } .karteweiter .knopf.leise { flex:none; padding-left:22px; padding-right:22px; } .karteweiter .knopf:disabled { opacity:.4; }
+  #wahl .wahltitel { margin:0 0 10px; font:800 16px/1.2 var(--kopf); color:#fff; }
+  .wahlchips { display:flex; flex-wrap:wrap; justify-content:center; gap:8px; margin:0 0 14px; }
+  .wahlchips button { padding:9px 13px; border-radius:999px; border:1.5px solid var(--kante); background:rgba(0,0,0,.25); font:800 14px/1 var(--sans); color:var(--soft); }
+  .wahlchips button[aria-pressed="true"] { background:var(--sonne); color:#1a1200; border-color:var(--sonne); }
+  #wahl .zeile .knopf.leise { flex:none; padding-left:22px; padding-right:22px; }
+  [data-lupe] { cursor:zoom-in; }
+  .kbild .gr { position:absolute; top:10px; left:10px; padding:7px 11px; border-radius:999px; background:rgba(3,26,32,.72); font:800 12.5px/1 var(--sans); color:#fff; pointer-events:none; }
+  #lupe { position:fixed; inset:0; z-index:90; background:#010a0c; overflow:hidden; touch-action:none; }
+  #lupe img { position:absolute; left:0; top:0; width:100%; height:100%; object-fit:contain; transform-origin:0 0; will-change:transform; user-select:none; -webkit-user-drag:none; }
+  #lupe .lzu { position:absolute; top:max(12px,env(safe-area-inset-top)); right:12px; width:46px; height:46px; border-radius:50%; border:1.5px solid var(--kante); background:rgba(3,26,32,.8); color:#fff; font:700 26px/1 var(--sans); z-index:2; }
+  #lupe .ltext { position:absolute; left:0; right:0; bottom:0; margin:0; padding:14px 16px calc(14px + env(safe-area-inset-bottom,0px)); background:linear-gradient(0deg,rgba(1,10,12,.9),rgba(1,10,12,0)); font:700 14px/1.35 var(--sans); color:var(--soft); text-align:center; pointer-events:none; }
+  #lupe .ltext b { color:#fff; font:800 18px/1.2 var(--kopf); display:block; }
+  #fehler { position:fixed; inset:0; z-index:80; display:none; align-items:center; justify-content:center; text-align:center; padding:32px; background:var(--bg); }
+  @media (min-width:700px) { #tippen { font-size:17px; } .frage h2 { font-size:30px; } }
+  @media (prefers-reduced-motion:reduce) { *, *::before, *::after { animation-duration:.01ms !important; transition-duration:.01ms !important; } }
 </style>
 </head>
 <body>
@@ -219,25 +190,44 @@
 <canvas id="ov"></canvas>
 <canvas id="konf"></canvas>
 <a class="zurueck" href="index.html" aria-label="Zurück zur Übersicht">← Übersicht</a>
-<div id="oben"><button type="button" id="ton" class="pille">Ton an</button></div>
-<button type="button" id="tagwerk" class="pille" hidden><img alt=""><span><small>Tier des Tages</small><b></b></span></button>
-<div id="zoom"><button type="button" id="ansicht" aria-label="Ansicht wechseln">◐</button><button type="button" id="zplus" aria-label="Vergrößern">+</button><button type="button" id="zminus" aria-label="Verkleinern">−</button></div>
-<div id="hint">Drehe die Kugel und tippe auf ein Tier. Die Farbe am Rand zeigt den Lebensraum.</div>
-<div id="unten">
-  <div id="filter" role="group" aria-label="Auswahl">
-    <button type="button" data-f="a">Alle</button><button type="button" data-f="B">Bedroht</button><button type="button" data-f="E">Nur hier</button><button type="button" data-f="W">Wanderer</button><button type="button" data-f="N">Eingeschleppt</button><button type="button" data-f="†">Ausgestorben</button>
+<div id="oben"><button type="button" id="ansicht" class="rund" aria-label="Ansicht wechseln">Tag/Nacht</button><button type="button" id="ton" class="rund">Ton an</button></div>
+<div id="zoom"><button type="button" id="zplus" aria-label="Vergrößern">+</button><button type="button" id="zminus" aria-label="Verkleinern">−</button></div>
+
+<section id="start">
+  <div class="logo"><b>Tier<em>globus</em></b><span>Wo auf der Erde lebt welches Tier?</span></div>
+  <div id="startunten" class="tafel">
+    <div class="zeile">
+      <button type="button" id="bSpiel" class="knopf"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M7 4.5v15l13-7.5z"/></svg>Spielen</button>
+      <button type="button" id="bLern" class="knopf mint"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M12 6.5C10 5 7 4.5 4 5v13c3-.5 6 0 8 1.5 2-1.5 5-2 8-1.5V5c-3-.5-6 0-8 1.5zM12 6.5v13"/></svg>Lernen</button>
+    </div>
+    <p id="bestText">Oder drehe die Kugel und schau dich um.</p>
+    <div id="wahl" hidden>
+      <p class="wahltitel">Mit welchen Tieren willst du spielen?</p>
+      <div class="wahlchips" id="wahlchips" role="group" aria-label="Tiergruppe"></div>
+      <div class="zeile"><button type="button" class="knopf leise" id="wahlZurueck" aria-label="Zurück">‹</button><button type="button" class="knopf" id="wahlLos">Los geht's</button></div>
+    </div>
   </div>
-  <nav id="leiste" aria-label="Bereiche">
-    <button type="button" data-p="heute"><i><svg viewBox="0 0 24 24"><rect x="3.5" y="5" width="17" height="15.5" rx="2.5"/><path d="M3.5 10h17M8 3v4M16 3v4"/><circle cx="12" cy="15.2" r="1.3" class="v"/></svg></i>Heute</button>
-    <button type="button" data-p="rund"><i><svg viewBox="0 0 24 24"><circle cx="6" cy="18" r="2.2"/><circle cx="18" cy="6" r="2.2"/><path d="M8.2 18h7.3a3.5 3.5 0 0 0 0-7h-7a3.5 3.5 0 0 1 0-7h7.3"/></svg></i>Touren</button>
-    <button type="button" data-p="spiele"><i><svg viewBox="0 0 24 24"><rect x="4" y="4" width="16" height="16" rx="3.5"/><circle cx="9" cy="9" r="1.2" class="v"/><circle cx="15" cy="15" r="1.2" class="v"/><circle cx="12" cy="12" r="1.2" class="v"/></svg></i>Spiele</button>
-    <button type="button" data-p="samml"><i><svg viewBox="0 0 24 24"><rect x="4" y="4" width="7" height="7" rx="1.5"/><rect x="13" y="4" width="7" height="7" rx="1.5"/><rect x="4" y="13" width="7" height="7" rx="1.5"/><rect x="13" y="13" width="7" height="7" rx="1.5"/></svg></i>Sammlung</button>
-  </nav>
-</div>
-<div id="karte" role="dialog" aria-label="Tier"></div>
-<div id="menue" role="dialog" aria-label="Menü"><div class="kasten" id="mkasten"></div></div>
-<div id="toast" role="status" aria-live="polite"></div>
-<div id="lupe" role="dialog" aria-label="Bild groß"><div class="scroller"><img alt=""></div><button class="zu" aria-label="Schließen">×</button><div class="unterschrift"></div></div>
+</section>
+
+<section id="hudbox" hidden>
+  <div class="tafel hud">
+    <div><small id="rtxt">Runde 1 von 10</small><div class="punkte" id="dots"></div></div>
+    <div class="r"><small>Punkte</small><span id="score">0</span></div>
+    <button type="button" class="aus" id="bAus" aria-label="Spiel beenden">✕</button>
+  </div>
+  <div class="tafel frage" id="frage"></div>
+</section>
+<div id="tippen" hidden>Tippe auf die Kugel, wo es lebt</div>
+<section id="ergebnis" class="blatt tafel" hidden></section>
+
+<section id="lernoben" hidden>
+  <div class="tafel"><b>Tippe auf ein Tier</b> oder starte mit „Los geht's“. Die Farbe am Rand zeigt den Lebensraum.</div>
+  <div id="filter" role="group" aria-label="Tiergruppe"></div>
+</section>
+<div id="lernunten" hidden><button type="button" class="knopf mint" id="bZufall">Los geht's</button><button type="button" class="knopf leise" id="bHome">Startseite</button></div>
+<section id="karte" class="blatt tafel" hidden></section>
+<section id="schluss" hidden></section>
+<div id="lupe" hidden role="dialog" aria-label="Bild groß"><img alt=""><button type="button" class="lzu" aria-label="Schließen">×</button><p class="ltext"></p></div>
 <div id="fehler"><div><h2>Die Kugel kann hier nicht angezeigt werden</h2><p>Dein Browser stellt keine WebGL-Grafik bereit. Probiere einen anderen Browser oder ein anderes Gerät.</p></div></div>
 
 <script>
@@ -249,36 +239,30 @@ const TEX={"day": "data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDAAYEBQ
 'use strict';
 const D2R = Math.PI / 180, BILD = 'tierglobus-bilder/', TON = 'tierglobus-toene/';
 const $ = id => document.getElementById(id);
-const EP = ['Säugetiere', 'Vögel', 'Reptilien', 'Amphibien', 'Fische', 'Insekten', 'Wirbellose'].map(n => ({ n, s: '' }));
-const REG = ['Europa', 'Asien', 'Afrika', 'Nordamerika', 'Südamerika', 'Ozeanien', 'Polargebiete', 'Ozeane'];
+const EPN = ['Säugetiere', 'Vögel', 'Reptilien', 'Amphibien', 'Fische', 'Insekten', 'Wirbellose'];
 const LR = [{ n: 'Wald', c: '122,208,128' }, { n: 'Grasland', c: '226,190,104' }, { n: 'Wüste', c: '240,214,170' }, { n: 'Gebirge', c: '184,166,232' }, { n: 'Polar', c: '176,230,255' }, { n: 'Süßwasser', c: '104,226,208' }, { n: 'Meer', c: '110,160,255' }];
 const RLN = { LC: 'nicht gefährdet', NT: 'Vorwarnliste', VU: 'gefährdet', EN: 'stark gefährdet', CR: 'vom Aussterben bedroht', EW: 'in der Natur ausgestorben', EX: 'ausgestorben', DD: 'Daten fehlen', '–': 'nicht bewertet' };
-const WEGFARBE = '255,232,160', NEOFARBE = '255,150,100';
-const PAKET = ['Heimische Tiere: Wald', 'Heimische Tiere: Garten und Gewässer', 'Wildes Europa', 'Afrikanische Savanne', 'Afrika: Wald, Wüste und Fluss', 'Madagaskar und Inseln', 'Asien: Dschungel', 'Ost- und Zentralasien', 'Nordamerika', 'Amazonien', 'Südamerika: Anden bis Feuerland', 'Australien', 'Polargebiete', 'Korallenriff', 'Hochsee', 'Tiefsee und Küste', 'Große Wanderer', 'Verschwunden', 'Neu hier', 'Am Rand des Aussterbens', 'Rekorde und Spezialisten'];
+const WEGFARBE = '255,232,160', NEOFARBE = '255,150,100', RUNDEN = 10;
 const REDUZIERT = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 function lsGet(k) { try { return localStorage.getItem(k); } catch (e) { return null; } }
 function lsSet(k, v) { try { localStorage.setItem(k, v); } catch (e) {} }
-function lsJson(k, d) { try { const v = JSON.parse(lsGet(k) || 'null'); return v == null ? d : v; } catch (e) { return d; } }
 function esc(s) { return String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c]); }
-function shuffle(a, rnd) { rnd = rnd || Math.random; for (let n = a.length - 1; n > 0; n--) { const j = Math.floor(rnd() * (n + 1)); [a[n], a[j]] = [a[j], a[n]]; } return a; }
-function zufall(seed) { let a = seed >>> 0; return () => { a = (a + 0x6D2B79F5) >>> 0; let t = a; t = Math.imul(t ^ (t >>> 15), t | 1); t ^= t + Math.imul(t ^ (t >>> 7), t | 61); return ((t ^ (t >>> 14)) >>> 0) / 4294967296; }; }
+function shuffle(a) { for (let n = a.length - 1; n > 0; n--) { const j = Math.floor(Math.random() * (n + 1)); [a[n], a[j]] = [a[j], a[n]]; } return a; }
 function zahl(n) { return n.toLocaleString('de-DE'); }
+function kmText(k) { const r = k >= 1000 ? Math.round(k / 100) * 100 : Math.round(k / 10) * 10; return zahl(r) + ' km'; }
+function kurz(t) { const s = String(t).match(/[^.!?]+[.!?]+(\s|$)/g) || [t]; return s.slice(0, 2).join('').trim(); }
 
-/* ---------- Arten ---------- */
-// Feldnamen aus dem Kunstglobus bleiben, damit Sammlung und Spiele weiterlaufen: t Name, a wissenschaftlicher Name, j Größe als Text, y Körperlänge in cm, e Tiergruppe.
-const WERKE = DATA.map((d, i) => ({ i, key: d.k, bau: false, t: d.t, a: d.a, j: d.lt, y: d.l, e: d.g, r: d.r, h: d.h, merk: d.m || '', d }));
+/* ---------- Geometrie und Arten ---------- */
 function toVec(lat, lon) { const c = Math.cos(lat); return [c * Math.sin(lon), Math.sin(lat), c * Math.cos(lon)]; }
 function vec(p) { return toVec(p[0] * D2R, p[1] * D2R); }
 function dot(a, b) { return a[0] * b[0] + a[1] * b[1] + a[2] * b[2]; }
 function ang(a, b) { return Math.acos(Math.max(-1, Math.min(1, dot(a, b)))); }
 function slerp(A, B, t, th) { if (th < 1e-5) return A.slice(); const s = Math.sin(th), f = Math.sin((1 - t) * th) / s, g = Math.sin(t * th) / s; return [f * A[0] + g * B[0], f * A[1] + g * B[1], f * A[2] + g * B[2]]; }
-function km(a, b) { return ang(a, b) * 6371; }
 function arcPoints(A, B, n) {
   const th = ang(A, B), k = 0.05 + 0.34 * (th / Math.PI), pts = [];
   for (let i = 0; i <= n; i++) { const t = i / n, p = slerp(A, B, t, th), r = 1 + k * Math.sin(Math.PI * t); pts.push([p[0] * r, p[1] * r, p[2] * r]); }
   return { pts, th };
 }
-// Wanderroute: Großkreisstücke von Wegpunkt zu Wegpunkt, zur Mitte hin leicht über die Kugel gehoben
 function routePoints(V, proBogen) {
   const th = []; let total = 0; for (let k = 0; k < V.length - 1; k++) { th.push(ang(V[k], V[k + 1])); total += th[k]; }
   const hub = Math.min(0.09, 0.012 + 0.09 * total / Math.PI), pts = [], wp = [0]; let weg = 0;
@@ -289,73 +273,30 @@ function routePoints(V, proBogen) {
   }
   return { pts, th: total, wp };
 }
+const WERKE = DATA.map((d, i) => ({ i, key: d.k, t: d.t, a: d.a, j: d.lt, e: d.g, r: d.r, h: d.h, merk: d.m || '', d }));
 WERKE.forEach(w => {
   const d = w.d; let pkt;
   w.areal = d.ar.map(c => ({ g: vec(c), rho: c[2] / 6371 }));
-  w.m = w.areal[0].g; w.gb = w.m; pkt = w.areal.map(c => [c.g, c.rho]);
+  w.m = w.areal[0].g; pkt = w.areal.map(c => [c.g, c.rho]);
   if (d.ro) {
     const V = d.ro.map(vec);
     w.route = routePoints(V, 64); w.route.zu = ang(V[0], V[V.length - 1]) < 0.002;
     w.route.lab = d.ro.map((p, k) => p[2] ? { g: V[k], txt: p[2], k: w.route.wp[k] } : null).filter(Boolean);
-    w.fein = routePoints(V, 26).pts; pkt = V.map(g => [g, 0]);
+    pkt = V.map(g => [g, 0]);
   }
   if (d.ne) {
     const A = vec(d.ne.von), B = vec(d.ne.nach);
     w.neo = { A, B, arc: arcPoints(A, B, 56), neu: d.ne.neu.map(c => ({ g: vec(c), rho: c[2] / 6371 })) };
-    w.fein = arcPoints(A, B, 22).pts; pkt = [[A, 0], [B, 0]].concat(w.neo.neu.map(c => [c.g, c.rho]));
+    pkt = [[A, 0], [B, 0]].concat(w.neo.neu.map(c => [c.g, c.rho]));
   }
-  // Blickmitte und Spannweite für Anflug und Zoom
   const s = [0, 0, 0]; pkt.forEach(([g]) => { s[0] += g[0]; s[1] += g[1]; s[2] += g[2]; });
   const l = Math.hypot(s[0], s[1], s[2]);
   w.mitte = l / pkt.length > 0.2 ? s.map(v => v / l) : w.m;
   w.spann = Math.max(...pkt.map(([g, rho]) => ang(w.mitte, g) + rho));
 });
-const SORTIERT = WERKE.slice().sort((p, q) => p.d.p - q.d.p || p.i - q.i);
-SORTIERT.forEach((w, n) => { w.rank = n; });
-const ETAPPEN = PAKET.map((name, n) => ({ n, name, list: SORTIERT.filter(w => w.d.p === n + 1) })).filter(E => E.list.length);
-ETAPPEN.forEach(E => E.list.forEach(w => { w.et = E.n; }));
-const TAGPERM = shuffle(WERKE.map(w => w.i), zufall(20261110));
-
-/* ---------- Lernstand ---------- */
-const HEUTE = Math.floor((Date.now() - new Date().getTimezoneOffset() * 6e4) / 864e5);
-let LS = lsJson('tg1_lern', {}); if (!LS || typeof LS !== 'object' || Array.isArray(LS)) LS = {};
-let STERNE = lsJson('tg1_sterne', {}); if (!STERNE || typeof STERNE !== 'object' || Array.isArray(STERNE)) STERNE = {};
-let FERTIG = new Set(lsJson('tg1_fertig', []));
-function speichern() { lsSet('tg1_lern', JSON.stringify(LS)); lsSet('tg1_sterne', JSON.stringify(STERNE)); lsSet('tg1_fertig', JSON.stringify([...FERTIG])); }
-const sv = w => LS[w.key] || {};
-function st(w) { return LS[w.key] || (LS[w.key] = {}); }
-function entdeckt(w) { const x = sv(w); return !!(x.e || x.k); }
-function gekonnt(w) { const x = sv(w); return (x.k || 0) >= 2 || !!x.m; }
-function markEntdeckt(w) { const x = st(w); if (!x.e) { x.e = 1; speichern(); return true; } return false; }
-const ABSTAND = [1, 1, 2, 4, 8, 16, 32];
-function antwort(w, ok) {
-  const vor = gekonnt(w), x = st(w); x.e = 1;
-  if (ok) { if (x.d !== HEUTE) { x.k = (x.k || 0) + 1; x.d = HEUTE; x.n = HEUTE + ABSTAND[Math.min(x.k, 6)]; } }
-  else { x.k = Math.min(x.k || 0, 1); x.m = 0; x.n = HEUTE + 1; }
-  speichern();
-  return { neu: !vor && gekonnt(w) };
-}
-function setManuell(w, v) { const x = st(w); x.e = 1; if (v) { x.m = 1; if (x.n === undefined) x.n = HEUTE + 3; } else { x.m = 0; x.k = Math.min(x.k || 0, 1); } speichern(); }
-function faellig() { return WERKE.filter(w => { const x = sv(w); return x.n !== undefined && x.n <= HEUTE && x.d !== HEUTE; }); }
-function anz(list, f) { return (list || WERKE).filter(f).length; }
-const ABZ = [
-  { id: 'e10', sym: '10', n: 'Neugierig', b: '10 Tiere entdeckt', f: () => anz(null, entdeckt) >= 10 },
-  { id: 'e50', sym: '50', n: 'Weltenbummler', b: '50 Tiere entdeckt', f: () => anz(null, entdeckt) >= 50 },
-  { id: 'eall', sym: '∞', n: 'Alles gesehen', b: 'Alle Tiere entdeckt', f: () => anz(null, entdeckt) >= WERKE.length },
-  { id: 'welt', sym: '◎', n: 'Weltreise', b: 'In jeder Weltregion ein Tier entdeckt', f: () => REG.filter(x => WERKE.some(w => w.r === x)).every(x => WERKE.some(w => w.r === x && entdeckt(w))) },
-  { id: 'wand', sym: '➶', n: 'Zugbegleiter', b: 'Alle Wanderer entdeckt', f: () => WERKE.filter(w => w.route).every(entdeckt) },
-  { id: 'rund', sym: '⟡', n: 'Unterwegs', b: 'Eine Tour zu Ende gegangen', f: () => FERTIG.size > 0 },
-  { id: 'drei', sym: '★', n: 'Fehlerlos', b: 'Drei Sterne in einem Tour-Quiz', f: () => Object.values(STERNE).some(s => s >= 3) },
-  { id: 'raet', sym: '☀', n: 'Rätselfreund', b: 'Fünf Tagesrätsel gelöst', f: () => (+lsGet('tg1_raetsel_n') || 0) >= 5 },
-  { id: 'zeit', sym: '⇅', n: 'Augenmaß', b: 'Einen Größenvergleich ohne Fehler', f: () => lsGet('tg1_zeit_ok') === '1' },
-  { id: 'g10', sym: '✓', n: 'Kenner', b: '10 Tiere sicher gekonnt', f: () => anz(null, gekonnt) >= 10 },
-  { id: 'g50', sym: '✦', n: 'Expertin, Experte', b: '50 Tiere sicher gekonnt', f: () => anz(null, gekonnt) >= 50 }
-];
-function neueAbzeichen() {
-  const alt = new Set(lsJson('tg1_abz', [])), neu = ABZ.filter(a => !alt.has(a.id) && a.f());
-  if (neu.length) { neu.forEach(a => alt.add(a.id)); lsSet('tg1_abz', JSON.stringify([...alt])); }
-  return neu;
-}
+const SPIELBAR = WERKE.filter(w => !w.merk.includes('†'));
+function farbe(w) { return w.merk.includes('†') ? '176,176,188' : LR[w.h].c; }
+function arealAbstand(w, g) { let d = 1e9, zg = w.m, rho = 0, c0 = w.areal[0]; for (const c of w.areal) { const x = Math.max(0, ang(g, c.g) - c.rho) * 6371; if (x < d) { d = x; zg = c.g; c0 = c; } } return { d, g: zg, c: c0 }; }
 
 /* ---------- WebGL ---------- */
 const glc = $('gl'), ov = $('ov'), ctx = ov.getContext('2d'), kc = $('konf'), kctx = kc.getContext('2d');
@@ -371,10 +312,10 @@ uniform sampler2D tDay,tNight,tCloud;
 float hash(vec2 p){return fract(sin(dot(p,vec2(127.1,311.7)))*43758.5453);}
 void main(){
   vec2 f=gl_FragCoord.xy; vec2 p=(f-uC)/uR; float r2=dot(p,p); float r=sqrt(r2);
-  vec3 bg=mix(vec3(0.004,0.006,0.02),vec3(0.0,0.0,0.006),f.y/uRes.y);
+  vec3 bg=mix(vec3(0.004,0.07,0.085),vec3(0.0,0.02,0.03),f.y/uRes.y);
   vec2 cell=f/(2.6*uDpr); vec2 cid=floor(cell); float h=hash(cid);
-  if(h>0.9935){ vec2 q=fract(cell)-0.5; float b=smoothstep(0.34,0.0,length(q))*(h-0.9935)/0.0065; vec3 sc=mix(vec3(0.75,0.85,1.0),vec3(1.0,0.9,0.75),hash(cid+7.3)); bg+=sc*b*0.9; }
-  bg+=vec3(0.42,0.55,0.95)*exp(-(r-1.0)*16.0)*step(1.0,r)*0.42;
+  if(h>0.9935){ vec2 q=fract(cell)-0.5; float b=smoothstep(0.34,0.0,length(q))*(h-0.9935)/0.0065; vec3 sc=mix(vec3(0.75,0.95,1.0),vec3(1.0,0.9,0.75),hash(cid+7.3)); bg+=sc*b*0.9; }
+  bg+=vec3(0.25,0.9,0.8)*exp(-(r-1.0)*16.0)*step(1.0,r)*0.34;
   if(r>=1.0+2.0/uR){ gl_FragColor=vec4(bg,1.0); return; }
   float z=sqrt(max(0.0,1.0-r2));
   float y=p.y*uCp+z*uSp, z1=-p.y*uSp+z*uCp; float x=p.x*uCl+z1*uSl, zz=-p.x*uSl+z1*uCl;
@@ -392,7 +333,7 @@ void main(){
   vec3 nightC=nl*vec3(0.80,0.82,0.95)+vec3(1.0,0.82,0.5)*max(nl.r-0.30,0.0)*0.9+vec3(0.02,0.025,0.04)*cl;
   vec3 col=mix(nightC,dayC,lit);
   col+=vec3(1.0,0.5,0.2)*0.09*exp(-pow(sunD*8.0,2.0));
-  vec3 atm=mix(vec3(0.75,0.55,0.30)*0.55,vec3(0.30,0.55,1.0),lit);
+  vec3 atm=mix(vec3(0.75,0.55,0.30)*0.55,vec3(0.25,0.85,0.9),lit);
   col+=atm*pow(1.0-z,2.6)*0.8; col*=mix(1.0,0.80+0.20*z,0.6);
   gl_FragColor=vec4(mix(bg,col,smoothstep(1.0+1.0/uR,1.0-1.2/uR,r)),1.0);
 }`;
@@ -403,7 +344,7 @@ gl.useProgram(prog);
 gl.bindBuffer(gl.ARRAY_BUFFER, gl.createBuffer()); gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1, -1, 3, -1, -1, 3]), gl.STATIC_DRAW);
 const aLoc = gl.getAttribLocation(prog, 'a'); gl.enableVertexAttribArray(aLoc); gl.vertexAttribPointer(aLoc, 2, gl.FLOAT, false, 0, 0);
 const U = {}; ['uRes','uC','uR','uDpr','uCl','uSl','uCp','uSp','uCloud','uCloudA','uSun','uMode','tDay','tNight','tCloud'].forEach(n => U[n] = gl.getUniformLocation(prog, n));
-let geladen = 0, bereit = false, aufloesung = '2k';
+let geladen = 0, bereit = false;
 const TX = {};
 function ladeTextur(name, unit, src, fein, fertig) {
   const im = new Image();
@@ -427,66 +368,68 @@ function feinLaden() {
   if (MAXT < 4096 || location.protocol === 'file:') return;
   const gross = MAXT >= 8192 && window.matchMedia('(pointer:fine)').matches && !(navigator.maxTouchPoints > 1) && !/Mobi|Android|iPhone|iPad/i.test(navigator.userAgent);
   const g = gross ? '8k' : '4k';
-  ladeTextur('tDay', 0, BILD + 'erde_tag_' + g + '.jpg', true, ok => { if (!ok) return; aufloesung = g; ladeTextur('tNight', 1, BILD + 'erde_nacht_' + g + '.jpg', true); });
+  ladeTextur('tDay', 0, BILD + 'erde_tag_' + g + '.jpg', true, ok => { if (ok) ladeTextur('tNight', 1, BILD + 'erde_nacht_' + g + '.jpg', true); });
 }
 ladeTextur('tDay', 0, TEX.day, false); ladeTextur('tNight', 1, TEX.night, false); ladeTextur('tCloud', 2, TEX.clouds, false);
 
 /* ---------- Zustand ---------- */
-let W = 0, H = 0, DPR = 1, R = 300, Rbase = 300, zoom = 1, zoomT = 1, autoZ = false, cx = 0, cy = 0, cxT = 0, cyT = 0;
-let lon0 = 12 * D2R, lat0 = 28 * D2R, lonT = null, latT = null, vLon = 0, vLat = 0, auto = true;
-let cl0, sl0, cp, sp;
-let arcKlang = true, sel = -1, arcStart = 0, karteOffen = false, kompakt = false, rueckFn = null;
-let tour = null, game = null, guess = null, gArc = null, gArcStart = 0, gShow = null;
+let W = 0, H = 0, DPR = 1, R = 300, Rbase = 300, RbaseT = 300, zoom = 1, zoomT = 1, cx = 0, cy = 0, cxT = 0, cyT = 0, topT = 0, botT = 0;
+let lon0 = 12 * D2R, lat0 = 24 * D2R, lonT = null, latT = null, vLon = 0, vLat = 0, auto = true;
+let cl0, sl0, cp, sp, fokusTempo = 3.2, LX = 0; const SP = 484;
+let mode = 'start', game = null, guess = null, gArc = null, gArcStart = 0, gDist = 0, gA = null, sel = -1, arcStart = 0, filterF = 'a', thumbsDrawn = [];
 let ton = false, ac = null;
-let zeitN = WERKE.length, filterF = 'a', spielt = null, neuW = null, niveau = lsGet('tg1_niveau') === 'v' ? 'v' : 'b';
 function sonne() { const d = new Date(), doy = (d - Date.UTC(d.getUTCFullYear(), 0, 0)) / 864e5; const dec = 23.44 * Math.sin(2 * Math.PI * (doy - 80) / 365) * D2R; const h = d.getUTCHours() + d.getUTCMinutes() / 60 + d.getUTCSeconds() / 3600; return toVec(dec, -(h - 12) * 15 * D2R); }
 let sun = sonne(), sunZeit = 0;
 const kleinCache = {};
 function klein(w) { let im = kleinCache[w.i]; if (!im) { im = kleinCache[w.i] = new Image(); im.src = BILD + w.key + '_k.jpg'; } return im; }
-function landscape() { return window.matchMedia('(orientation:landscape) and (min-width:640px)').matches; }
-function panelW() { return Math.min(480, 0.46 * W); }
-function unterH() { const u = document.getElementById('unten'); return u ? u.offsetHeight : 120; }
+
 function resize() {
   W = window.innerWidth; H = window.innerHeight; DPR = Math.min(2, window.devicePixelRatio || 1);
   [glc, ov, kc].forEach(c => { c.width = Math.round(W * DPR); c.height = Math.round(H * DPR); });
-  gl.viewport(0, 0, glc.width, glc.height);
-  Rbase = Math.max(200, 0.7 * Math.min(W, H - (landscape() ? 0 : 60))); R = Rbase * zoom; targetCenter(true);
+  gl.viewport(0, 0, glc.width, glc.height); layout(true);
 }
-function freeH() { return kompakt ? H * 0.54 : H * 0.34; }
-function targetCenter(jump) {
-  let tx = W / 2, ty = H / 2;
-  if (karteOffen) { if (landscape()) tx = (W - panelW()) / 2; else ty = Math.max(70, freeH() / 2 + 30); }
-  else ty = Math.max(140, (H - unterH()) / 2 + 20);
-  cxT = tx; cyT = ty; if (jump) { cx = tx; cy = ty; }
-}
-window.addEventListener('resize', () => { resize(); if (typeof zeitSkala === 'function' && document.getElementById('zskala')) zeitSkala(); });
-function sichtbar(w) { return filterF === 'a' || w.merk.includes(filterF) || w.i === sel || (tour && tour.list[tour.n] === w); }
-
-/* ---------- Projektion ---------- */
+window.addEventListener('resize', resize);
 function frameTrig() { cl0 = Math.cos(lon0); sl0 = Math.sin(lon0); cp = Math.cos(lat0); sp = Math.sin(lat0); }
 function proj(g, s) { s = s || 1; const x1 = g[0] * cl0 - g[2] * sl0, z1 = g[0] * sl0 + g[2] * cl0, y2 = g[1] * cp - z1 * sp, z2 = g[1] * sp + z1 * cp, vx = x1 * s, vy = y2 * s; return { x: cx + R * vx, y: cy - R * vy, z: z2, vis: z2 > 0 || (vx * vx + vy * vy) > 1 }; }
 function unproj(sx, sy) { const p = (sx - cx) / R, q = (cy - sy) / R, r2 = p * p + q * q; if (r2 >= 1) return null; const z = Math.sqrt(1 - r2), y = q * cp + z * sp, z1 = -q * sp + z * cp, x = p * cl0 + z1 * sl0, zz = -p * sl0 + z1 * cl0; return { lat: Math.asin(Math.max(-1, Math.min(1, y))), lon: Math.atan2(x, zz) }; }
-const ZMIN = 0.55, ZMAX = 6;
-function setZoom(z, a) { zoomT = Math.max(ZMIN, Math.min(ZMAX, z)); autoZ = !!a; }
-function freeMin() { return landscape() ? Math.min(H, W - panelW()) : Math.min(W, freeH() - 30); }
-function fitZoom(A, B, ring) { const th = ring ? 0.02 : ang(A, B), need = 0.7 * freeMin() / 2 / Math.max(0.03, Math.sin(Math.min(th, 3.0) / 2)); setZoom(Math.min(ring ? 2.6 : 3, need / Rbase), true); }
-function fitSpann(th) { const need = 0.62 * freeMin() / 2 / Math.sin(Math.max(0.04, Math.min(th, 1.5))); setZoom(Math.max(0.62, Math.min(4.5, need / Rbase)), true); }
-let fokusTempo = 3.2, zeitKlangT = 0;
+const ZMIN = 0.6, ZMAX = 7;
+function setZoom(z) { zoomT = Math.max(ZMIN, Math.min(ZMAX, z)); }
+function freeMin() { return Math.max(120, Math.min(W - LX, H - topT - botT) - 24); }
+function fitZoom(A, B) { const th = ang(A, B), need = 0.74 * freeMin() / 2 / Math.max(0.03, Math.sin(Math.min(th, 3.0) / 2)); setZoom(Math.min(3.2, need / RbaseT)); }
+function fitSpann(th) { const need = 0.66 * freeMin() / 2 / Math.sin(Math.max(0.04, Math.min(th, 1.5))); setZoom(Math.max(0.7, Math.min(4.5, need / RbaseT))); }
 function focus(g) { fokusTempo = 3.2; latT = Math.max(-1.25, Math.min(1.25, Math.asin(Math.max(-1, Math.min(1, g[1]))))); lonT = Math.atan2(g[0], g[2]); auto = false; }
 
+/* Platz für die Kugel zwischen den Bedienflächen */
+function layout(jump) {
+  const sichtbar = el => el && !el.hidden;
+  let top = 56, bot = 20;
+  if (mode === 'start') { top = 175; bot = ($('startunten').offsetHeight || 150) + 36; }
+  else if (mode === 'spiel') {
+    top = Math.round($('hudbox').getBoundingClientRect().bottom) + 6;
+    bot = game && game.phase === 'done' ? $('ergebnis').offsetHeight + 8 : 64;
+  } else if (mode === 'lernen') {
+    if (sichtbar($('karte'))) bot = $('karte').offsetHeight + 8;
+    else { top = Math.round($('lernoben').getBoundingClientRect().bottom) + 6; bot = ($('lernunten').offsetHeight || 60) + 22; }
+  }
+  const seit = mode !== 'start' && window.matchMedia('(min-width:900px) and (min-aspect-ratio:3/2)').matches;
+  document.body.classList.toggle('seit', seit); LX = seit ? SP : 0;
+  if (seit) { top = 64; bot = 24; }
+  topT = top; botT = bot;
+  const avail = Math.max(160, H - top - bot), breit = W - LX;
+  cxT = LX + breit / 2; cyT = top + avail / 2;
+  if (seit || (!(mode === 'spiel' && game && game.phase === 'done') && !(mode === 'lernen' && sichtbar($('karte'))))) RbaseT = Math.max(110, 0.5 * Math.min(breit * 1.12, avail * 1.04));
+  if (jump) { cx = cxT; cy = cyT; Rbase = RbaseT; }
+}
+
 /* ---------- Klang ---------- */
-// Klangidee: Jedes Tier hat einen Ton auf einer pentatonischen Leiter. Der Wanderbogen rauscht wie ein Flug, die Ankunft am Ziel klingt wie eine Glocke.
-let mix = null, hall = null, rauschen = null;
-const PENTA = [0, 2, 4, 7, 9];
-function tonhoehe(w) { const stufe = Math.round((w.rank / (WERKE.length - 1)) * 14); return 146.83 * Math.pow(2, (Math.floor(stufe / 5) * 12 + PENTA[stufe % 5]) / 12); }
+let mix = null, hall = null;
 function tonAufbau() {
   ac = new (window.AudioContext || window.webkitAudioContext)();
   const komp = ac.createDynamicsCompressor(); komp.connect(ac.destination);
-  mix = ac.createGain(); mix.gain.value = 0.55; mix.connect(komp);
-  hall = ac.createConvolver(); const len = Math.floor(ac.sampleRate * 2.4), ir = ac.createBuffer(2, len, ac.sampleRate);
+  mix = ac.createGain(); mix.gain.value = 0.5; mix.connect(komp);
+  hall = ac.createConvolver(); const len = Math.floor(ac.sampleRate * 2), ir = ac.createBuffer(2, len, ac.sampleRate);
   for (let c = 0; c < 2; c++) { const d = ir.getChannelData(c); for (let i = 0; i < len; i++) d[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / len, 3); }
-  hall.buffer = ir; const hg = ac.createGain(); hg.gain.value = 0.28; hall.connect(hg); hg.connect(mix);
-  rauschen = ac.createBuffer(1, ac.sampleRate * 2, ac.sampleRate); const r = rauschen.getChannelData(0); for (let i = 0; i < r.length; i++) r[i] = Math.random() * 2 - 1;
+  hall.buffer = ir; const hg = ac.createGain(); hg.gain.value = 0.25; hall.connect(hg); hg.connect(mix);
 }
 function ziel(node, trocken) { const g = ac.createGain(); g.gain.value = trocken; node.connect(g); g.connect(mix); node.connect(hall); }
 function pluck(f, t, laut, dauer) {
@@ -494,52 +437,28 @@ function pluck(f, t, laut, dauer) {
   [[1, 1], [4, 0.18], [10, 0.05]].forEach(([m, a]) => { const o = ac.createOscillator(), og = ac.createGain(); o.type = 'sine'; o.frequency.value = f * m; og.gain.value = a; o.connect(og); og.connect(g); o.start(t); o.stop(t + dauer + 0.05); });
   ziel(g, 0.9);
 }
-function glocke(f, t, laut) {
-  const g = ac.createGain(); g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(laut, t + 0.01); g.gain.exponentialRampToValueAtTime(0.0001, t + 2.2);
-  [[1, 1], [2.76, 0.35], [5.4, 0.12]].forEach(([m, a]) => { const o = ac.createOscillator(), og = ac.createGain(); o.frequency.value = f * m; og.gain.value = a; o.connect(og); og.connect(g); o.start(t); o.stop(t + 2.3); });
-  ziel(g, 0.5);
-}
-function flug(t, dauer, laut) {
-  const q = ac.createBufferSource(); q.buffer = rauschen; q.loop = true;
-  const bp = ac.createBiquadFilter(); bp.type = 'bandpass'; bp.Q.value = 2.2; bp.frequency.setValueAtTime(260, t); bp.frequency.exponentialRampToValueAtTime(1500, t + dauer * 0.5); bp.frequency.exponentialRampToValueAtTime(380, t + dauer);
-  const g = ac.createGain(); g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(laut, t + dauer * 0.45); g.gain.exponentialRampToValueAtTime(0.0001, t + dauer);
-  q.connect(bp); bp.connect(g); ziel(g, 0.8); q.start(t); q.stop(t + dauer + 0.1);
-}
-function klick(t) { const q = ac.createBufferSource(); q.buffer = rauschen; const hp = ac.createBiquadFilter(); hp.type = 'highpass'; hp.frequency.value = 3000; const g = ac.createGain(); g.gain.setValueAtTime(0.12, t); g.gain.exponentialRampToValueAtTime(0.0001, t + 0.04); q.connect(hp); hp.connect(g); g.connect(mix); q.start(t); q.stop(t + 0.05); }
-function klang(art, w, extra) {
+function klang(art) {
   if (!ac || !ton) return;
   try {
     const t = ac.currentTime + 0.01;
-    if (art === 'tap') klick(t);
-    else if (art === 'werk') { pluck(tonhoehe(w), t, 0.32, 1.4); if (w.route || w.neo) flug(t + 0.05, extra || 1.6, 0.09); }
-    else if (art === 'ankunft') glocke(tonhoehe(w) * 2, t, 0.09);
-    else if (art === 'zeit') pluck(tonhoehe(w), t, 0.2, 0.9);
+    if (art === 'tap') pluck(660, t, 0.12, 0.25);
+    else if (art === 'top') { pluck(523.25, t, 0.28, 0.9); pluck(783.99, t + 0.11, 0.26, 1.2); pluck(1046.5, t + 0.22, 0.2, 1.4); }
     else if (art === 'gut') { pluck(523.25, t, 0.28, 0.9); pluck(783.99, t + 0.11, 0.26, 1.2); }
     else if (art === 'schade') { pluck(196, t, 0.26, 0.7); pluck(185, t + 0.13, 0.2, 0.9); }
     else if (art === 'sieg') [523.25, 587.33, 659.25, 783.99, 880, 1046.5].forEach((f, n) => pluck(f, t + n * 0.09, 0.22, 1.4));
   } catch (e) {}
 }
-function tonSchalter() {
+$('ton').addEventListener('click', () => {
   if (!ac) { try { tonAufbau(); } catch (e) { ac = null; return; } }
   ton = !ton; if (ton && ac.resume) ac.resume();
-  const b = $('ton'); b.textContent = ton ? 'Ton aus' : 'Ton an'; b.setAttribute('aria-pressed', String(ton));
-  lsSet('tg1_ton', ton ? '1' : '0'); if (ton) klang('sieg');
-}
-$('ton').addEventListener('click', tonSchalter);
+  const b = $('ton'); b.textContent = ton ? 'Ton aus' : 'Ton an'; b.setAttribute('aria-pressed', String(ton)); if (ton) klang('sieg');
+});
 
-/* ---------- Toast und Konfetti ---------- */
-const toastEl = $('toast'); let toastQ = [], toastAn = false;
-function toast(titel, txt) { toastQ.push([titel, txt]); if (!toastAn) toastWeiter(); }
-function toastWeiter() {
-  const t = toastQ.shift(); if (!t) { toastAn = false; return; } toastAn = true;
-  toastEl.innerHTML = `<b>${esc(t[0])}</b>${esc(t[1])}`; toastEl.classList.add('zeigen');
-  setTimeout(() => { toastEl.classList.remove('zeigen'); setTimeout(toastWeiter, 550); }, 2600);
-}
-function zeigeAbzeichen() { neueAbzeichen().forEach(a => toast('Neues Abzeichen', a.n + ' · ' + a.b)); }
+/* ---------- Konfetti ---------- */
 let konf = [];
 function konfetti() {
-  if (REDUZIERT) return; const farben = ['#d6b46e', '#7fe3d2', '#9be8a5', '#f39b9b', '#96dcff', '#fff3d6'];
-  for (let n = 0; n < 110; n++) konf.push({ x: W * (0.3 + 0.4 * Math.random()), y: H * 0.3, vx: (Math.random() - 0.5) * 520, vy: -180 - Math.random() * 560, c: farben[n % farben.length], r: Math.random() * 6, vr: (Math.random() - 0.5) * 12, s: 5 + Math.random() * 6, t: 0 });
+  if (REDUZIERT) return; const farben = ['#ffc233', '#3fe3c2', '#5fe08a', '#ff6b57', '#7cc8ff', '#ffffff'];
+  for (let n = 0; n < 120; n++) konf.push({ x: W * (0.25 + 0.5 * Math.random()), y: H * 0.35, vx: (Math.random() - 0.5) * 560, vy: -200 - Math.random() * 600, c: farben[n % farben.length], r: Math.random() * 6, vr: (Math.random() - 0.5) * 12, s: 5 + Math.random() * 6, t: 0 });
 }
 function zeichneKonfetti(dt) {
   kctx.setTransform(DPR, 0, 0, DPR, 0, 0); kctx.clearRect(0, 0, W, H); if (!konf.length) return;
@@ -547,396 +466,214 @@ function zeichneKonfetti(dt) {
   for (const k of konf) { k.t += dt; k.vy += 900 * dt; k.vx *= 0.99; k.x += k.vx * dt; k.y += k.vy * dt; k.r += k.vr * dt; kctx.save(); kctx.translate(k.x, k.y); kctx.rotate(k.r); kctx.fillStyle = k.c; kctx.globalAlpha = Math.max(0, 1 - k.t / 4); kctx.fillRect(-k.s / 2, -k.s / 4, k.s, k.s / 2); kctx.restore(); }
 }
 
-/* ---------- Karte ---------- */
-const karte = $('karte');
-function kmText(k) { const r = k >= 1000 ? Math.round(k / 100) * 100 : Math.round(k / 10) * 10; return zahl(r) + ' km'; }
-function bildHtml(w) { return `<button class="bild" data-lupe="${w.i}" aria-label="Bild groß ansehen"><img src="${BILD + w.key}.jpg" alt="${esc(w.t)}"><span class="lupe">⤢ groß</span></button>`; }
-function statusMarke(w) { return gekonnt(w) ? '<span class="marke ok">✓ sicher gekonnt</span>' : ''; }
-function ampelHtml(w) {
-  const s = w.d.s, v = niveau === 'v';
-  if (s === 'EX' || s === 'EW') return `<span class="marke grau">${v ? s + ' · ' : ''}${RLN[s]}${w.d.ex ? ' ' + esc(w.d.ex) : ''}</span>`;
-  if (s === 'CR' || s === 'EN' || s === 'VU') return `<span class="marke rot">${v ? s + ' · ' + RLN[s] : 'bedroht'}</span>`;
-  if (s === 'NT') return `<span class="marke">${v ? 'NT · ' : ''}${RLN.NT}</span>`;
-  if (s === 'LC') return `<span class="marke ok">${v ? 'LC · ' : ''}${RLN.LC}</span>`;
-  return v ? `<span class="marke grau">${esc(RLN[s] || s)}</span>` : '';
-}
-function markenHtml(w) {
-  const m = w.merk, v = niveau === 'v';
-  return `<div class="marken"><span class="marke grau"><i class="pkt" style="background:rgb(${LR[w.h].c})"></i>${LR[w.h].n}</span>${ampelHtml(w)}${m.includes('E') ? `<span class="marke">nur hier${v ? ' (endemisch)' : ''}</span>` : ''}${m.includes('W') ? '<span class="marke">Wanderer</span>' : ''}${m.includes('N') ? `<span class="marke neo">eingeschleppt${v ? ' (Neozoon)' : ''}</span>` : ''}${statusMarke(w)}</div>`;
-}
-function infoHtml(w) {
-  const d = w.d, v = niveau === 'v', z = (k, t, c) => `<dt${c ? ` class="${c}"` : ''}>${k}</dt><dd>${esc(t)}</dd>`;
-  let h = `<h2>${esc(w.t)}</h2>${v ? `<p class="wiss">${esc(w.a)}</p>` : ''}<dl class="info">` + z('Gruppe', EP[w.e].n + (v ? ', ' + d.o : '')) + z('Verbreitung', d.v) + z('Größe', d.lt) + z('Gewicht', d.gw) + z('Alter', d.al) + z('Nahrung', d.na);
-  if (w.route) h += z('Wanderung', 'rund ' + kmText(w.route.th * 6371) + (w.route.zu ? ' im Kreis' : ' je Richtung'), 'her');
-  if (w.neo) h += z('Eingeschleppt', d.ne.ort, 'neo');
-  return h + '</dl>' + markenHtml(w);
-}
-function werkHtml(w) {
-  const d = w.d, v = niveau === 'v';
-  return `<div class="werk" data-w="${w.i}">` + bildHtml(w) + infoHtml(w) +
-    `<div class="seg niveau" role="group" aria-label="Niveau"><button type="button" data-niv="b" aria-pressed="${!v}">Basis</button><button type="button" data-niv="v" aria-pressed="${v}">Vertiefung</button></div>` +
-    `<p class="text">${esc(d.x)}</p>${v ? `<p class="text vert">${esc(d.xv)}</p>` : ''}<p class="frageb"><b>Schau genau hin</b>${esc(d.f)}</p>` +
-    (d.ton ? `<button type="button" class="knopf leise tonknopf" data-ton="${w.i}">🔊 Stimme anhören</button>` : '') +
-    `<p class="quelle">Bild: ${esc(d.q)}, über Wikimedia Commons</p></div>`;
-}
-function setKarte(html, komp) { kompakt = !!komp; karte.classList.toggle('kompakt', kompakt); karte.innerHTML = html; karte.scrollTop = 0; targetCenter(false); }
-function openKarte() { closeMenue(); document.body.classList.add('mitkarte'); $('hint').classList.add('weg'); karteOffen = true; karte.classList.add('offen'); targetCenter(false); }
-function closeKarte() { document.body.classList.remove('mitkarte'); if (autoZ) { zoomT = 1; autoZ = false; } karteOffen = false; kompakt = false; karte.classList.remove('offen', 'kompakt'); targetCenter(false); }
-function schliesseWerk() { sel = -1; tour = null; closeKarte(); if (rueckFn) { const f = rueckFn; rueckFn = null; f(); } }
-karte.addEventListener('click', e => {
-  const b = e.target.closest('[data-lupe]'); if (b) { lupe(WERKE[+b.dataset.lupe]); return; }
-  const n = e.target.closest('[data-niv]');
-  if (n) { niveau = n.dataset.niv; lsSet('tg1_niveau', niveau); karte.querySelectorAll('.werk').forEach(el => { el.outerHTML = werkHtml(WERKE[+el.dataset.w]); }); klang('tap'); return; }
-  const s = e.target.closest('[data-ton]'); if (s) rufe(WERKE[+s.dataset.ton]);
-});
-let rufAudio = null;
-function rufe(w) { try { if (rufAudio) rufAudio.pause(); rufAudio = new Audio(TON + w.key + '.mp3'); rufAudio.play().catch(() => toast('Tierstimme', 'Die Aufnahme lässt sich nicht abspielen.')); } catch (e) {} }
-function bogenDauer(w) { const th = w.route ? w.route.th : w.neo ? w.neo.arc.th : 0; return 1500 + 1800 * Math.min(1, th / Math.PI); }
-function zeigeWerk(w) { sel = w.i; arcStart = performance.now(); gArc = null; fitSpann(w.spann); focus(w.mitte); arcKlang = false; if (!game) klang('werk', w, bogenDauer(w) / 1000); }
-function albumKnopf(w) { const g = gekonnt(w); return `<button class="knopf ${g ? 'gelernt' : 'leise'}" id="gel">${g ? '✓ Sicher gekonnt' : 'Kenne ich schon'}</button>`; }
-function showWerk(i, rueck) {
-  const w = WERKE[i]; tour = null; game = null; guess = null; gArc = null; gShow = null; rueckFn = rueck || null; stopZeit();
-  setKarte(`<div class="kopfzeile"><span class="runde">${w === werkDesTages() ? 'Tier des Tages' : EP[w.e].n}</span><button class="x" aria-label="Schließen">×</button></div>` + werkHtml(w) + `<div class="unten">${rueck ? '<button class="knopf leise klein" id="zurueckzu" aria-label="Zurück">‹</button>' : ''}${albumKnopf(w)}</div>`);
-  karte.querySelector('.x').onclick = schliesseWerk;
-  if ($('zurueckzu')) $('zurueckzu').onclick = schliesseWerk;
-  if (markEntdeckt(w)) zeigeAbzeichen();
-  bindAlbum(w); openKarte(); zeigeWerk(w);
-}
-function bindAlbum(w) { $('gel').onclick = () => { const v = !gekonnt(w); setManuell(w, v); $('gel').outerHTML = albumKnopf(w); const m = karte.querySelector('.marken'); if (m) m.outerHTML = markenHtml(w); bindAlbum(w); klang(v ? 'gut' : 'tap'); if (v) zeigeAbzeichen(); }; }
+/* ---------- Ansicht (Tag, Nacht) ---------- */
+const ANSICHTEN = [{ z: 'Tag/Nacht', n: 'Tag und Nacht' }, { z: 'Tag', n: 'Nur Tag' }, { z: 'Nacht', n: 'Nur Nacht' }];
+let ansichtNr = +lsGet('tg2_ansicht') || 0; if (ansichtNr < 0 || ansichtNr > 2) ansichtNr = 0;
+function setAnsicht(n) { ansichtNr = n; $('ansicht').textContent = ANSICHTEN[n].z; $('ansicht').setAttribute('aria-label', 'Ansicht: ' + ANSICHTEN[n].n + '. Tippen zum Wechseln'); lsSet('tg2_ansicht', String(n)); }
+$('ansicht').addEventListener('click', () => { setAnsicht((ansichtNr + 1) % 3); klang('tap'); });
+setAnsicht(ansichtNr);
 
-/* ---------- Lupe ---------- */
-const lupeEl = $('lupe'), lupeImg = lupeEl.querySelector('img');
-function lupe(w) { lupeImg.src = BILD + w.key + '.jpg'; lupeImg.alt = w.t; lupeEl.querySelector('.unterschrift').textContent = w.t + ' · ' + w.a + '   Tippen zum Vergrößern'; lupeEl.classList.remove('gross'); lupeEl.classList.add('offen'); }
-lupeImg.addEventListener('click', e => {
-  const sc = lupeEl.querySelector('.scroller'), r = lupeImg.getBoundingClientRect(), fx = (e.clientX - r.left) / r.width, fy = (e.clientY - r.top) / r.height;
-  lupeEl.classList.toggle('gross');
-  if (lupeEl.classList.contains('gross')) requestAnimationFrame(() => { sc.scrollLeft = fx * lupeImg.offsetWidth - W / 2; sc.scrollTop = fy * lupeImg.offsetHeight - H / 2; });
-});
-lupeEl.querySelector('.zu').onclick = () => lupeEl.classList.remove('offen', 'gross');
+/* ---------- Modi ---------- */
+function zeige(id, an) { $(id).hidden = !an; }
+function setMode(m) {
+  mode = m; document.body.classList.toggle('m-spiel', m === 'spiel'); document.body.classList.toggle('m-lernen', m === 'lernen');
+  zeige('start', m === 'start'); zeige('hudbox', m === 'spiel'); zeige('tippen', false); zeige('ergebnis', false); zeige('schluss', false);
+  zeige('lernoben', m === 'lernen'); zeige('lernunten', m === 'lernen'); zeige('karte', false);
+  zeige('zoom', true);
+  if (m !== 'spiel') { game = null; guess = null; gArc = null; gA = null; }
+  if (m !== 'lernen') sel = -1;
+  auto = m === 'start'; if (m === 'start') { setZoom(1); sel = -1; }
+  if (m === 'lernen') setZoom(1);
+  layout(false);
+}
+function bestWert(k) { return +(lsGet('tg2_best' + (k && k !== 'a' ? '_' + k : '')) || 0); }
+function startText() { const b = bestWert(); $('bestText').innerHTML = b ? `Dein Rekord <span class="best">${zahl(b)} Punkte</span>. Oder schau dich frei um.` : 'Oder drehe die Kugel und schau dich um.'; }
+function goStart() { zeigeWahl(false); setMode('start'); startText(); }
 
-/* ---------- Bereiche (Menü) ---------- */
-const menue = $('menue'), mk = $('mkasten');
-let ansicht = '';
-function zeigeMenue(html, name) {
+/* ---------- Spiel ---------- */
+let spielKat = lsGet('tg2_kat') || 'a';
+function spielPool(k) { return SPIELBAR.filter(w => k === 'a' || w.e === +k); }
+function katName(k) { return k === 'a' ? 'Alle Tiere' : EPN[+k]; }
+function zeigeWahl(an) {
+  $('wahl').hidden = !an; $('startunten').querySelector('.zeile').hidden = an; $('bestText').hidden = an;
+  if (!an) return;
+  const n = k => spielPool(k).length;
+  $('wahlchips').innerHTML = `<button type="button" data-k="a" aria-pressed="${spielKat === 'a'}">Alle ${n('a')}</button>` + EPN.map((t, k) => `<button type="button" data-k="${k}" aria-pressed="${spielKat === String(k)}">${t} ${n(String(k))}</button>`).join('');
+  $('wahlchips').querySelectorAll('button').forEach(b => b.onclick = () => { spielKat = b.dataset.k; lsSet('tg2_kat', spielKat); $('wahlchips').querySelectorAll('button').forEach(x => x.setAttribute('aria-pressed', String(x === b))); klang('tap'); });
+  layout(false);
+}
+function startSpiel(kat) {
   klang('tap');
-  menue.style.paddingBottom = ($('leiste').offsetHeight + 22) + 'px';
-  ansicht = name; mk.innerHTML = html; menue.classList.add('offen'); document.body.classList.add('mitmenue'); mk.scrollTop = 0; requestAnimationFrame(() => { mk.scrollTop = 0; });
-  document.querySelectorAll('#leiste button').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.p === name)));
-  const x = mk.querySelector('[data-zu]'); if (x) x.onclick = closeMenue;
+  const k = typeof kat === 'string' ? kat : spielKat, pool = shuffle(spielPool(k)), n = Math.min(RUNDEN, pool.length), cnt = {}, ord = [];
+  // Bei allen Tieren gemischte Gruppen, je Gruppe höchstens vier
+  if (k === 'a') { for (const w of pool) { if ((cnt[w.e] || 0) >= 4) continue; cnt[w.e] = (cnt[w.e] || 0) + 1; ord.push(w); if (ord.length === n) break; } }
+  else ord.push(...pool.slice(0, n));
+  zeigeWahl(false); setMode('spiel');
+  game = { order: ord, r: 0, pts: 0, res: [], phase: 'ask', bonus: false, zehn: null, kat: k, n };
+  setScore(0, true);
+  frage();
 }
-function closeMenue() { menue.classList.remove('offen'); document.body.classList.remove('mitmenue'); ansicht = ''; document.querySelectorAll('#leiste button').forEach(b => b.setAttribute('aria-pressed', 'false')); }
-menue.addEventListener('click', e => { if (e.target === menue) closeMenue(); });
-function kopf(titel, unter) { return `<div class="kopfzeile"><div style="flex:1"><h2>${titel}</h2>${unter ? `<p class="unterzeile">${unter}</p>` : ''}</div><button class="x" data-zu aria-label="Schließen">×</button></div>`; }
-function jahrKurz(y) { return y < 0 ? zahl(Math.abs(y)) + ' v. Chr.' : String(y); }
-function spanne(list) { const l = list.slice().sort((p, q) => p.y - q.y); return jahrKurz(l[0].y) + ' bis ' + jahrKurz(l[l.length - 1].y); }
-function sterneHtml(n) { let s = ''; for (let k = 0; k < 3; k++) s += k < n ? '★' : '<i>★</i>'; return `<span class="sterne" aria-label="${n} von 3 Sternen">${s}</span>`; }
-function kachelHtml(w, mark) {
-  const e = entdeckt(w) || mark !== undefined;
-  if (!e) return `<button class="kachel neu" data-w="${w.i}" aria-label="${esc(w.t)}, noch nicht entdeckt"><img loading="lazy" src="${BILD + w.key}_k.jpg" alt=""></button>`;
-  const g = gekonnt(w), hak = mark === true ? '<span class="hak">✓</span>' : mark === false ? '<span class="hak f">✗</span>' : g ? '<span class="hak">✓</span>' : '';
-  return `<button class="kachel ${g ? 'hat' : ''}${w.bau ? ' bau' : ''}" data-w="${w.i}" aria-label="${esc(w.t)}"><img loading="lazy" src="${BILD + w.key}_k.jpg" alt="">${hak}</button>`;
+function setScore(v, still) { const s = $('score'); s.textContent = zahl(v); if (!still) { s.classList.add('hoch'); setTimeout(() => s.classList.remove('hoch'), 380); } }
+function ziehe() { const used = new Set(game.order.slice(-Math.max(1, Math.floor(spielPool(game.kat).length / 2))).map(w => w.i)), alle = spielPool(game.kat); let pool = alle.filter(w => !game.order.includes(w)); if (!pool.length) pool = alle.filter(w => !used.has(w.i)); if (!pool.length) pool = alle; game.order.push(pool[Math.floor(Math.random() * pool.length)]); }
+function punkteZeile() {
+  const n = game.r, von = Math.max(0, n - game.n + 1); let t = '';
+  for (let k = von; k < von + game.n; k++) { const r = game.res[k]; t += `<i class="${r ? (r.p >= 700 ? 'ok' : r.p >= 300 ? 'nah' : 'weit') : (k === n && game.phase === 'ask' ? 'jetzt' : '')}"></i>`; }
+  $('dots').innerHTML = t;
 }
-function bindeKacheln(rueck) {
-  mk.querySelectorAll('[data-w]').forEach(b => b.onclick = () => showWerk(+b.dataset.w, rueck));
-  mk.querySelectorAll('[data-neu]').forEach(b => b.onclick = () => { const w = WERKE[+b.dataset.neu]; toast('Noch nicht entdeckt', 'Gruppe ' + EP[w.e].n + ', ' + w.r + '.'); });
+function frage() {
+  const w = game.order[game.r]; game.phase = 'ask'; guess = null; gArc = null; gA = null; sel = -1;
+  $('rtxt').textContent = (game.r < game.n ? `Runde ${game.r + 1} von ${game.n}` : `Bonusrunde ${game.r + 1 - game.n}`) + (game.kat === 'a' ? '' : ' · ' + EPN[+game.kat]); punkteZeile();
+  $('frage').innerHTML = `<img src="${BILD + w.key}_k.jpg" alt="${esc(w.t)}" data-lupe="${w.i}"><div><small>Wo lebt dieses Tier?</small><h2>${esc(w.t)}</h2><div class="chips"><span class="chip">${esc(EPN[w.e])}</span><span class="chip"><i style="background:rgb(${LR[w.h].c})"></i>${LR[w.h].n}</span></div></div>`;
+  $('frage').style.animation = 'none'; void $('frage').offsetWidth; $('frage').style.animation = '';
+  zeige('ergebnis', false); zeige('tippen', true); zeige('zoom', true);
+  layout(false); setZoom(1);
 }
-
-/* Heute */
-function werkDesTages() { return WERKE[TAGPERM[((HEUTE % WERKE.length) + WERKE.length) % WERKE.length]]; }
-function raetselStand() { const x = lsJson('tg1_raetsel', {}); return x.d === HEUTE ? x : null; }
-function quadrate(erg) { return erg.map(o => o ? '🟩' : '🟥').join(''); }
-function datumText() { return new Date().toLocaleDateString('de-DE', { weekday: 'long', day: 'numeric', month: 'long' }); }
-function teilen(r) {
-  const txt = `Tierglobus Tagesrätsel, ${new Date().toLocaleDateString('de-DE')}\n${quadrate(r.erg)} ${r.ok} von 5`;
-  if (navigator.share) navigator.share({ text: txt }).catch(() => {});
-  else if (navigator.clipboard) navigator.clipboard.writeText(txt).then(() => toast('Kopiert', 'Das Ergebnis liegt in der Zwischenablage.'), () => {});
+function tippe(u) {
+  if (!game || game.phase !== 'ask') return;
+  const w = game.order[game.r], gg = toVec(u.lat, u.lon), A = arealAbstand(w, gg), d = A.d, p = Math.round(1000 * Math.exp(-d / 1500));
+  game.phase = 'done'; guess = u; gDist = d; gA = A;
+  let ende = null;
+  if (d > 0) { const th = ang(gg, A.c.g); ende = th > 0.002 ? slerp(A.c.g, gg, Math.min(1, A.c.rho / th), th) : A.c.g; }
+  const th2 = ende ? ang(gg, ende) : 0;
+  gArc = ende && th2 > 0.004 ? arcPoints(gg, ende, 56) : null; gArcStart = performance.now(); sel = w.i; arcStart = gArcStart;
+  game.pts += p; game.res.push({ w, p, d });
+  if (game.r === game.n - 1 && !game.bonus) game.zehn = game.pts; punkteZeile();
+  setScore(game.pts);
+  klang(p >= 900 ? 'top' : p >= 400 ? 'gut' : 'schade'); if (p >= 900) konfetti();
+  const urteil = p >= 900 ? 'Volltreffer!' : p >= 700 ? 'Sehr nah dran' : p >= 400 ? 'Ganz gut' : p >= 150 ? 'Noch ein Stück weg' : 'Weit daneben';
+  const letzte = game.r === game.n - 1 && !game.bonus, bonus = game.bonus;
+  $('ergebnis').innerHTML = `<div class="urteil"><span class="gross">${urteil}</span><span class="pk">+${zahl(p)}<small>Punkte</small></span></div>
+    <p class="abstand">${d < 1 ? 'Du hast mitten ins <b>Verbreitungsgebiet</b> getippt.' : `Dein Tipp lag <b>${kmText(d)}</b> vom Verbreitungsgebiet entfernt.`} Hier lebt es: ${esc(w.d.v)}.</p>
+    <div class="wusstest"><strong>Wusstest du?</strong>${esc(kurz(w.d.x))}</div>
+    <button type="button" class="knopf voll" id="weiter">${letzte ? 'Ergebnis ansehen' : bonus ? 'Nächste Bonusrunde' : 'Nächste Runde'}</button>${bonus ? '<button type="button" class="knopf leise voll" id="beenden" style="margin-top:10px">Beenden und Ergebnis ansehen</button>' : ''}`;
+  zeige('tippen', false); zeige('ergebnis', true); zeige('zoom', false);
+  $('weiter').onclick = () => { klang('tap'); if (letzte) schlussBild(); else { game.r++; if (!game.order[game.r]) ziehe(); frage(); } };
+  if ($('beenden')) $('beenden').onclick = () => { klang('tap'); schlussBild(); };
+  layout(false);
+  { const th = ang(gg, A.c.g), rho = A.c.rho, ges = Math.min(3.0, th + rho);
+    focus(th > 0.001 ? slerp(gg, A.c.g, (th + rho) / (2 * th), th) : A.c.g);
+    const need = 0.8 * freeMin() / 2 / Math.max(0.03, Math.sin(Math.max(0.06, ges) / 2)); setZoom(Math.min(3.2, need / RbaseT)); }
 }
-function zeigeHeute() {
-  const w = werkDesTages(), r = raetselStand(), f = faellig().length;
-  let html = kopf('Heute', datumText()) +
-    `<button class="gross" id="h-werk"><img src="${BILD + w.key}_k.jpg" alt=""><span><span class="r">Tier des Tages</span><b>${esc(w.t)}</b><small>${esc(w.a)} · ${esc(w.j)}</small></span></button>
-    <h3>Tagesrätsel</h3>`;
-  html += r ? `<p class="quadrate">${quadrate(r.erg)}</p><p class="hinweis">${r.ok} von 5 richtig. Morgen gibt es ein neues Rätsel.</p><button class="knopf leise" id="h-teilen" style="width:100%;margin-top:10px">Ergebnis teilen</button>`
-    : `<p class="unterzeile">Fünf Fragen zu fünf Tieren. Jeden Tag neu und für alle gleich.</p><button class="knopf" id="h-raetsel" style="width:100%;margin-top:10px">Rätsel starten</button>`;
-  if (f) html += `<h3>Auffrischen</h3><p class="unterzeile">${f} ${f === 1 ? 'Tier wäre' : 'Tiere wären'} heute gut zum Wiederholen. Ganz freiwillig.</p><button class="knopf leise" id="h-wdh" style="width:100%;margin-top:10px">Wiederholen</button>`;
-  zeigeMenue(html, 'heute');
-  $('h-werk').onclick = () => showWerk(w.i);
-  if ($('h-raetsel')) $('h-raetsel').onclick = starteTagesraetsel;
-  if ($('h-teilen')) $('h-teilen').onclick = () => teilen(r);
-  if ($('h-wdh')) $('h-wdh').onclick = starteWiederholung;
-}
-
-/* Rundgänge */
-const RUND = [];
-ETAPPEN.filter(E => E.list.length >= 3).forEach(E => RUND.push({ id: 'e' + E.n, g: 'Pakete', name: E.name, sub: E.list.length + ' Tiere', list: E.list }));
-[['W', 'Auf Wanderschaft', 'Ein Bogen zeigt den Weg, den diese Tiere jedes Jahr zurücklegen'], ['B', 'Bedroht', 'Arten, die auf der Roten Liste als gefährdet gelten'], ['E', 'Nur hier', 'Arten, die es nur an einem einzigen Ort der Erde gibt'], ['N', 'Neu hier', 'Vom Menschen in fremde Gebiete gebrachte Arten'], ['†', 'Verschwunden', 'Ausgestorbene Arten']]
-  .forEach(([m, name, sub]) => { const l = SORTIERT.filter(w => w.merk.includes(m)); if (l.length >= 2) RUND.push({ id: 'm' + m, g: 'Themen', name, sub, list: l }); });
-REG.forEach((x, k) => { const l = SORTIERT.filter(w => w.r === x); if (l.length >= 2) RUND.push({ id: 'r' + k, g: 'Rund um die Welt', name: x, sub: l.length + ' Tiere', list: l }); });
-RUND.push({ id: 'alle', g: 'Alles', name: 'Alle Tiere', sub: WERKE.length + ' Tiere der Reihe nach', list: SORTIERT });
-const RMAP = {}; RUND.forEach(R0 => { RMAP[R0.id] = R0; });
-function zeigeRund() {
-  let html = kopf('Touren', 'Die Kugel fliegt von Tier zu Tier. Du kannst jederzeit aussteigen und frei weiterschauen.'), gr = '';
-  RUND.forEach(R0 => {
-    if (R0.g !== gr) { html += (gr ? '</div>' : '') + `<h3>${R0.g}</h3><div class="liste">`; gr = R0.g; }
-    const e = anz(R0.list, entdeckt), n = R0.list.length;
-    html += `<button class="zeile" data-r="${R0.id}"><b>${esc(R0.name)}</b><small>${esc(R0.sub)}</small><small>${e} von ${n} gesehen ${STERNE[R0.id] ? sterneHtml(STERNE[R0.id]) : ''}</small><div class="balken mini"><i style="width:${(e / n * 100).toFixed(0)}%"></i></div></button>`;
-  });
-  zeigeMenue(html + '</div>', 'rund');
-  mk.querySelectorAll('[data-r]').forEach(b => b.onclick = () => starteRundgang(b.dataset.r));
-}
-function starteRundgang(id, ab) {
-  const R0 = RMAP[id]; closeMenue(); game = null; guess = null; gArc = null; gShow = null; rueckFn = null; stopZeit();
-  let n = ab; if (n === undefined) { n = R0.list.findIndex(w => !entdeckt(w)); if (n < 0) n = 0; }
-  tour = { id, list: R0.list, n }; tourZeige();
-}
-function tourZeige() {
-  const R0 = RMAP[tour.id], w = tour.list[tour.n], n = tour.n, len = tour.list.length, letzte = n === len - 1;
-  if (markEntdeckt(w)) zeigeAbzeichen();
-  if (letzte && !FERTIG.has(tour.id)) { FERTIG.add(tour.id); speichern(); zeigeAbzeichen(); }
-  const reihe = len <= 20 ? `<div class="punktreihe">${tour.list.map((x, k) => `<i class="${k === n ? 'j' : entdeckt(x) ? 'r' : ''}"></i>`).join('')}</div>` : '';
-  setKarte(`<div class="kopfzeile"><span class="runde">${esc(R0.name)} · ${n + 1} von ${len}</span><button class="x" aria-label="Tour beenden">×</button></div>${reihe}` + werkHtml(w) +
-    (letzte ? `<p class="hinweis">Das war der letzte Halt. Wenn du magst, prüfe dein Wissen in einem kurzen Quiz.</p>` : '') +
-    `<div class="unten"><button class="knopf leise klein" id="zur" aria-label="Vorheriges Tier" ${n === 0 ? 'disabled' : ''}>‹</button>${letzte ? '<button class="knopf leise" id="fertig">Fertig</button><button class="knopf" id="quiz">Quiz</button>' : '<button class="knopf" id="vor">Weiter ›</button>'}</div>`);
-  karte.querySelector('.x').onclick = () => { tour = null; sel = -1; closeKarte(); };
-  $('zur').onclick = () => { if (tour.n > 0) { tour.n--; tourZeige(); } };
-  if ($('vor')) $('vor').onclick = () => { tour.n++; tourZeige(); };
-  if ($('fertig')) $('fertig').onclick = () => { tour = null; sel = -1; closeKarte(); };
-  if ($('quiz')) $('quiz').onclick = () => starteRundQuiz(tour.id);
-  openKarte(); zeigeWerk(w);
+function schlussBild() {
+  const s = game.pts, k = game.kat, b = bestWert(k), z = game.zehn === null ? s : game.zehn, neu = z > b; if (neu) lsSet('tg2_best' + (k !== 'a' ? '_' + k : ''), String(z));
+  const rk = (k === 'a' ? '' : ' bei ' + EPN[+k]) + ' in ' + game.n + ' Runden';
+  const quote = s / Math.max(1000, game.res.length * 1000), sterne = quote >= 0.7 ? 3 : quote >= 0.45 ? 2 : quote >= 0.2 ? 1 : 0;
+  zeige('ergebnis', false); zeige('hudbox', false); zeige('tippen', false); zeige('zoom', false);
+  gArc = null; guess = null; sel = -1;
+  $('schluss').innerHTML = `<div class="tafel"><h2>${sterne === 3 ? 'Weltklasse!' : sterne === 2 ? 'Stark gespielt' : sterne === 1 ? 'Guter Start' : 'Das geht noch besser'}</h2>
+    <div class="summe">${zahl(s)}<small>von ${zahl(game.res.length * 1000)} Punkten</small></div>
+    <div class="sterne" aria-label="${sterne} von 3 Sternen">${[1, 2, 3].map(k => `<i class="${k <= sterne ? 'an' : ''}">★</i>`).join('')}</div>
+    <p class="bestzeile">${neu ? `<b>Neuer Rekord${rk}!</b>` : `Dein Rekord${rk} liegt bei <b>${zahl(Math.max(b, z))} Punkten</b>.`}</p>
+    <div class="liste">${game.res.map(r => `<div><img src="${BILD + r.w.key}_k.jpg" alt="${esc(r.w.t)}" data-lupe="${r.w.i}"><span>${esc(r.w.t)}</span><em class="${r.p >= 700 ? 'a' : r.p >= 300 ? 'b' : 'c'}">${zahl(r.p)}</em></div>`).join('')}</div>
+    <div class="schlussknoepfe"><button type="button" class="knopf" id="weiterspielen">Weiterspielen mit Bonusrunden</button><button type="button" class="knopf leise" id="nochmal">Neues Spiel</button><div class="zeile"><button type="button" class="knopf mint" id="zuLernen">Lernen</button><button type="button" class="knopf leise" id="zuStart">Start</button></div></div></div>`;
+  zeige('schluss', true); klang(sterne ? 'sieg' : 'schade'); if (sterne >= 2) konfetti();
+  $('weiterspielen').onclick = () => { klang('tap'); game.bonus = true; game.phase = 'ask'; game.r = game.res.length; if (!game.order[game.r]) ziehe(); zeige('schluss', false); zeige('hudbox', true); zeige('zoom', true); auto = false; layout(false); frage(); };
+  $('nochmal').onclick = () => startSpiel(game.kat); $('zuLernen').onclick = startLernen; $('zuStart').onclick = goStart;
+  auto = true; setZoom(1); cyT = H * 0.3; RbaseT = Math.max(110, 0.4 * W);
 }
 
-/* Spiele */
-const MODI = { ort: 'Wo lebt es?', zeit: 'Größenvergleich', detail: 'Detailrätsel', werk: 'Tier erkennen', epoche: 'Welche Tiergruppe?', mix: 'Gemischt' };
-const MINFO = { ort: 'Tippe auf der Kugel in das Verbreitungsgebiet.', zeit: 'Bringe fünf Tiere nach ihrer Körpergröße in die richtige Reihenfolge.', detail: 'Ein kleiner Ausschnitt. Je früher du es erkennst, desto mehr Punkte.', werk: 'Ein Bild, vier Namen zur Auswahl.', epoche: 'Säugetier, Vogel, Fisch oder etwas anderes?', mix: 'Alle Fragearten durcheinander.' };
-let spielBereich = lsGet('tg1_spielbereich') || 'a';
-function spielPool(b) { if (b === 's') return WERKE.filter(entdeckt); return WERKE.slice(); }
-function best(m, b) { return +(lsGet('tg1_best_' + m + '_' + b) || 0); }
-function zeigeSpiele() {
-  const anzS = anz(null, entdeckt); if (spielBereich === 's' && anzS < 8) spielBereich = 'a';
-  let html = kopf('Spiele', 'Kurze Runden auf Punkte. Richtige Antworten zählen auch für deine Sammlung.') +
-    `<button class="gross" id="s-tag" style="margin-top:14px"><span style="font-size:34px;width:60px;text-align:center;flex:none">☀</span><span><span class="r">Tagesrätsel</span><b>${raetselStand() ? 'Heute schon gelöst' : 'Fünf Fragen für heute'}</b><small>Jeden Tag neu und für alle gleich</small></span></button>
-    <h3>Aus welchen Tieren?</h3><div class="seg" id="sbereich" style="margin-top:0"><button data-b="a" aria-pressed="${spielBereich === 'a'}">Alle</button><button data-b="s" aria-pressed="${spielBereich === 's'}" ${anzS < 8 ? 'disabled' : ''}>Entdeckte (${anzS})</button></div>
-    <h3>Spielart</h3><div class="modi">`;
-  Object.keys(MODI).forEach(m => { const b = best(m, spielBereich); html += `<button class="modus" data-m="${m}"><b>${MODI[m]}</b><small>${MINFO[m]}${b ? ' Bestleistung ' + zahl(b) + ' Punkte.' : ''}</small></button>`; });
-  zeigeMenue(html + '</div>', 'spiele');
-  $('s-tag').onclick = () => { if (raetselStand()) zeigeHeute(); else starteTagesraetsel(); };
-  mk.querySelectorAll('#sbereich button').forEach(b => b.onclick = () => { if (b.disabled) return; spielBereich = b.dataset.b; lsSet('tg1_spielbereich', spielBereich); zeigeSpiele(); });
-  mk.querySelectorAll('.modus').forEach(b => b.onclick = () => starteFrei(b.dataset.m));
+/* ---------- Lernen ---------- */
+function sichtbarW(w) { const f = mode === 'start' && !$('wahl').hidden ? spielKat : filterF; return f === 'a' || w.e === +f; }
+function startLernen() {
+  klang('tap'); setMode('lernen'); filterF = 'a'; queue = []; hist = []; baueFilter(); layout(false);
 }
+function baueFilter() {
+  const f = $('filter'), n = g => WERKE.filter(w => g === 'a' || w.e === g).length;
+  f.innerHTML = `<button type="button" data-f="a" aria-pressed="${filterF === 'a'}">Alle ${n('a')}</button>` + EPN.map((t, k) => `<button type="button" data-f="${k}" aria-pressed="${filterF === String(k)}">${t} ${n(k)}</button>`).join('');
+  f.querySelectorAll('button').forEach(b => b.onclick = () => { filterF = b.dataset.f; queue = []; if (!document.getElementById('karte').hidden) schliesseKarte(); f.querySelectorAll('button').forEach(x => x.setAttribute('aria-pressed', String(x === b))); klang('tap'); });
+}
+function fakt(k, v, breit) { return `<div${breit ? ' class="breit"' : ''}><dt>${k}</dt><dd>${esc(v)}</dd></div>`; }
+function kartenHtml(w) {
+  const d = w.d, st = d.s;
+  const status = st === 'LC' ? '<span class="chip gut">' + RLN.LC + '</span>' : (st === 'CR' || st === 'EN' || st === 'VU') ? `<span class="chip rot">${RLN[st]}</span>` : (st === 'EX' || st === 'EW') ? `<span class="chip rot">${RLN[st]}${d.ex ? ' ' + esc(d.ex) : ''}</span>` : st === 'NT' ? `<span class="chip">${RLN.NT}</span>` : '';
+  let h = `<div class="kbild"><img src="${BILD + w.key}.jpg" alt="${esc(w.t)}" data-lupe="${w.i}"><span class="gr">⤢ groß</span><button type="button" class="zu" aria-label="Schließen">×</button><h2>${esc(w.t)}</h2></div>
+    <p class="wiss">${esc(w.a)}</p>
+    <div class="chips"><span class="chip">${esc(EPN[w.e])}</span><span class="chip"><i style="background:rgb(${farbe(w)})"></i>${LR[w.h].n}</span><span class="chip">${esc(w.r)}</span>${status}</div>
+    <dl class="fakten">${fakt('Verbreitung', d.v, true)}${fakt('Größe', d.lt)}${fakt('Gewicht', d.gw)}${fakt('Alter', d.al)}${fakt('Nahrung', d.na)}`;
+  if (w.route) h += fakt('Wanderung', 'rund ' + kmText(w.route.th * 6371) + (w.route.zu ? ' im Kreis' : ' je Richtung'), true);
+  if (w.neo) h += fakt('Eingeschleppt', d.ne.ort, true);
+  h += `</dl><p class="text">${esc(d.x)}</p><div class="vertiefung"><b>Mehr dazu</b><p>${esc(d.xv)}</p></div>`;
+  if (d.ton) h += `<button type="button" class="knopf leise voll" data-ton="1" style="margin-bottom:12px">Stimme anhören</button>`;
+  return h + `<p class="quelle">Bild: ${esc(d.q)}, über Wikimedia Commons</p><div class="karteweiter"><button type="button" class="knopf leise" id="kZurueck" aria-label="Vorheriges Tier" ${hist.length ? '' : 'disabled'}>‹</button><button type="button" class="knopf mint" id="kWeiter">Weiter</button></div>`;
+}
+let hist = [], queue = [];
+function oeffneKarte(w, zurueck) {
+  if (!zurueck && sel >= 0 && sel !== w.i) hist.push(sel);
+  queue = queue.filter(x => x !== w);
+  sel = w.i; arcStart = performance.now();
+  const k = $('karte'); k.innerHTML = kartenHtml(w); k.scrollTop = 0; zeige('karte', true); zeige('lernoben', false); zeige('lernunten', false); zeige('zoom', false);
+  k.querySelector('.zu').onclick = schliesseKarte;
+  $('kWeiter').onclick = naechstesTier;
+  $('kZurueck').onclick = () => { const i = hist.pop(); if (i !== undefined) oeffneKarte(WERKE[i], true); };
+  const s = k.querySelector('[data-ton]'); if (s) s.onclick = () => { try { if (rufAudio) rufAudio.pause(); rufAudio = new Audio(TON + w.key + '.mp3'); rufAudio.play().catch(() => {}); } catch (e) {} };
+  layout(false); focus(w.mitte); fitSpann(w.spann); klang('tap');
+}
+let rufAudio = null;
+function schliesseKarte() { sel = -1; hist = []; zeige('karte', false); zeige('lernoben', true); zeige('lernunten', true); zeige('zoom', true); layout(false); setZoom(1); }
+function naechstesTier() {
+  if (!queue.length) queue = shuffle(WERKE.filter(sichtbarW).filter(w => w.i !== sel));
+  const w = queue.pop(); if (w) oeffneKarte(w);
+}
+function zufallstier() { naechstesTier(); }
 
-/* Sammlung */
-let albumFilter = lsGet('tg1_albumfilter') || 'a';
-function zeigeSammlung() {
-  const P = WERKE, hat = new Set(lsJson('tg1_abz', [])), f = faellig().length;
-  let html = kopf('Sammlung', 'Jedes Tier, das du öffnest, wird hier farbig. Grau sind Tiere, die du noch nicht angesehen hast. Umrandet sind Tiere, die du in Spielen an zwei verschiedenen Tagen richtig erkannt hast.') +
-    `<div class="stand"><div><b>${anz(null, entdeckt)}</b>entdeckt</div><div><b>${anz(null, gekonnt)}</b>sicher gekonnt</div><div><b>${FERTIG.size}</b>Touren</div></div>`;
-  if (f) html += `<button class="knopf leise" id="sa-wdh" style="width:100%;margin-top:10px">${f} ${f === 1 ? 'Tier' : 'Tiere'} auffrischen</button>`;
-  html += `<h3>Abzeichen</h3><div class="abz">${ABZ.map(a => `<div class="${hat.has(a.id) ? 'hat' : ''}"><span class="sym">${a.sym}</span>${a.n}<small>${a.b}</small></div>`).join('')}</div>`;
-  ETAPPEN.forEach(E => { const l = E.list.filter(w => P.includes(w)); if (!l.length) return; html += `<h3>${esc(E.name)} <span style="float:right">${anz(l, entdeckt)}/${l.length}</span></h3><div class="album">${l.map(w => kachelHtml(w)).join('')}</div>`; });
-  html += `<p style="margin:18px 0 0;text-align:center"><button class="klein-link" id="reset">Alles zurücksetzen</button></p>`;
-  zeigeMenue(html, 'samml');
-  if ($('sa-wdh')) $('sa-wdh').onclick = starteWiederholung;
-  mk.querySelectorAll('#afilter button').forEach(b => b.onclick = () => { albumFilter = b.dataset.f; lsSet('tg1_albumfilter', albumFilter); zeigeSammlung(); });
-  bindeKacheln(() => zeigeSammlung());
-  $('reset').onclick = () => { const b = $('reset'); if (b.dataset.sicher) { LS = {}; STERNE = {}; FERTIG = new Set(); speichern(); ['tg1_abz', 'tg1_raetsel', 'tg1_raetsel_n', 'tg1_zeit_ok'].forEach(k => lsSet(k, '')); zeigeSammlung(); } else { b.dataset.sicher = '1'; b.textContent = 'Wirklich alles löschen? Nochmal tippen'; } };
+/* ---------- Lupe: Bild groß, mit zwei Fingern zoomen ---------- */
+const lupeEl = $('lupe'), lupeImg = lupeEl.querySelector('img');
+let lz = { s: 1, x: 0, y: 0 }, lp = new Map(), lg = null, lTap = 0;
+function lSetze() {
+  const w = lupeEl.clientWidth, h = lupeEl.clientHeight;
+  lz.s = Math.max(1, Math.min(6, lz.s));
+  lz.x = Math.min(0, Math.max(w - w * lz.s, lz.x)); lz.y = Math.min(0, Math.max(h - h * lz.s, lz.y));
+  lupeImg.style.transform = `translate(${lz.x}px,${lz.y}px) scale(${lz.s})`;
 }
-
-/* ---------- Quiz ---------- */
-function starteQuiz(g) {
-  closeMenue(); tour = null; rueckFn = null; stopZeit();
-  game = Object.assign({ r: 0, score: 0, ok: 0, erg: [], ro: [], neu: [], phase: 'ask' }, g); game.n = game.order.length;
-  sel = -1; guess = null; gArc = null; auto = false; $('hint').classList.add('weg'); askRound();
+function lZoomUm(px, py, neu) { const qx = (px - lz.x) / lz.s, qy = (py - lz.y) / lz.s; lz.s = Math.max(1, Math.min(6, neu)); lz.x = px - lz.s * qx; lz.y = py - lz.s * qy; lSetze(); }
+function lupeAuf(w) {
+  lupeImg.src = BILD + w.key + '.jpg'; lupeImg.alt = w.t;
+  lupeEl.querySelector('.ltext').innerHTML = `<b>${esc(w.t)}</b>Mit zwei Fingern vergrößern, doppelt tippen zum Zoomen · Bild: ${esc(w.d.q)}`;
+  lz = { s: 1, x: 0, y: 0 }; lp.clear(); lg = null; lupeEl.hidden = false; lSetze(); klang('tap');
 }
-function starteTagesraetsel() {
-  if (raetselStand()) { zeigeHeute(); return; }
-  const rnd = zufall(HEUTE * 7919 + 13), list = shuffle(WERKE.slice(), rnd).slice(0, 5);
-  starteQuiz({ kind: 'tag', order: list, arten: shuffle(['werk', 'werk', 'detail', 'ort', 'epoche'], rnd) });
-}
-function starteRundQuiz(id) {
-  const R0 = RMAP[id], list = shuffle(R0.list.slice()).slice(0, 10);
-  const basis = ['werk', 'werk', 'werk', 'ort', 'ort', 'ort', 'detail', 'detail', 'epoche', 'epoche'];
-  starteQuiz({ kind: 'rund', id, order: list, arten: shuffle(basis).slice(0, list.length) });
-}
-function starteWiederholung() {
-  const list = shuffle(faellig()).slice(0, 10); if (!list.length) { toast('Auffrischen', 'Heute ist nichts dran.'); return; }
-  starteQuiz({ kind: 'wdh', order: list, arten: list.map(() => ['werk', 'werk', 'ort', 'ort', 'detail', 'epoche'][Math.floor(Math.random() * 6)]) });
-}
-function zeitRunde(pool) { const P = shuffle(pool.slice()), out = []; for (const w of P) { if (out.every(x => Math.max(x.y, w.y) / Math.min(x.y, w.y) >= 1.2)) out.push(w); if (out.length === 5) break; } return out.length === 5 ? out : P.slice(0, 5); }
-function starteFrei(m) {
-  const pool = spielPool(spielBereich);
-  if (m === 'zeit') { const runden = [0, 1, 2, 3, 4].map(() => zeitRunde(pool)); starteQuiz({ kind: 'frei', m, b: spielBereich, order: runden, arten: runden.map(() => 'zeit') }); return; }
-  const list = shuffle(pool.slice()).slice(0, 10); if (!list.length) return;
-  starteQuiz({ kind: 'frei', m, b: spielBereich, order: list, arten: list.map(() => m === 'mix' ? ['werk', 'ort', 'epoche', 'detail', 'werk'][Math.floor(Math.random() * 5)] : m) });
-}
-function endGame() { game = null; guess = null; gArc = null; gShow = null; sel = -1; closeKarte(); }
-function quizTitel() { return game.kind === 'rund' ? RMAP[game.id].name + ' · Quiz' : game.kind === 'tag' ? 'Tagesrätsel' : game.kind === 'wdh' ? 'Auffrischen' : MODI[game.m]; }
-function rundenKopf() {
-  const reihe = game.order.map((x, k) => `<i class="${k < game.ro.length ? (game.ro[k] ? 'r' : 'f') : k === game.r ? 'j' : ''}"></i>`).join('');
-  return `<div class="kopfzeile"><span class="runde">${esc(quizTitel())} · ${game.r + 1} von ${game.n}${game.kind === 'frei' ? ' · ' + zahl(game.score) + ' Punkte' : ''}</span><button class="x" aria-label="Beenden">×</button></div><div class="punktreihe">${reihe}</div>`;
-}
-const benannt = x => !/kultur|zeit|dynastie|reich|isch\b|ische|ischer|mönche|jäger|aborigines|rapa nui|shona|yoruba|olmeken|moche|nazca|maya|azteken|muisca|inka|nabatäer|sumerer|umayyaden|minoer|khmer|safawiden|ancestral/i.test(x.a);
-function optionen(w, feld) {
-  const P = WERKE.filter(x => x.bau === w.bau && x[feld] !== w[feld] && !x[feld].includes(w[feld]) && !w[feld].includes(x[feld]));
-  const gleich = x => feld !== 'a' || benannt(x) === benannt(w);
-  const stufen = [x => x.et === w.et, x => x.e === w.e && x.r === w.r, x => x.e === w.e, x => x.r === w.r, () => true];
-  const order = [];
-  stufen.forEach(f => shuffle(P.filter(x => f(x) && gleich(x))).forEach(x => order.push(x)));
-  shuffle(P.slice()).forEach(x => order.push(x));
-  const out = [], seen = new Set([w[feld]]);
-  for (const x of order) { if (!seen.has(x[feld])) { seen.add(x[feld]); out.push(x[feld]); } if (out.length === 3) break; }
-  return shuffle(out.concat([w[feld]]));
-}
-const DSTUFE = [5, 3.2, 1.9, 1], DPUNKTE = [1000, 700, 450, 250];
-function askRound() {
-  const art = game.arten[game.r]; game.art = art; game.phase = 'ask'; guess = null; gArc = null; gShow = null; sel = -1;
-  if (art === 'zeit') { askZeit(); return; }
-  const w = game.order[game.r];
-  let html = rundenKopf();
-  const opt = f => `<div class="antworten">${optionen(w, f).map(o => `<button data-o="${esc(o)}">${esc(o)}</button>`).join('')}</div>`;
-  if (art === 'werk') html += bildHtml(w) + `<p class="frage">Welches Tier ist das?</p>` + opt('t');
-  else if (art === 'detail') { game.ds = 0; game.fx = 25 + Math.random() * 50; game.fy = 25 + Math.random() * 50; html += `<div class="detail"><img id="dimg" src="${BILD + w.key}.jpg" alt="Ausschnitt eines Tiers" style="width:100%;height:100%;object-fit:cover;transform-origin:${game.fx}% ${game.fy}%;transform:scale(${DSTUFE[0]})"></div><p class="frage">Welches Tier zeigt dieser Ausschnitt?</p>` + opt('t') + `<div class="unten"><button class="knopf leise" id="mehr">Mehr zeigen (${zahl(DPUNKTE[1])} Punkte)</button></div>`; }
-  else if (art === 'wer') html += bildHtml(w) + `<h2>${esc(w.t)}</h2><p class="frage">${benannt(w) ? (w.bau ? 'Wer hat es gebaut?' : 'Wer hat es geschaffen?') : 'Welcher Kultur oder Zeit wird es zugeordnet?'}</p>` + opt('a');
-  else if (art === 'epoche') html += bildHtml(w) + `<h2>${esc(w.t)}</h2><p class="frage">Zu welcher Tiergruppe gehört es?</p><div class="antworten">${EP.map((e, n) => `<button data-e="${n}">${e.n}<small>${e.s}</small></button>`).join('')}</div>`;
-  else html += bildHtml(w) + `<h2>${esc(w.t)}</h2><p class="frage">Wo lebt dieses Tier?</p><p class="hinweis">Drehe die Kugel und tippe in das Verbreitungsgebiet. Bis 500 km Abstand gilt als richtig.</p><div class="unten"><button class="knopf" id="ok" disabled>Tipp bestätigen</button></div>`;
-  setKarte(html, art === 'ort');
-  karte.querySelector('.x').onclick = endGame;
-  if (art === 'ort') $('ok').onclick = answerOrt;
-  if ($('mehr')) $('mehr').onclick = () => { if (game.ds >= DSTUFE.length - 1) return; game.ds++; $('dimg').style.transform = `scale(${DSTUFE[game.ds]})`; const b = $('mehr'); if (game.ds >= DSTUFE.length - 1) { b.disabled = true; b.textContent = 'Ganz zu sehen'; } else b.textContent = `Mehr zeigen (${zahl(DPUNKTE[game.ds + 1])} Punkte)`; };
-  karte.querySelectorAll('.antworten button').forEach(b => b.onclick = () => {
-    if (game.phase !== 'ask') return;
-    if (art === 'epoche') { answerEpoche(+b.dataset.e, b); return; }
-    const feld = art === 'wer' ? 'a' : 't', ok = b.dataset.o === w[feld];
-    karte.querySelectorAll('.antworten button').forEach(x => { if (x.dataset.o === w[feld]) x.classList.add('richtig'); });
-    if (!ok) b.classList.add('falsch');
-    if ($('dimg')) $('dimg').style.transform = 'scale(1)';
-    klang(ok ? 'gut' : 'schade');
-    const p = !ok ? 0 : art === 'detail' ? DPUNKTE[game.ds] : 1000;
-    game.phase = 'wait'; setTimeout(() => showResult(w, ok, ok ? 'Richtig!' : 'Leider nicht.', ok ? '' : 'Richtig ist ' + w[feld] + '.', p), art === 'detail' ? 1100 : 700);
-  });
-  openKarte();
-  if (art !== 'ort') { focus(w.m); setZoom(1, true); }
-}
-function askZeit() {
-  const ws = game.order[game.r]; game.wahl = [];
-  setKarte(rundenKopf() + `<p class="frage">Vom kleinsten zum größten Tier</p><p class="hinweis">Tippe die Tiere der Reihe nach an. Nochmal tippen nimmt die Zahl zurück.</p><div class="reihe">${ws.map(w => `<button data-z="${w.i}"><span class="nr"></span><img src="${BILD + w.key}_k.jpg" alt=""><span>${esc(w.t)}<small style="display:block;color:var(--soft);font-size:12.5px">${esc(w.a)}</small></span></button>`).join('')}</div><div class="unten"><button class="knopf" id="zpruef" disabled>Prüfen</button></div>`);
-  karte.querySelector('.x').onclick = endGame;
-  const neu = () => { karte.querySelectorAll('[data-z]').forEach(b => { const k = game.wahl.indexOf(+b.dataset.z); b.classList.toggle('gesetzt', k >= 0); b.querySelector('.nr').textContent = k >= 0 ? k + 1 : ''; }); $('zpruef').disabled = game.wahl.length !== ws.length; };
-  karte.querySelectorAll('[data-z]').forEach(b => b.onclick = () => { if (game.phase !== 'ask') return; const i = +b.dataset.z, k = game.wahl.indexOf(i); if (k >= 0) game.wahl.splice(k, 1); else game.wahl.push(i); klang('tap'); neu(); });
-  $('zpruef').onclick = () => {
-    const richtig = ws.slice().sort((p, q) => p.y - q.y), treffer = richtig.map((w, k) => game.wahl[k] === w.i), n = treffer.filter(Boolean).length, ok = n === ws.length;
-    game.phase = 'result'; game.ro.push(ok); game.score += n * 200; if (ok) { game.ok++; lsSet('tg1_zeit_ok', '1'); }
-    richtig.forEach((w, k) => game.erg.push({ w, ok: treffer[k] }));
-    klang(ok ? 'gut' : 'schade');
-    const letzte = game.r >= game.n - 1;
-    setKarte(rundenKopf() + `<div class="rueckmeldung ${ok ? 'gut' : 'schlecht'}">${ok ? '✓ Alles in der richtigen Reihenfolge!' : `${n} von ${ws.length} an der richtigen Stelle`}${game.kind === 'frei' ? ' +' + zahl(n * 200) + ' Punkte' : ''}<small>So ist die richtige Reihenfolge.</small></div><div class="reihe">${richtig.map((w, k) => `<button data-lupe="${w.i}" class="${treffer[k] ? 'richtig' : 'falsch'}"><span class="nr" style="border:0;background:${treffer[k] ? 'var(--gruen)' : 'var(--rot)'};color:#111">${k + 1}</span><img src="${BILD + w.key}_k.jpg" alt=""><span>${esc(w.t)}</span><span class="jahr">${esc(w.j)}</span></button>`).join('')}</div>` +
-      `<div class="unten"><button class="knopf" id="weiter">${letzte ? 'Ergebnis ansehen' : 'Nächste Runde ›'}</button></div>`);
-    karte.querySelector('.x').onclick = endGame;
-    $('weiter').onclick = () => { game.r++; if (game.r >= game.n) finishGame(); else askRound(); };
-  };
-  openKarte(); setZoom(1, true);
-}
-function showResult(w, ok, titel, txt, p) {
-  if (!game || game.phase === 'result' || game.order[game.r] !== w) return; // Antwort eines schon beendeten Spiels
-  game.phase = 'result'; game.score += p; if (ok) game.ok++; game.ro.push(ok);
-  const res = antwort(w, ok); game.erg.push({ w, ok });
-  if (res.neu) game.neu.push(w);
-  const letzte = game.r >= game.n - 1;
-  setKarte(rundenKopf() + `<div class="rueckmeldung ${ok ? 'gut' : 'schlecht'}">${ok ? '✓ ' : '✗ '}${esc(titel)}${game.kind === 'frei' ? ' +' + zahl(p) + ' Punkte' : ''}${txt ? `<small>${esc(txt)}</small>` : ''}</div>` + werkHtml(w) +
-    `<div class="unten"><button class="knopf" id="weiter">${letzte ? 'Ergebnis ansehen' : 'Weiter ›'}</button></div>`);
-  karte.querySelector('.x').onclick = endGame;
-  $('weiter').onclick = () => { game.r++; if (game.r >= game.n) finishGame(); else askRound(); };
-  if (game.art !== 'ort') zeigeWerk(w);
-}
-function arealAbstand(w, g) { let d = 1e9, zg = w.m; for (const c of w.areal) { const x = Math.max(0, ang(g, c.g) - c.rho) * 6371; if (x < d) { d = x; zg = c.g; } } return { d, g: zg }; }
-function answerOrt() {
-  if (!guess || game.phase !== 'ask') return;
-  const w = game.order[game.r], gg = toVec(guess.lat, guess.lon), A = arealAbstand(w, gg), d = A.d, p = Math.round(1000 * Math.exp(-d / 1500)), th = ang(gg, A.g), ok = d <= 500;
-  gArc = d > 0 && th > 0.004 ? arcPoints(gg, A.g, 56) : null; gArcStart = performance.now(); gShow = w; sel = w.i; arcStart = gArcStart; arcKlang = true;
-  focus(slerp(gg, A.g, 0.5, th)); fitZoom(gg, A.g, false); klang(ok ? 'gut' : 'schade');
-  showResult(w, ok, ok ? (d < 1 ? 'Mitten im Verbreitungsgebiet!' : 'Richtig, nah dran!') : 'Zu weit weg.', (d < 1 ? '' : `Dein Tipp lag rund ${kmText(d)} vom Verbreitungsgebiet entfernt. `) + 'Verbreitung: ' + w.d.v + '.', p);
-}
-function answerEpoche(e, b) {
-  const w = game.order[game.r], ok = e === w.e;
-  karte.querySelectorAll('.antworten button').forEach(x => { if (+x.dataset.e === w.e) x.classList.add('richtig'); });
-  if (!ok) b.classList.add('falsch');
-  klang(ok ? 'gut' : 'schade'); game.phase = 'wait';
-  setTimeout(() => showResult(w, ok, ok ? 'Richtig!' : 'Leider nicht.', ok ? '' : 'Es gehört zur Gruppe ' + EP[w.e].n + '.', ok ? 1000 : 0), 700);
-}
-function ergebnisListe() { return `<div class="album" style="margin-top:12px">${game.erg.map(x => kachelHtml(x.w, x.ok)).join('')}</div>`; }
-function finishGame() {
-  const G = game; G.phase = 'end'; sel = -1; gArc = null; guess = null; gShow = null;
-  const neuTxt = G.neu.length ? `<p class="hinweis">Jetzt sicher gekonnt: ${G.neu.map(w => esc(w.t)).join(', ')}.</p>` : '';
-  const kopfE = t => `<div class="kopfzeile"><span class="runde">${esc(t)} · Ergebnis</span><button class="x" aria-label="Schließen">×</button></div>`;
-  let html, knoepfe;
-  if (G.kind === 'rund') {
-    const q = G.ok / G.n, s = q >= 1 ? 3 : q >= 0.9 ? 2 : q >= 0.8 ? 1 : 0;
-    if (s > (STERNE[G.id] || 0)) { STERNE[G.id] = s; speichern(); }
-    html = kopfE(RMAP[G.id].name) + `<div class="grosssterne">${[0, 1, 2].map(k => k < s ? '<span>★</span>' : '<span><i>★</i></span>').join('')}</div><h2 style="text-align:center">${G.ok} von ${G.n} richtig</h2>
-      <p class="hinweis" style="text-align:center">${s === 3 ? 'Fehlerlos!' : s ? 'Gut gemacht.' : 'Ab acht von zehn gibt es Sterne.'}</p>${ergebnisListe()}${neuTxt}`;
-    knoepfe = `<button class="knopf leise" id="e3">Zur Kugel</button><button class="knopf" id="e2">Nochmal</button>`;
-    if (s) { konfetti(); klang('sieg'); }
-  } else if (G.kind === 'tag') {
-    const erg = G.ro.slice(), x = { d: HEUTE, erg, ok: G.ok }; lsSet('tg1_raetsel', JSON.stringify(x)); lsSet('tg1_raetsel_n', String((+lsGet('tg1_raetsel_n') || 0) + 1));
-    html = kopfE('Tagesrätsel') + `<p class="quadrate" style="text-align:center">${quadrate(erg)}</p><h2 style="text-align:center">${G.ok} von 5 richtig</h2><p class="hinweis" style="text-align:center">Morgen gibt es ein neues Rätsel.</p>${ergebnisListe()}${neuTxt}`;
-    knoepfe = `<button class="knopf leise" id="e3">Zur Kugel</button><button class="knopf" id="e4">Teilen</button>`;
-    if (G.ok === 5) konfetti(); klang('sieg'); setzePunkt();
-  } else if (G.kind === 'wdh') {
-    const f = faellig().length;
-    html = kopfE('Auffrischen') + `<h2 style="text-align:center">${G.ok} von ${G.n} richtig</h2>${ergebnisListe()}${neuTxt}<p class="hinweis">${f ? 'Es warten noch ' + f + ' Tiere.' : 'Für heute ist alles aufgefrischt.'}</p>`;
-    knoepfe = `<button class="knopf leise" id="e3">Zur Kugel</button>${f ? '<button class="knopf" id="e2">Weiter</button>' : ''}`;
-    klang('gut');
-  } else {
-    const max = G.m === 'zeit' ? G.n * 1000 : G.n * 1000, old = best(G.m, G.b), neu = G.score > old; if (neu) lsSet('tg1_best_' + G.m + '_' + G.b, String(G.score));
-    html = kopfE(MODI[G.m]) + `<h2 style="text-align:center">${zahl(G.score)} von ${zahl(max)} Punkten</h2><p class="hinweis" style="text-align:center">${neu ? 'Neue Bestleistung!' : 'Deine Bestleistung liegt bei ' + zahl(old) + ' Punkten.'}</p>${ergebnisListe()}${neuTxt}`;
-    knoepfe = `<button class="knopf leise" id="e5">Spiele</button><button class="knopf" id="e2">Noch einmal</button>`;
-    if (neu) konfetti(); klang('sieg');
+function lupeZu() { lupeEl.hidden = true; lupeImg.removeAttribute('src'); }
+lupeEl.querySelector('.lzu').addEventListener('click', lupeZu);
+document.addEventListener('click', e => { const t = e.target.closest('[data-lupe]'); if (t) { e.stopPropagation(); lupeAuf(WERKE[+t.dataset.lupe]); } }, true);
+lupeImg.addEventListener('pointerdown', e => {
+  e.preventDefault(); try { lupeImg.setPointerCapture(e.pointerId); } catch (err) {}
+  lp.set(e.pointerId, { x: e.clientX, y: e.clientY });
+  if (lp.size === 2) { const [a, b] = [...lp.values()]; lg = { d: Math.hypot(a.x - b.x, a.y - b.y) || 1, mx: (a.x + b.x) / 2, my: (a.y + b.y) / 2, s: lz.s, x: lz.x, y: lz.y }; }
+  else if (lp.size === 1) {
+    const jetzt = performance.now();
+    if (jetzt - lTap < 300) { lZoomUm(e.clientX, e.clientY, lz.s > 1.2 ? 1 : 2.6); lTap = 0; } else lTap = jetzt;
   }
-  setKarte(html + `<div class="unten">${knoepfe}</div>`);
-  karte.querySelector('.x').onclick = endGame;
-  if ($('e3')) $('e3').onclick = endGame;
-  if ($('e4')) $('e4').onclick = () => teilen(raetselStand());
-  if ($('e5')) $('e5').onclick = () => { endGame(); zeigeSpiele(); };
-  if ($('e2')) $('e2').onclick = () => { if (G.kind === 'rund') starteRundQuiz(G.id); else if (G.kind === 'wdh') starteWiederholung(); else starteFrei(G.m); };
-  karte.querySelectorAll('.album [data-w]').forEach(b => b.onclick = () => lupe(WERKE[+b.dataset.w]));
-  zeigeAbzeichen();
-}
-
-/* ---------- Filter ---------- */
-/* ---------- Ansicht: Tag und Nacht (folgt der Uhrzeit), nur Tag, nur Nacht ---------- */
-const ANSICHTEN = [{ id: 'b', zeichen: '◐', name: 'Tag und Nacht, die Schattengrenze folgt der Uhrzeit' }, { id: 't', zeichen: '☀', name: 'Nur Tag' }, { id: 'n', zeichen: '☾', name: 'Nur Nacht' }];
-let ansichtNr = Math.max(0, ANSICHTEN.findIndex(a => a.id === lsGet('tg1_ansicht')));
-function setAnsicht(n, melden) { ansichtNr = n; const a = ANSICHTEN[n]; $('ansicht').textContent = a.zeichen; $('ansicht').setAttribute('aria-label', 'Ansicht: ' + a.name + '. Tippen zum Wechseln'); lsSet('tg1_ansicht', a.id); if (melden) toast('Ansicht', a.name); }
-$('ansicht').addEventListener('click', () => { setAnsicht((ansichtNr + 1) % ANSICHTEN.length, true); klang('tap'); });
-setAnsicht(ansichtNr, false);
-function stopZeit() {}
-function setFilter(f) { filterF = f; document.querySelectorAll('#filter button').forEach(x => x.setAttribute('aria-pressed', String(x.dataset.f === f))); }
-document.querySelectorAll('#filter button').forEach(b => {
-  const f = b.dataset.f, n = f === 'a' ? WERKE.length : WERKE.filter(w => w.merk.includes(f)).length;
-  if (!n) { b.hidden = true; return; }
-  b.textContent += ' ' + n;
-  b.addEventListener('click', () => { if (game) return; if (karteOffen) { tour = null; sel = -1; rueckFn = null; closeKarte(); } setFilter(f); klang('tap'); $('hint').classList.add('weg'); });
 });
-setFilter('a');
+lupeImg.addEventListener('pointermove', e => {
+  if (!lp.has(e.pointerId)) return;
+  const alt = lp.get(e.pointerId); lp.set(e.pointerId, { x: e.clientX, y: e.clientY });
+  if (lp.size >= 2 && lg) {
+    const [a, b] = [...lp.values()], d = Math.hypot(a.x - b.x, a.y - b.y), mx = (a.x + b.x) / 2, my = (a.y + b.y) / 2;
+    const qx = (lg.mx - lg.x) / lg.s, qy = (lg.my - lg.y) / lg.s; lz.s = Math.max(1, Math.min(6, lg.s * d / lg.d)); lz.x = mx - lz.s * qx; lz.y = my - lz.s * qy; lSetze();
+  } else if (lp.size === 1 && lz.s > 1) { lz.x += e.clientX - alt.x; lz.y += e.clientY - alt.y; lSetze(); }
+});
+function lEnde(e) { lp.delete(e.pointerId); if (lp.size < 2) lg = null; }
+lupeImg.addEventListener('pointerup', lEnde); lupeImg.addEventListener('pointercancel', lEnde);
+lupeEl.addEventListener('wheel', e => { e.preventDefault(); lZoomUm(e.clientX, e.clientY, lz.s * Math.exp(-e.deltaY * 0.002)); }, { passive: false });
+window.addEventListener('resize', () => { if (!lupeEl.hidden) { lz = { s: 1, x: 0, y: 0 }; lSetze(); } });
 
-/* ---------- Bedienelemente ---------- */
-const PANEL = { heute: zeigeHeute, rund: zeigeRund, spiele: zeigeSpiele, samml: zeigeSammlung };
-document.querySelectorAll('#leiste button').forEach(b => b.addEventListener('click', () => { if (ansicht === b.dataset.p) { closeMenue(); return; } stopZeit(); PANEL[b.dataset.p](); }));
-function setzePunkt() { const b = document.querySelector('#leiste [data-p="heute"]'); let p = b.querySelector('.punkt'); if (!raetselStand()) { if (!p) b.insertAdjacentHTML('beforeend', '<span class="punkt" aria-label="Neues Tagesrätsel"></span>'); } else if (p) p.remove(); }
-const tw = $('tagwerk');
-(function () { const w = werkDesTages(); tw.querySelector('img').src = BILD + w.key + '_k.jpg'; tw.querySelector('b').textContent = w.t; tw.hidden = false; tw.onclick = () => showWerk(w.i); lon0 = Math.atan2(w.m[0], w.m[2]) - 0.25; lat0 = Math.max(-0.8, Math.min(0.9, Math.asin(w.m[1]) * 0.8)); })();
-$('zplus').addEventListener('click', () => { auto = false; setZoom(zoomT * 1.4, false); });
-$('zminus').addEventListener('click', () => { auto = false; setZoom(zoomT / 1.4, false); });
-ov.addEventListener('wheel', e => { e.preventDefault(); auto = false; setZoom(zoomT * Math.exp(-e.deltaY * 0.0015), false); }, { passive: false });
+/* ---------- Bedienung ---------- */
+$('bSpiel').onclick = () => { klang('tap'); zeigeWahl(true); };
+$('wahlZurueck').onclick = () => { klang('tap'); zeigeWahl(false); layout(false); };
+$('wahlLos').onclick = () => startSpiel(spielKat); $('bLern').onclick = startLernen;
+$('bAus').onclick = goStart; $('bHome').onclick = goStart; $('bZufall').onclick = zufallstier;
+$('zplus').onclick = () => { auto = false; setZoom(zoomT * 1.4); };
+$('zminus').onclick = () => { auto = false; setZoom(zoomT / 1.4); };
+ov.addEventListener('wheel', e => { e.preventDefault(); auto = false; setZoom(zoomT * Math.exp(-e.deltaY * 0.0015)); }, { passive: false });
 let ptr = null, pinch = null;
 ov.addEventListener('pointerdown', e => {
   if (ptr && !pinch) { pinch = { id: e.pointerId, x: e.clientX, y: e.clientY, d0: Math.max(30, Math.hypot(e.clientX - ptr.lx, e.clientY - ptr.ly)), z0: zoomT }; ptr.moved = true; vLon = vLat = 0; try { ov.setPointerCapture(e.pointerId); } catch (err) {} return; }
   if (ptr) return;
   ptr = { id: e.pointerId, sx: e.clientX, sy: e.clientY, lx: e.clientX, ly: e.clientY, t0: performance.now(), lt: performance.now(), moved: false };
   try { ov.setPointerCapture(e.pointerId); } catch (err) {}
-  auto = false; vLon = vLat = 0; lonT = latT = null; $('hint').classList.add('weg'); stopZeit();
+  auto = false; vLon = vLat = 0; lonT = latT = null;
 });
 ov.addEventListener('pointermove', e => {
-  if (pinch && ptr) { if (e.pointerId === pinch.id) { pinch.x = e.clientX; pinch.y = e.clientY; } else if (e.pointerId === ptr.id) { ptr.lx = e.clientX; ptr.ly = e.clientY; } else return; setZoom(pinch.z0 * Math.hypot(pinch.x - ptr.lx, pinch.y - ptr.ly) / pinch.d0, false); zoom = zoomT; return; }
+  if (pinch && ptr) { if (e.pointerId === pinch.id) { pinch.x = e.clientX; pinch.y = e.clientY; } else if (e.pointerId === ptr.id) { ptr.lx = e.clientX; ptr.ly = e.clientY; } else return; setZoom(pinch.z0 * Math.hypot(pinch.x - ptr.lx, pinch.y - ptr.ly) / pinch.d0); zoom = zoomT; return; }
   if (!ptr || e.pointerId !== ptr.id) return;
   const dx = e.clientX - ptr.lx, dy = e.clientY - ptr.ly, now = performance.now();
   if (!ptr.moved && Math.hypot(e.clientX - ptr.sx, e.clientY - ptr.sy) > 8) ptr.moved = true;
@@ -951,24 +688,26 @@ function endPtr(e, cancel) {
 }
 ov.addEventListener('pointerup', e => endPtr(e, false));
 ov.addEventListener('pointercancel', e => endPtr(e, true));
-let thumbsDrawn = [];
-function thumbAt(x, y) { for (let k = thumbsDrawn.length - 1; k >= 0; k--) { const t = thumbsDrawn[k]; if (Math.hypot(x - t.tx, y - t.ty) <= 24) return t.w.i; } return -1; }
-function markerAt(x, y) { let b = -1, bd = 1e9; for (const w of WERKE) { if (!sichtbar(w)) continue; const p = proj(w.m); if (p.z < 0.06) continue; const d = Math.hypot(p.x - x, p.y - y); if (d < 22 && d < bd) { bd = d; b = w.i; } } return b; }
+function thumbAt(x, y) { for (let k = thumbsDrawn.length - 1; k >= 0; k--) { const t = thumbsDrawn[k]; if (Math.hypot(x - t.tx, y - t.ty) <= 26) return t.w.i; } return -1; }
+function markerAt(x, y) { let b = -1, bd = 1e9; for (const w of WERKE) { if (!sichtbarW(w)) continue; const p = proj(w.m); if (p.z < 0.06) continue; const d = Math.hypot(p.x - x, p.y - y); if (d < 24 && d < bd) { bd = d; b = w.i; } } return b; }
 function tap(x, y) {
   frameTrig();
-  if (game) { if (game.art === 'ort' && game.phase === 'ask') { const u = unproj(x, y); if (u) { guess = u; $('ok').disabled = false; klang('tap'); } } return; }
-  let i = thumbAt(x, y); if (i < 0) i = markerAt(x, y);
-  if (i >= 0) showWerk(i); else if (karteOffen && !tour) schliesseWerk();
+  if (mode === 'spiel') { if (game && game.phase === 'ask') { const u = unproj(x, y); if (u) tippe(u); } return; }
+  if (mode === 'start') { let i = thumbAt(x, y); if (i < 0) i = markerAt(x, y); if (i >= 0) { startLernen(); oeffneKarte(WERKE[i]); } return; }
+  if (mode === 'lernen') {
+    if (!$('karte').hidden) { schliesseKarte(); return; }
+    let i = thumbAt(x, y); if (i < 0) i = markerAt(x, y); if (i >= 0) oeffneKarte(WERKE[i]);
+  }
 }
 document.addEventListener('keydown', e => {
-  if (e.key === 'Escape') { if (lupeEl.classList.contains('offen')) lupeEl.classList.remove('offen', 'gross'); else if (menue.classList.contains('offen')) closeMenue(); else if (game) endGame(); else if (karteOffen) { tour = null; schliesseWerk(); } return; }
-  if (menue.classList.contains('offen') || lupeEl.classList.contains('offen')) return;
-  if (tour) { if (e.key === 'ArrowRight' && $('vor')) $('vor').click(); if (e.key === 'ArrowLeft' && $('zur')) $('zur').click(); return; }
+  if (!lupeEl.hidden) { if (e.key === 'Escape') lupeZu(); return; }
+  if (e.key === 'Escape') { if (mode === 'lernen' && !$('karte').hidden) schliesseKarte(); else if (mode !== 'start') goStart(); return; }
   const s = 0.08; if (e.key === 'ArrowLeft') { lon0 -= s; auto = false; } if (e.key === 'ArrowRight') { lon0 += s; auto = false; }
   if (e.key === 'ArrowUp') { lat0 = Math.min(1.3, lat0 + s); auto = false; } if (e.key === 'ArrowDown') { lat0 = Math.max(-1.3, lat0 - s); auto = false; }
 });
 
 /* ---------- Zeichnen ---------- */
+function rrect(x, y, w, h, r) { ctx.beginPath(); if (ctx.roundRect) ctx.roundRect(x, y, w, h, r); else ctx.rect(x, y, w, h); }
 function glow(x, y, r, rgb, a) { const g = ctx.createRadialGradient(x, y, 0, x, y, r); g.addColorStop(0, `rgba(255,255,255,${a})`); g.addColorStop(0.25, `rgba(${rgb},${a * 0.8})`); g.addColorStop(1, `rgba(${rgb},0)`); ctx.fillStyle = g; ctx.beginPath(); ctx.arc(x, y, r, 0, 6.2832); ctx.fill(); }
 function drawArc(pts, prog, rgb, breite) {
   const n = pts.length - 1, last = prog * n, P = pts.map(q => proj(q));
@@ -982,84 +721,17 @@ function drawArc(pts, prog, rgb, breite) {
   }
   if (prog > 0 && prog < 1) { const k = Math.min(n - 1, Math.floor(last)), a = P[k], b = P[k + 1], f = last - k; if (a.vis && b.vis) glow(a.x + (b.x - a.x) * f, a.y + (b.y - a.y) * f, 9, rgb, 0.9); }
 }
-function drawRing(g, tms, rgb) {
-  const up = Math.abs(g[1]) > 0.95 ? [1, 0, 0] : [0, 1, 0];
-  let e1 = [up[1] * g[2] - up[2] * g[1], up[2] * g[0] - up[0] * g[2], up[0] * g[1] - up[1] * g[0]]; const l1 = Math.hypot(...e1); e1 = e1.map(v => v / l1);
-  const e2 = [g[1] * e1[2] - g[2] * e1[1], g[2] * e1[0] - g[0] * e1[2], g[0] * e1[1] - g[1] * e1[0]];
-  for (let k = 0; k < 2; k++) {
-    const ph = ((tms / 1700) + k * 0.5) % 1, rho = (0.02 + ph * 0.1) / Math.max(1, zoom * 0.6), al = (1 - ph) * 0.9;
-    ctx.strokeStyle = `rgba(${rgb},${al.toFixed(3)})`; ctx.lineWidth = 2; ctx.beginPath(); let st0 = false;
-    for (let s = 0; s <= 40; s++) { const a = s / 40 * 6.2832, c = Math.cos(rho), sn = Math.sin(rho); const q = [0, 1, 2].map(j => g[j] * c + sn * (e1[j] * Math.cos(a) + e2[j] * Math.sin(a))); const p = proj(q); if (p.z <= 0) { st0 = false; continue; } if (!st0) { ctx.moveTo(p.x, p.y); st0 = true; } else ctx.lineTo(p.x, p.y); }
-    ctx.stroke();
-  }
-}
-function label(text, x, y, rgb) {
-  ctx.font = '500 13px "DM Sans",system-ui,sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'bottom';
-  const w = ctx.measureText(text).width + 14, h = 22, rx = Math.max(6 + w / 2, Math.min((karteOffen && landscape() ? W - panelW() : W) - 6 - w / 2, x));
-  y = Math.max(y, 62 + h + 10); y = Math.min(y, (karteOffen && !landscape() ? H - karte.offsetHeight : H - unterH()) - 4);
-  ctx.fillStyle = 'rgba(6,8,22,.8)'; ctx.strokeStyle = `rgba(${rgb},.7)`; ctx.lineWidth = 1; ctx.beginPath();
-  if (ctx.roundRect) ctx.roundRect(rx - w / 2, y - h - 10, w, h, 11); else ctx.rect(rx - w / 2, y - h - 10, w, h); ctx.fill(); ctx.stroke();
-  ctx.fillStyle = '#fff'; ctx.fillText(text, rx, y - 14);
-}
-function farbe(w) { return w.merk.includes('†') ? '176,176,188' : LR[w.h].c; }
-function drawMarkers(tms) {
-  const items = [];
-  for (const w of WERKE) { if (!sichtbar(w)) continue; const p = proj(w.m); if (p.z <= 0.02) continue; items.push({ w, p, a: Math.min(1, (p.z - 0.02) / 0.3), d: w.i === sel ? -1 : neuW && neuW.i === w.i && tms - neuW.t < 1800 ? -0.5 : Math.hypot(p.x - cx, p.y - cy) }); }
-  items.sort((x, y) => x.d - y.d);
-  const maxX = karteOffen && landscape() ? W - panelW() : W, maxY = karteOffen && !landscape() ? H - karte.offsetHeight : H - (menue.classList.contains('offen') ? 0 : unterH());
-  // Gruppen nah beieinander liegender Punkte bilden, Bilder im Kreis darum auffächern
-  const gruppen = [];
-  for (const it of items) { if (it.a < 0.7) continue; let g = null; for (const q of gruppen) if (Math.hypot(q.x - it.p.x, q.y - it.p.y) < 26) { g = q; break; } if (!g) { g = { x: it.p.x, y: it.p.y, m: [] }; gruppen.push(g); } g.m.push(it); }
-  const aktiv = [];
-  const setze = (it, tx, ty) => { if (aktiv.length >= 70) return; if (tx < 24 || tx > maxX - 24 || ty < 96 || ty > maxY - 24) return; if (aktiv.every(o => Math.hypot(o.tx - tx, o.ty - ty) > 45)) { it.tx = tx; it.ty = ty; aktiv.push(it); } };
-  for (const g of gruppen) {
-    // Nur Werke aus derselben Stadt (unter 40 km) werden im Kreis aufgefächert, sonst sitzt jedes Bild direkt über seinem Punkt
-    const stadt = g.m.length > 1 && g.m.length <= 12 && g.m.every(it => km(it.w.m, g.m[0].w.m) < 40);
-    if (!stadt) { g.m.forEach(it => setze(it, it.p.x, it.p.y - 32)); continue; }
-    const mx = g.m.reduce((s, it) => s + it.p.x, 0) / g.m.length, my = g.m.reduce((s, it) => s + it.p.y, 0) / g.m.length;
-    const n = g.m.length, rr = Math.max(40, n * 47 / (2 * Math.PI));
-    g.m.sort((a, b) => a.p.x - b.p.x);
-    g.m.forEach((it, k) => { const a = -Math.PI / 2 + (k - (n - 1) / 2) * (2 * Math.PI / n); setze(it, mx + rr * Math.cos(a), my + rr * Math.sin(a)); });
-  }
-  // Leitlinien und Punkte (genau am Ort)
-  ctx.lineWidth = 1;
-  for (const it of aktiv) { ctx.strokeStyle = `rgba(${farbe(it.w)},.6)`; ctx.beginPath(); const dx = it.tx - it.p.x, dy = it.ty - it.p.y, l = Math.hypot(dx, dy) || 1; ctx.moveTo(it.p.x + dx / l * 3, it.p.y + dy / l * 3); ctx.lineTo(it.tx - dx / l * 20, it.ty - dy / l * 20); ctx.stroke(); }
-  for (const it of items) {
-    const { w, p, a } = it, ist = w.i === sel, s = ist ? 1.5 : 1, frisch = neuW && neuW.i === w.i && tms - neuW.t < 1200;
-    ctx.globalCompositeOperation = 'lighter'; glow(p.x, p.y, (frisch ? 30 : 11) * s, ist ? '150,220,255' : farbe(w), (frisch ? 0.9 : 0.42) * a); ctx.globalCompositeOperation = 'source-over';
-    ctx.fillStyle = ist ? `rgba(220,245,255,${a})` : w.bau ? `rgba(190,250,240,${a})` : `rgba(240,226,190,${a})`; ctx.beginPath(); ctx.arc(p.x, p.y, 3 * s, 0, 6.2832); ctx.fill();
-  }
-  thumbsDrawn = aktiv;
-  const istNeu = it => neuW && neuW.i === it.w.i && tms - neuW.t < 1800;
-  aktiv.sort((a, b) => istNeu(a) - istNeu(b));
-  for (const it of aktiv) {
-    const { w, tx, ty } = it, im = klein(w), ist = w.i === sel, g = gekonnt(w), pop = istNeu(it) ? popFaktor(tms - neuW.t) : 1, r = 20 * pop;
-    if (pop > 1.02) { ctx.globalCompositeOperation = 'lighter'; glow(tx, ty, r * 1.9, farbe(w), 0.35 * Math.min(1, pop - 1)); ctx.globalCompositeOperation = 'source-over'; }
-    ctx.save(); ctx.beginPath(); ctx.arc(tx, ty, r, 0, 6.2832); ctx.clip();
-    if (im.complete && im.naturalWidth) { const sc = Math.max(2 * r / im.naturalWidth, 2 * r / im.naturalHeight); ctx.drawImage(im, tx - im.naturalWidth * sc / 2, ty - im.naturalHeight * sc / 2, im.naturalWidth * sc, im.naturalHeight * sc); } else { ctx.fillStyle = '#222'; ctx.fill(); }
-    ctx.restore();
-    ctx.strokeStyle = ist ? '#ffffff' : 'rgb(' + farbe(w) + ')'; ctx.lineWidth = g || ist ? 3 : 2; ctx.beginPath(); ctx.arc(tx, ty, r, 0, 6.2832); ctx.stroke();
-    if (g) { ctx.fillStyle = '#9be8a5'; ctx.beginPath(); ctx.arc(tx + 14, ty - 14, 6, 0, 6.2832); ctx.fill(); ctx.fillStyle = '#08210c'; ctx.font = '700 9px "DM Sans",system-ui,sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillText('✓', tx + 14, ty - 13.5); }
-  }
-}
-function popFaktor(ms) {
-  const p = ms / 1800; if (p >= 1) return 1;
-  if (p < 0.28) { const q = p / 0.28; return 0.4 + 1.8 * (1 - Math.pow(1 - q, 3)); }
-  const q = (p - 0.28) / 0.72; return 2.2 - 1.2 * (q * q * (3 - 2 * q));
-}
-function drawZeitTitel(tms) {
-  if (!neuW || tms - neuW.t > 2600 || karteOffen || menue.classList.contains('offen')) return;
-  const w = WERKE[neuW.i], t = thumbsDrawn.find(x => x.w.i === w.i); if (!t) return;
-  ctx.globalAlpha = Math.min(1, (tms - neuW.t) / 300, (2600 - (tms - neuW.t)) / 400);
-  label(w.t + ' · ' + w.j, t.tx, t.ty - 20 * popFaktor(tms - neuW.t) - 4, farbe(w));
-  ctx.globalAlpha = 1;
+function pille(text, x, y, rgb, gross) {
+  ctx.font = `800 ${gross ? 15 : 13}px Nunito,system-ui,sans-serif`; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+  const w = ctx.measureText(text).width + 22, h = gross ? 30 : 26, rx = Math.max(6 + w / 2, Math.min(W - 6 - w / 2, x)), ry = Math.max(topT + h / 2, Math.min(H - botT - h / 2, y));
+  ctx.fillStyle = 'rgba(3,26,32,.88)'; ctx.strokeStyle = `rgba(${rgb},.95)`; ctx.lineWidth = 2; rrect(rx - w / 2, ry - h / 2, w, h, h / 2); ctx.fill(); ctx.stroke();
+  ctx.fillStyle = '#fff'; ctx.fillText(text, rx, ry + 0.5);
 }
 function basis(g) {
   const up = Math.abs(g[1]) > 0.95 ? [1, 0, 0] : [0, 1, 0];
   let e1 = [up[1] * g[2] - up[2] * g[1], up[2] * g[0] - up[0] * g[2], up[0] * g[1] - up[1] * g[0]]; const l1 = Math.hypot(e1[0], e1[1], e1[2]); e1 = e1.map(v => v / l1);
   return [e1, [g[1] * e1[2] - g[2] * e1[1], g[2] * e1[0] - g[0] * e1[2], g[0] * e1[1] - g[1] * e1[0]]];
 }
-// Verbreitungsgebiet als Kreis auf der Kugel. Punkte auf der Rückseite werden an den Kugelrand geschoben, damit die Fläche dort sauber endet.
 function kreisPfad(c, rho) {
   const [e1, e2] = c.b || (c.b = basis(c.g)), cs = Math.cos(rho), sn = Math.sin(rho); let vorn = 0;
   ctx.beginPath();
@@ -1086,43 +758,97 @@ function drawWeg(pts, e, rgb) {
   ctx.stroke();
   ctx.globalCompositeOperation = 'lighter'; drawArc(pts, e, rgb, 1.8); ctx.globalCompositeOperation = 'source-over';
 }
-const BOGENSTART = 450;
+function bogenDauer(w) { const th = w.route ? w.route.th : w.neo ? w.neo.arc.th : 0; return 1500 + 1800 * Math.min(1, th / Math.PI); }
+function rundBild(w, x, y, r, rgb, rand) {
+  const im = klein(w);
+  ctx.save(); ctx.shadowColor = 'rgba(0,0,0,.55)'; ctx.shadowBlur = 8; ctx.shadowOffsetY = 2; ctx.fillStyle = '#0a2a33'; ctx.beginPath(); ctx.arc(x, y, r, 0, 6.2832); ctx.fill(); ctx.restore();
+  ctx.save(); ctx.beginPath(); ctx.arc(x, y, r, 0, 6.2832); ctx.clip();
+  if (im.complete && im.naturalWidth) { const sc = Math.max(2 * r / im.naturalWidth, 2 * r / im.naturalHeight); ctx.drawImage(im, x - im.naturalWidth * sc / 2, y - im.naturalHeight * sc / 2, im.naturalWidth * sc, im.naturalHeight * sc); }
+  ctx.restore();
+  ctx.strokeStyle = '#fff'; ctx.lineWidth = 3; ctx.beginPath(); ctx.arc(x, y, r, 0, 6.2832); ctx.stroke();
+  ctx.strokeStyle = 'rgb(' + rgb + ')'; ctx.lineWidth = 2; ctx.beginPath(); ctx.arc(x, y, r + 2.5, 0, 6.2832); ctx.stroke();
+}
+function drawMarkers() {
+  const karteAuf = !$('karte').hidden, items = [];
+  for (const w of WERKE) {
+    if (karteAuf ? w.i !== sel : !sichtbarW(w)) continue;
+    const p = proj(w.m); if (p.z <= 0.02) continue;
+    items.push({ w, p, a: Math.min(1, (p.z - 0.02) / 0.3), d: w.i === sel ? -1 : Math.hypot(p.x - cx, p.y - cy) });
+  }
+  items.sort((x, y) => x.d - y.d);
+  const aktiv = [], maxY = H - botT;
+  for (const it of items) {
+    if (it.a < 0.7 || aktiv.length >= 60) continue;
+    const tx = it.p.x, ty = it.p.y - 34;
+    if (tx < LX + 26 || tx > W - 26 || ty < topT || ty > maxY - 20) continue;
+    if (aktiv.every(o => Math.hypot(o.tx - tx, o.ty - ty) > 50)) { it.tx = tx; it.ty = ty; aktiv.push(it); }
+  }
+  ctx.lineWidth = 1.5;
+  for (const it of aktiv) { ctx.strokeStyle = `rgba(${farbe(it.w)},.8)`; ctx.beginPath(); ctx.moveTo(it.p.x, it.p.y - 3); ctx.lineTo(it.tx, it.ty + 20); ctx.stroke(); }
+  for (const it of items) { const { w, p, a } = it; ctx.globalCompositeOperation = 'lighter'; glow(p.x, p.y, 11, farbe(w), 0.45 * a); ctx.globalCompositeOperation = 'source-over'; ctx.fillStyle = `rgba(255,255,255,${a})`; ctx.beginPath(); ctx.arc(p.x, p.y, 3, 0, 6.2832); ctx.fill(); }
+  thumbsDrawn = aktiv;
+  for (const it of aktiv) rundBild(it.w, it.tx, it.ty, it.w.i === sel ? 24 : 20, farbe(it.w));
+}
 function drawGebiet(t) {
   if (sel < 0) return; const w = WERKE[sel], dt = t - arcStart;
   const f = REDUZIERT ? 1 : 1 - Math.pow(1 - Math.min(1, dt / 900), 3), puls = REDUZIERT ? 1 : 0.86 + 0.14 * Math.sin(t / 520);
-  w.areal.forEach(c => drawAreal(c, f, farbe(w), puls));
-  if (w.neo && !game) { const f2 = REDUZIERT ? 1 : 1 - Math.pow(1 - Math.max(0, Math.min(1, (dt - BOGENSTART - bogenDauer(w)) / 900)), 3); w.neo.neu.forEach(c => drawAreal(c, f2, NEOFARBE, puls)); }
+  w.areal.forEach(c => drawAreal(c, f, mode === 'spiel' ? '255,194,51' : farbe(w), puls));
+  if (w.neo && mode === 'lernen') { const f2 = REDUZIERT ? 1 : 1 - Math.pow(1 - Math.max(0, Math.min(1, (dt - 450 - bogenDauer(w)) / 900)), 3); w.neo.neu.forEach(c => drawAreal(c, f2, NEOFARBE, puls)); }
 }
-function drawSelected(t) {
-  if (sel < 0) return; const w = WERKE[sel], dt = t - arcStart;
-  if (game || (!w.route && !w.neo)) return;
-  const dauer = bogenDauer(w), pr = REDUZIERT ? 1 : Math.min(1, Math.max(0, (dt - BOGENSTART) / dauer)), e = 1 - Math.pow(1 - pr, 3);
+function drawRoute(t) {
+  if (sel < 0 || mode !== 'lernen') return; const w = WERKE[sel], dt = t - arcStart;
+  if (!w.route && !w.neo) return;
+  const dauer = bogenDauer(w), pr = REDUZIERT ? 1 : Math.min(1, Math.max(0, (dt - 450) / dauer)), e = 1 - Math.pow(1 - pr, 3);
   if (w.route) {
     const R0 = w.route, n = R0.pts.length - 1; drawWeg(R0.pts, e, WEGFARBE);
     if (pr >= 1 && !REDUZIERT) {
-      let u = ((dt - BOGENSTART - dauer) / (dauer * 1.8)) % 2; if (R0.zu) u = u % 1; else if (u > 1) u = 2 - u;
+      let u = ((dt - 450 - dauer) / (dauer * 1.8)) % 2; if (R0.zu) u = u % 1; else if (u > 1) u = 2 - u;
       const p = proj(wegPunkt(R0.pts, u)); if (p.vis) { ctx.globalCompositeOperation = 'lighter'; glow(p.x, p.y, 12, WEGFARBE, 0.95); ctx.globalCompositeOperation = 'source-over'; }
     }
     const LP = R0.lab.map(L => proj(L.g)), my = LP.reduce((q, p) => q + p.y, 0) / (LP.length || 1);
-    R0.lab.forEach((L, k) => { if (e * n < L.k - 0.5) return; const p = LP[k]; if (p.z > 0.1) label(L.txt, p.x, p.y <= my ? p.y - 6 : p.y + 40, WEGFARBE); });
+    R0.lab.forEach((L, k) => { if (e * n < L.k - 0.5) return; const p = LP[k]; if (p.z > 0.1) pille(L.txt, p.x, p.y <= my ? p.y - 16 : p.y + 16, WEGFARBE); });
   } else {
     const N = w.neo, pa = proj(N.A), pb = proj(N.B); drawWeg(N.arc.pts, e, NEOFARBE);
     const oben = pa.y < pb.y;
-    if (pa.z > 0.1) label('Heimat: ' + w.d.ne.heimat, pa.x, oben ? pa.y - 6 : pa.y + 40, farbe(w));
-    if (pr >= 1 && pb.z > 0.1) label('Eingeschleppt: ' + w.d.ne.ort, pb.x, oben ? pb.y + 40 : pb.y - 6, NEOFARBE);
+    if (pa.z > 0.1) pille('Heimat: ' + w.d.ne.heimat, pa.x, oben ? pa.y - 16 : pa.y + 16, farbe(w));
+    if (pr >= 1 && pb.z > 0.1) pille('Eingeschleppt: ' + w.d.ne.ort, pb.x, oben ? pb.y + 16 : pb.y - 16, NEOFARBE);
   }
-  if (!arcKlang && !game && dt > BOGENSTART + dauer) { arcKlang = true; klang('ankunft', w); }
+}
+function drawSpiel(tms) {
+  if (!game) return;
+  const done = game.phase === 'done' && gA, w = game.order[game.r];
+  let gp = guess ? proj(toVec(guess.lat, guess.lon)) : null;
+  if (done && tms - gArcStart > 500) { const pb = proj(gA.c.g); if (pb.z > 0.05) rundBild(w, pb.x, pb.y - 4, 24, '255,194,51'); }
+  // Entfernungslinie in Koralle mit dunklem Rand, damit sie sich vom gelben Gebiet abhebt
+  let pr = 0;
+  if (done && gArc) {
+    pr = Math.min(1, (tms - gArcStart) / 1500); const e = 1 - Math.pow(1 - pr, 3), last = Math.floor(e * (gArc.pts.length - 1));
+    ctx.strokeStyle = 'rgba(0,0,0,.55)'; ctx.lineWidth = 6; ctx.lineCap = 'round'; ctx.lineJoin = 'round'; ctx.beginPath(); let pen = false;
+    for (let i = 0; i <= last; i++) { const p = proj(gArc.pts[i]); if (!p.vis) { pen = false; continue; } if (pen) ctx.lineTo(p.x, p.y); else { ctx.moveTo(p.x, p.y); pen = true; } }
+    ctx.stroke();
+    ctx.setLineDash([]); drawArc(gArc.pts, e, '255,107,87', 2.4);
+  }
+  if (gp && gp.z > 0) {
+    const a = (tms % 1400) / 1400;
+    ctx.fillStyle = '#ff6b57'; ctx.strokeStyle = '#fff'; ctx.lineWidth = 3; ctx.beginPath(); ctx.arc(gp.x, gp.y, 8, 0, 6.2832); ctx.fill(); ctx.stroke();
+    if (done && !REDUZIERT) { ctx.strokeStyle = `rgba(255,107,87,${(1 - a).toFixed(2)})`; ctx.lineWidth = 2; ctx.beginPath(); ctx.arc(gp.x, gp.y, 8 + 22 * a, 0, 6.2832); ctx.stroke(); }
+  }
+  // Entfernung als Schild über dem Tipp, zuletzt gezeichnet, damit nichts darüber liegt
+  if (done && gp && gp.z > 0 && (pr > 0.5 || !gArc)) {
+    const pb = proj(gA.c.g), unten = pb.z > 0.05 && pb.y < gp.y && Math.abs(pb.x - gp.x) < 90;
+    pille(gDist < 1 ? 'Treffer!' : kmText(gDist), gp.x, unten ? gp.y + 34 : gp.y - 34, '255,107,87', true);
+  }
 }
 function render(tms) {
   const dt = Math.min(0.05, (tms - (render.l || tms)) / 1000); render.l = tms;
   if (tms - sunZeit > 20000) { sun = sonne(); sunZeit = tms; }
-  if (auto && !game && !karteOffen) lon0 += 0.04 * dt;
+  if (auto || (mode === 'spiel' && game && game.phase === 'ask' && !ptr && !pinch)) { lon0 += 0.045 * dt; if (lonT !== null) lonT += 0.045 * dt; }
   if (!ptr) {
     if (lonT !== null) { let d = lonT - lon0; d = Math.atan2(Math.sin(d), Math.cos(d)); const k = 1 - Math.exp(-dt * fokusTempo); lon0 += d * k; lat0 += (latT - lat0) * k; if (Math.abs(d) < 0.002 && Math.abs(latT - lat0) < 0.002) lonT = latT = null; }
     else { lon0 += vLon * dt; lat0 = Math.max(-1.3, Math.min(1.3, lat0 + vLat * dt)); const f = Math.exp(-dt * 3.2); vLon *= f; vLat *= f; }
   }
   if (lon0 > Math.PI) lon0 -= 2 * Math.PI; if (lon0 < -Math.PI) lon0 += 2 * Math.PI;
-  const kk = 1 - Math.exp(-dt * 6); cx += (cxT - cx) * kk; cy += (cyT - cy) * kk;
+  const kk = 1 - Math.exp(-dt * 6); cx += (cxT - cx) * kk; cy += (cyT - cy) * kk; Rbase += (RbaseT - Rbase) * (1 - Math.exp(-dt * 6));
   zoom += (zoomT - zoom) * (1 - Math.exp(-dt * 7)); R = Rbase * zoom;
   frameTrig();
   if (bereit) {
@@ -1132,28 +858,16 @@ function render(tms) {
     gl.drawArrays(gl.TRIANGLES, 0, 3);
   }
   ctx.setTransform(DPR, 0, 0, DPR, 0, 0); ctx.clearRect(0, 0, W, H);
+  thumbsDrawn = [];
   if (bereit) {
-    const verdeckt = game && (game.phase === 'ask' || game.phase === 'wait' || game.art === 'zeit');
-    if (!game) {
-      ctx.globalCompositeOperation = 'lighter'; ctx.lineWidth = 1; ctx.strokeStyle = 'rgba(255,240,200,0.26)';
-      for (const w of WERKE) { if (!w.fein || w.i === sel || !sichtbar(w)) continue; let prev = proj(w.fein[0]), pen = false; ctx.beginPath(); for (let k = 1; k < w.fein.length; k++) { const p = proj(w.fein[k]); if (prev.vis && p.vis) { if (!pen) { ctx.moveTo(prev.x, prev.y); pen = true; } ctx.lineTo(p.x, p.y); } else pen = false; prev = p; } ctx.stroke(); }
-      ctx.globalCompositeOperation = 'source-over';
-    }
-    drawGebiet(tms); if (!verdeckt) drawMarkers(tms); else thumbsDrawn = [];
-    drawSelected(tms); drawZeitTitel(tms);
-    if (gArc) { const pr = Math.min(1, (tms - gArcStart) / 1800); ctx.globalCompositeOperation = 'lighter'; drawArc(gArc.pts, 1 - Math.pow(1 - pr, 3), '140,225,255', 1.6); ctx.globalCompositeOperation = 'source-over'; }
-    if (gShow && game && game.phase !== 'ask') { const pb = proj(gShow.gb); if (pb.z > 0.05 && (tms - gArcStart) > 900) { glow(pb.x, pb.y, 18, '214,180,110', 0.9); label(gShow.t, pb.x, pb.y - 6, '214,180,110'); } }
-    if (guess) { const p = proj(toVec(guess.lat, guess.lon)); if (p.z > 0) { ctx.strokeStyle = '#8fd3ff'; ctx.lineWidth = 2.5; ctx.beginPath(); ctx.arc(p.x, p.y, 9, 0, 6.2832); ctx.stroke(); ctx.fillStyle = '#8fd3ff'; ctx.beginPath(); ctx.arc(p.x, p.y, 3.5, 0, 6.2832); ctx.fill(); } }
+    if (mode === 'lernen') { drawGebiet(tms); drawMarkers(); drawRoute(tms); } else if (mode === 'start') drawMarkers();
+    else if (mode === 'spiel') { drawGebiet(tms); drawSpiel(tms); }
   }
   zeichneKonfetti(dt);
   requestAnimationFrame(render);
 }
-resize(); frameTrig(); setzePunkt(); requestAnimationFrame(render);
-setTimeout(() => $('hint').classList.add('weg'), 9000);
-window.__tg = { thumbs: () => thumbsDrawn.map(t => ({ i: t.w.i, x: t.tx, y: t.ty, px: t.p.x, py: t.p.y })), select: i => showWerk(i), state: () => ({ sel, lon0, lat0, bereit, zoom, aufloesung, tour: tour && tour.n, zeitN, game: game && { r: game.r, phase: game.phase, art: game.art, ok: game.ok, kind: game.kind }, ansicht }),
-  WERKE, RUND, LS: () => LS, STERNE: () => STERNE, setView: (a, b) => { lon0 = a; lat0 = b; lonT = latT = null; auto = false; }, setZoom: z => { setZoom(z, false); zoom = zoomT; }, closeMenue, schliesseWerk, starteRundgang, starteRundQuiz, starteWiederholung, starteFrei, starteTagesraetsel, zeigeHeute, zeigeRund, zeigeSpiele, zeigeSammlung, setFilter, antwort, game: () => game, werkDesTages,
-  proj: (lat, lon) => { frameTrig(); const p = proj(toVec(lat * D2R, lon * D2R)); return { x: p.x, y: p.y, z: p.z }; },
-  setSun: (lat, lon) => { sun = toVec(lat * D2R, lon * D2R); sunZeit = 1e15; } };
+resize(); frameTrig(); layout(true); startText(); requestAnimationFrame(render);
+window.__tg = { state: () => ({ mode, bereit, zoom, R, cx, cy, game: game && { r: game.r, phase: game.phase, pts: game.pts } }), WERKE, tippe, proj: (lat, lon) => { frameTrig(); const p = proj(toVec(lat * D2R, lon * D2R)); return { x: p.x, y: p.y, z: p.z }; }, thumbs: () => thumbsDrawn.map(t => ({ i: t.w.i, x: t.tx, y: t.ty })), setView: (a, b) => { lon0 = a; lat0 = b; lonT = latT = null; auto = false; }, oeffneKarte, startSpiel, lupeAuf, zeigeWahl, startLernen, goStart, game: () => game };
 })();
 </script>
 </body>

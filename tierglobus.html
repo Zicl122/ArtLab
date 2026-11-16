@@ -240,6 +240,17 @@
   .schlussxp .z b { color:var(--mint); }
   .entd { display:block; margin-top:4px; color:var(--soft); font-size:13px; }
   .neuchip { color:#03251f !important; background:var(--mint) !important; border-color:var(--mint) !important; }
+  #ergebnis { transition:height .35s cubic-bezier(.2,.8,.2,1); overflow:hidden; touch-action:pan-y; }
+  #ergebnis.auf { overflow-y:auto; }
+  #ergebnis .abstand { font-size:14.5px; }
+  .schieben { display:flex; flex-direction:column; align-items:center; gap:6px; width:100%; margin:12px 0 0; padding:4px 0 2px; border:0; background:none; color:var(--soft); font:700 12.5px/1.2 var(--sans); }
+  .schieben i { width:44px; height:5px; border-radius:99px; background:rgba(255,255,255,.35); }
+  .schieben span::before { content:'↑ '; }
+  #ergebnis.auf .schieben span::before { content:'↓ '; }
+  #ergebnis.auf .schieben span { font-size:0; } #ergebnis.auf .schieben span::after { content:'Wieder einklappen'; font-size:12.5px; }
+  .mehrinfo { padding-top:14px; }
+  .mehrinfo .wusstest.voll { margin:0 0 12px; font-size:14.5px; line-height:1.5; }
+  #ergebnis .mehrinfo .wusstest.voll strong { display:block; margin:0 0 6px; }
   #fehler { position:fixed; inset:0; z-index:80; display:none; align-items:center; justify-content:center; text-align:center; padding:32px; background:var(--bg); }
   @media (min-width:700px) { #tippen { font-size:17px; } .frage h2 { font-size:30px; } }
   @media (prefers-reduced-motion:reduce) { *, *::before, *::after { animation-duration:.01ms !important; transition-duration:.01ms !important; } }
@@ -470,7 +481,7 @@ function layout(jump) {
   if (mode === 'start') { top = 175; bot = ($('startunten').offsetHeight || 150) + 36; }
   else if (mode === 'spiel') {
     top = Math.round($('hudbox').getBoundingClientRect().bottom) + 6;
-    bot = game && game.phase === 'done' ? $('ergebnis').offsetHeight + 8 : 64;
+    bot = game && game.phase === 'done' ? (blattH || $('ergebnis').offsetHeight) + 8 : 64;
   } else if (mode === 'lernen') {
     if (sichtbar($('karte'))) bot = $('karte').offsetHeight + 8;
     else { top = Math.round($('lernoben').getBoundingClientRect().bottom) + 6; bot = ($('lernunten').offsetHeight || 60) + 22; }
@@ -712,17 +723,45 @@ function tippe(u) {
   }, 700);
   const satz = (String(w.d.x).match(/[^.!?]+[.!?]+/) || [w.d.x])[0].trim();
   $('ergebnis').innerHTML = `<div class="urteil"><img class="mini" src="${BILD + w.key}_k.jpg" alt="${esc(w.t)}" data-lupe="${w.i}"><div class="uk"><span class="gross">${urteil}${game.serie >= 2 ? `<span class="serie">🔥 ${game.serie}er-Serie</span>` : ''}</span><span class="tn">${esc(w.t)}</span></div><span class="pk">+${zahl(p)}<small>Punkte</small><span class="xp">+${xp} XP</span></span></div>
-    <p class="abstand">${d < 1 ? 'Mitten ins <b>Verbreitungsgebiet</b> getippt.' : `<b>${kmText(d)}</b> daneben.`} Verbreitung: ${esc(w.d.v)}.</p>
+    <p class="abstand">${d < 1 ? 'Du hast mitten ins <b>Verbreitungsgebiet</b> getippt.' : `Dein Tipp lag <b>${kmText(d)}</b> vom Verbreitungsgebiet entfernt.`} Hier lebt es: ${esc(w.d.v)}.</p>
     <p class="wusstest"><strong>Wusstest du?</strong> ${esc(satz)}</p>
-    <div class="ezeile">${bonus ? '<button type="button" class="knopf leise" id="beenden">Beenden</button>' : ''}<button type="button" class="knopf" id="weiter">${letzte ? 'Ergebnis ansehen' : bonus ? 'Nächste Bonusrunde' : 'Nächste Runde'}</button></div>`;
+    <div class="ezeile">${bonus ? '<button type="button" class="knopf leise" id="beenden">Beenden</button>' : ''}<button type="button" class="knopf" id="weiter">${letzte ? 'Ergebnis ansehen' : bonus ? 'Nächste Bonusrunde' : 'Nächste Runde'}</button></div>
+    <button type="button" class="schieben" id="schieben" aria-expanded="false"><i></i><span>Nach oben schieben für mehr Infos</span></button>
+    <div class="mehrinfo">
+      ${String(w.d.x).slice(satz.length).trim() ? `<div class="wusstest voll"><strong>Mehr über das Tier</strong>${esc(String(w.d.x).slice(satz.length).trim())}</div>` : ''}
+      <dl class="fakten">${fakt('Größe', w.d.lt)}${fakt('Gewicht', w.d.gw)}${fakt('Alter', w.d.al)}${fakt('Nahrung', w.d.na)}${fakt('Gruppe', EPN[w.e])}${fakt('Lebensraum', LR[w.h].n)}</dl>
+      <div class="vertiefung"><b>Mehr dazu</b><p>${esc(w.d.xv)}</p></div>
+      <p class="quelle">Bild: ${esc(w.d.q)}, über Wikimedia Commons</p>
+    </div>`;
   zeige('frage', false);
-  zeige('tippen', false); zeige('ergebnis', true); zeige('zoom', false);
+  zeige('tippen', false); zeige('ergebnis', true); zeige('zoom', false); blattZu(true);
   $('weiter').onclick = () => { klang('tap'); if (letzte) schlussBild(); else { game.r++; if (!game.order[game.r]) ziehe(); frage(); } };
   if ($('beenden')) $('beenden').onclick = () => { klang('tap'); schlussBild(); };
   layout(false);
   { const th = ang(gg, A.c.g), rho = A.c.rho, ges = Math.min(3.0, th + rho);
     focus(th > 0.001 ? slerp(gg, A.c.g, (th + rho) / (2 * th), th) : A.c.g);
     const need = 0.8 * freeMin() / 2 / Math.max(0.03, Math.sin(Math.max(0.06, ges) / 2)); setZoom(Math.min(3.2, need / RbaseT)); }
+}
+let blattH = 0, blattAuf = false;
+function blattZu(neu) {
+  const e = $('ergebnis'), g = $('schieben'); if (!g) return;
+  blattAuf = false; e.classList.remove('auf'); g.setAttribute('aria-expanded', 'false'); e.scrollTop = 0;
+  e.style.height = 'auto'; const h = Math.round(g.getBoundingClientRect().bottom - e.getBoundingClientRect().top + 10);
+  blattH = h; e.style.height = h + 'px';
+  if (neu) bindeSchieben();
+}
+function blattOeffnen() {
+  const e = $('ergebnis'); blattAuf = true; e.classList.add('auf'); $('schieben').setAttribute('aria-expanded', 'true');
+  e.style.height = Math.min(e.scrollHeight, Math.round(window.innerHeight * 0.82)) + 'px'; klang('tap');
+}
+function bindeSchieben() {
+  const e = $('ergebnis'), g = $('schieben');
+  g.onclick = () => { if (blattAuf) blattZu(); else blattOeffnen(); };
+  let y0 = null, h0 = 0;
+  e.onpointerdown = ev => { if (ev.target.closest('button:not(#schieben), img')) return; if (blattAuf && e.scrollTop > 0) return; y0 = ev.clientY; h0 = e.offsetHeight; e.style.transition = 'none'; };
+  e.onpointermove = ev => { if (y0 === null) return; const dy = y0 - ev.clientY; if (Math.abs(dy) < 6) return; e.style.height = Math.max(blattH, Math.min(window.innerHeight * 0.82, h0 + dy)) + 'px'; };
+  const ende = ev => { if (y0 === null) return; const dy = y0 - ev.clientY; y0 = null; e.style.transition = ''; if (dy > 40) blattOeffnen(); else if (dy < -40) blattZu(); else if (blattAuf) blattOeffnen(); else blattZu(); };
+  e.onpointerup = ende; e.onpointercancel = ende;
 }
 function schlussBild() {
   const s = game.pts, k = game.kat, b = bestWert(k), z = game.zehn === null ? s : game.zehn, neu = z > b; if (neu) lsSet('tg2_best' + (k !== 'a' ? '_' + k : ''), String(z));

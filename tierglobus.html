@@ -190,6 +190,56 @@
   #ergebnis .wusstest { margin:8px 0 12px; padding:9px 12px; font-size:13.5px; line-height:1.45; }
   #ergebnis .wusstest strong { display:inline; font-size:10.5px; margin:0 4px 0 0; }
   .ezeile { display:flex; gap:10px; } .ezeile .knopf { flex:1; padding-top:13px; padding-bottom:11px; font-size:18px; } .ezeile .knopf.leise { flex:none; font-size:15px; }
+  /* Gamification */
+  .profilzeile { display:flex; align-items:center; gap:12px; width:100%; margin:0 0 14px; padding:8px 12px 8px 8px; border-radius:18px; border:1.5px solid var(--kante); background:rgba(0,0,0,.25); text-align:left; }
+  .lvring { --p:0; width:50px; height:50px; flex:none; border-radius:50%; display:grid; place-items:center; background:conic-gradient(var(--ring,var(--sonne)) calc(var(--p)*1%), rgba(255,255,255,.12) 0); }
+  .lvring b { width:40px; height:40px; border-radius:50%; display:grid; place-items:center; background:var(--tief); font:800 20px/1 var(--kopf); color:#fff; }
+  .lvinfo { flex:1; min-width:0; }
+  .lvinfo .t1 { display:block; font:800 16px/1.1 var(--kopf); color:#fff; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .lvinfo .t2 { display:block; margin-top:3px; font:700 12.5px/1.2 var(--sans); color:var(--soft); }
+  .xpbar { height:8px; border-radius:99px; background:rgba(255,255,255,.12); overflow:hidden; margin-top:6px; }
+  .xpbar i { display:block; height:100%; border-radius:99px; background:linear-gradient(90deg,var(--mint),var(--sonne)); transition:width .8s cubic-bezier(.2,.8,.2,1); }
+  .badgezahl { flex:none; padding:7px 10px; border-radius:999px; background:rgba(255,194,51,.16); border:1px solid rgba(255,194,51,.4); font:800 13px/1 var(--sans); color:var(--sonne); }
+  .profimodus { display:flex; align-items:center; justify-content:center; gap:8px; width:100%; margin:0 0 14px; padding:10px 12px; border-radius:14px; border:1.5px dashed rgba(255,255,255,.25); background:none; font:800 14px/1.25 var(--sans); color:var(--soft); }
+  .profimodus[aria-pressed="true"] { border-style:solid; border-color:var(--sonne); background:rgba(255,194,51,.16); color:#fff; }
+  .profimodus:disabled { opacity:.55; cursor:default; }
+  .urteil .pk .xp { display:block; margin-top:4px; font:800 13px/1 var(--sans); color:var(--mint); letter-spacing:.02em; text-transform:none; }
+  .serie { display:inline-block; margin-left:6px; padding:3px 8px; border-radius:999px; background:rgba(255,107,87,.2); color:#ffb3a8; font:800 12px/1.2 var(--sans); vertical-align:2px; }
+  #toasts { position:fixed; z-index:95; left:50%; transform:translateX(-50%); top:calc(max(10px,env(safe-area-inset-top)) + 6px); width:calc(100% - 24px); max-width:420px; display:flex; flex-direction:column; gap:8px; pointer-events:none; }
+  .toast { display:flex; align-items:center; gap:12px; padding:10px 14px 10px 10px; border-radius:18px; background:linear-gradient(180deg,#1d6a7d,#0c3a45); border:2px solid var(--sonne); box-shadow:0 12px 30px rgba(0,0,0,.5); animation:tin .45s cubic-bezier(.2,.8,.2,1); }
+  .toast.weg { animation:tout .35s ease-in forwards; }
+  .toast .ic { width:44px; height:44px; flex:none; border-radius:50%; display:grid; place-items:center; font-size:24px; background:rgba(255,194,51,.2); }
+  .toast small { display:block; font:800 10.5px/1 var(--sans); letter-spacing:.12em; text-transform:uppercase; color:var(--sonne); margin-bottom:4px; }
+  .toast b { display:block; font:800 17px/1.15 var(--kopf); color:#fff; }
+  .toast span { display:block; font:600 12.5px/1.3 var(--sans); color:var(--soft); }
+  .toast.lv { border-color:var(--mint); background:linear-gradient(180deg,#14806c,#0b4a3f); }
+  .toast.lv .ic { background:rgba(63,227,194,.25); font:800 22px/1 var(--kopf); color:#fff; }
+  @keyframes tin { from { opacity:0; transform:translateY(-24px) scale(.95); } to { opacity:1; transform:none; } }
+  @keyframes tout { to { opacity:0; transform:translateY(-16px); } }
+  #profilblatt { z-index:45; max-height:86vh; max-height:86dvh; }
+  .pkopf { display:flex; align-items:center; gap:14px; margin:4px 0 14px; }
+  .pkopf .lvring { width:76px; height:76px; } .pkopf .lvring b { width:62px; height:62px; font-size:30px; }
+  .pkopf h2 { margin:0; font:800 26px/1.05 var(--kopf); }
+  .pkopf p { margin:4px 0 0; font:700 13.5px/1.3 var(--sans); color:var(--soft); }
+  .pstat { display:grid; grid-template-columns:repeat(4,1fr); gap:8px; margin:0 0 14px; }
+  .pstat div { padding:9px 6px; border-radius:14px; background:rgba(0,0,0,.22); text-align:center; }
+  .pstat b { display:block; font:800 20px/1 var(--kopf); color:#fff; font-variant-numeric:tabular-nums; }
+  .pstat span { display:block; margin-top:4px; font:700 10.5px/1.2 var(--sans); color:var(--soft); }
+  .phinweis { margin:0 0 14px; padding:10px 12px; border-radius:14px; background:rgba(63,227,194,.1); border-left:5px solid var(--mint); font:700 13.5px/1.4 var(--sans); }
+  .ptitel { margin:0 0 10px; font:800 12px/1 var(--sans); letter-spacing:.12em; text-transform:uppercase; color:var(--sonne); }
+  .badges { display:grid; grid-template-columns:repeat(auto-fill,minmax(96px,1fr)); gap:8px; margin:0 0 14px; }
+  .badge { padding:10px 6px 9px; border-radius:16px; background:rgba(255,194,51,.12); border:1.5px solid rgba(255,194,51,.45); text-align:center; }
+  .badge .bi { display:block; font-size:30px; line-height:1.1; }
+  .badge b { display:block; margin-top:4px; font:800 13px/1.15 var(--kopf); color:#fff; }
+  .badge span { display:block; margin-top:3px; font:600 11px/1.25 var(--sans); color:var(--soft); }
+  .badge.gesperrt { background:rgba(0,0,0,.2); border-color:var(--kante); }
+  .badge.gesperrt .bi { filter:grayscale(1); opacity:.35; }
+  .badge.gesperrt b { color:var(--soft); }
+  .schlussxp { margin:0 0 12px; padding:10px 12px; border-radius:16px; background:rgba(0,0,0,.22); }
+  .schlussxp .z { display:flex; justify-content:space-between; font:800 14px/1.2 var(--sans); }
+  .schlussxp .z b { color:var(--mint); }
+  .entd { display:block; margin-top:4px; color:var(--soft); font-size:13px; }
+  .neuchip { color:#03251f !important; background:var(--mint) !important; border-color:var(--mint) !important; }
   #fehler { position:fixed; inset:0; z-index:80; display:none; align-items:center; justify-content:center; text-align:center; padding:32px; background:var(--bg); }
   @media (min-width:700px) { #tippen { font-size:17px; } .frage h2 { font-size:30px; } }
   @media (prefers-reduced-motion:reduce) { *, *::before, *::after { animation-duration:.01ms !important; transition-duration:.01ms !important; } }
@@ -206,6 +256,7 @@
 <section id="start">
   <div class="logo"><b>Tier<em>globus</em></b><span>Wo auf der Erde lebt welches Tier?</span></div>
   <div id="startunten" class="tafel">
+    <button type="button" id="profil" class="profilzeile" aria-label="Dein Profil mit Level und Abzeichen"></button>
     <div class="zeile">
       <button type="button" id="bSpiel" class="knopf"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M7 4.5v15l13-7.5z"/></svg>Spielen</button>
       <button type="button" id="bLern" class="knopf mint"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M12 6.5C10 5 7 4.5 4 5v13c3-.5 6 0 8 1.5 2-1.5 5-2 8-1.5V5c-3-.5-6 0-8 1.5zM12 6.5v13"/></svg>Lernen</button>
@@ -214,6 +265,7 @@
     <div id="wahl" hidden>
       <p class="wahltitel">Mit welchen Tieren willst du spielen?</p>
       <div class="wahlchips" id="wahlchips" role="group" aria-label="Tiergruppe"></div>
+      <button type="button" id="profiBtn" class="profimodus"></button>
       <div class="zeile"><button type="button" class="knopf leise" id="wahlZurueck" aria-label="Zurück">‹</button><button type="button" class="knopf" id="wahlLos">Los geht's</button></div>
     </div>
   </div>
@@ -231,12 +283,14 @@
 <section id="ergebnis" class="blatt tafel" hidden></section>
 
 <section id="lernoben" hidden>
-  <div class="tafel"><b>Tippe auf ein Tier</b> oder starte mit „Los geht's“. Die Farbe am Rand zeigt den Lebensraum.</div>
+  <div class="tafel"><b>Tippe auf ein Tier</b> oder starte mit „Los geht's“. Jedes neue Tier bringt <b>10 XP</b>. <span id="entdecktText" class="entd"></span></div>
   <div id="filter" role="group" aria-label="Tiergruppe"></div>
 </section>
 <div id="lernunten" hidden><button type="button" class="knopf mint" id="bZufall">Los geht's</button><button type="button" class="knopf leise" id="bHome">Startseite</button></div>
 <section id="karte" class="blatt tafel" hidden></section>
 <section id="schluss" hidden></section>
+<section id="profilblatt" class="blatt tafel" hidden></section>
+<div id="toasts" aria-live="polite"></div>
 <div id="lupe" hidden role="dialog" aria-label="Bild groß"><img alt=""><button type="button" class="lzu" aria-label="Schließen">×</button><p class="ltext"></p></div>
 <div id="fehler"><div><h2>Die Kugel kann hier nicht angezeigt werden</h2><p>Dein Browser stellt keine WebGL-Grafik bereit. Probiere einen anderen Browser oder ein anderes Gerät.</p></div></div>
 
@@ -497,18 +551,115 @@ function setMode(m) {
   layout(false);
 }
 function bestWert(k) { return +(lsGet('tg2_best' + (k && k !== 'a' ? '_' + k : '')) || 0); }
-function startText() { const b = bestWert(); $('bestText').innerHTML = b ? `Dein Rekord <span class="best">${zahl(b)} Punkte</span>. Oder schau dich frei um.` : 'Oder drehe die Kugel und schau dich um.'; }
-function goStart() { zeigeWahl(false); setMode('start'); startText(); }
+function startText() { profilZeile(); const b = bestWert(); $('bestText').innerHTML = b ? `Dein Rekord <span class="best">${zahl(b)} Punkte</span>. Oder schau dich frei um.` : 'Oder drehe die Kugel und schau dich um.'; }
+function goStart() { zeige('profilblatt', false); zeigeWahl(false); setMode('start'); startText(); }
+
+
+/* ---------- Gamification: XP, Level, Abzeichen ---------- */
+const PK = 'tg2_profil';
+const LEER = () => ({ xp: 0, ent: [], bad: {}, tage: [], gru: [], reg: [], spiele: 0, runden: 0, treffer: 0 });
+let prof = (() => { try { return Object.assign(LEER(), JSON.parse(lsGet(PK) || '{}')); } catch (e) { return LEER(); } })();
+function speichern() { lsSet(PK, JSON.stringify(prof)); }
+function heute() { const d = new Date(); return d.getFullYear() + '-' + (d.getMonth() + 1) + '-' + d.getDate(); }
+const TITEL = ['Neuling', 'Spurenleser', 'Fährtenfinder', 'Tierfreund', 'Naturforscher', 'Expeditionsleiter', 'Weltenbummler', 'Artenkenner', 'Globusprofi', 'Tierglobus-Legende'];
+const PROFI_AB = 4;
+const FREI = { 4: 'Profi-Modus im Spiel (ohne Lebensraum-Hinweis, doppelte XP)' };
+function xpFuer(n) { return 50 * n * (n - 1); }
+function levelVon(xp) { let n = 1; while (xp >= xpFuer(n + 1)) n++; return n; }
+function titelVon(n) { return TITEL[Math.min(n, TITEL.length) - 1]; }
+function ringFarbe(n) { return n >= 9 ? '#ff6b57' : n >= 6 ? '#ffc233' : n >= 3 ? '#3fe3c2' : '#7cc8ff'; }
+function lvStand() { const n = levelVon(prof.xp), a = xpFuer(n), b = xpFuer(n + 1); return { n, a, b, p: Math.max(0, Math.min(100, (prof.xp - a) / (b - a) * 100)) }; }
+const BEDROHT = new Set(['VU', 'EN', 'CR']);
+const BADGES = [
+  { id: 'start', ic: '🐾', n: 'Erster Tipp', t: 'Die erste Runde gespielt' },
+  { id: 'voll', ic: '🎯', n: 'Volltreffer', t: 'Mindestens 900 Punkte in einer Runde' },
+  { id: 'serie3', ic: '🔥', n: 'Heiße Serie', t: '3 Runden in Folge sehr nah dran' },
+  { id: 'serie5', ic: '⚡', n: 'Unaufhaltsam', t: '5 Runden in Folge sehr nah dran' },
+  { id: 'meister', ic: '🏆', n: 'Weltklasse', t: 'Ein Spiel mit 3 Sternen beendet' },
+  { id: 'welt', ic: '🌍', n: 'Weltreise', t: 'In 6 Weltregionen richtig getippt' },
+  { id: 'gruppen', ic: '🧭', n: 'Allrounder', t: 'In jeder Tiergruppe ein Spiel beendet' },
+  { id: 'bonus', ic: '💪', n: 'Ausdauer', t: '10 Bonusrunden in einem Spiel' },
+  { id: 'profi', ic: '⭐', n: 'Profi', t: 'Ein Spiel im Profi-Modus beendet' },
+  { id: 'treue', ic: '📅', n: 'Dranbleiber', t: 'An 3 verschiedenen Tagen gespielt' },
+  { id: 'ent25', ic: '🔍', n: 'Forscherin', t: '25 Tiere im Lernmodus entdeckt' },
+  { id: 'ent100', ic: '📚', n: 'Artenkenner', t: '100 Tiere entdeckt' },
+  { id: 'entalle', ic: '👑', n: 'Alle entdeckt', t: 'Alle ' + WERKE.length + ' Tiere entdeckt' },
+  { id: 'bedroht', ic: '🛡️', n: 'Artenschützer', t: '10 bedrohte Tiere entdeckt' },
+  { id: 'wanderer', ic: '🦅', n: 'Wanderwege', t: '5 wandernde Tiere entdeckt' }
+];
+let toastQ = [], toastAn = false;
+function toast(html, cls) { toastQ.push({ html, cls }); if (!toastAn) naechsterToast(); }
+function naechsterToast() {
+  const t = toastQ.shift(); if (!t) { toastAn = false; return; } toastAn = true;
+  const el = document.createElement('div'); el.className = 'toast ' + (t.cls || ''); el.innerHTML = t.html; $('toasts').appendChild(el);
+  setTimeout(() => { el.classList.add('weg'); setTimeout(() => { el.remove(); naechsterToast(); }, 350); }, 2600);
+}
+function abzeichen(id) {
+  if (prof.bad[id]) return; const b = BADGES.find(x => x.id === id); if (!b) return;
+  prof.bad[id] = heute(); speichern();
+  toast(`<span class="ic">${b.ic}</span><div><small>Abzeichen freigeschaltet</small><b>${esc(b.n)}</b><span>${esc(b.t)}</span></div>`);
+  klang('sieg'); profilZeile();
+}
+function xpDazu(n) {
+  if (n <= 0) return; const vor = levelVon(prof.xp); prof.xp += n; speichern(); const nach = levelVon(prof.xp);
+  if (nach > vor) { for (let l = vor + 1; l <= nach; l++) toast(`<span class="ic">${l}</span><div><small>Level aufgestiegen</small><b>Level ${l} · ${esc(titelVon(l))}</b>${FREI[l] ? `<span>Neu freigeschaltet: ${esc(FREI[l])}</span>` : `<span>Weiter so!</span>`}</div>`, 'lv'); konfetti(); klang('sieg'); }
+  profilZeile();
+}
+function ringHtml(n, p) { return `<span class="lvring" style="--p:${p.toFixed(1)};--ring:${ringFarbe(n)}"><b>${n}</b></span>`; }
+function profilZeile() {
+  const L = lvStand(), nb = Object.keys(prof.bad).length;
+  $('profil').innerHTML = `${ringHtml(L.n, L.p)}<span class="lvinfo"><span class="t1">Level ${L.n} · ${esc(titelVon(L.n))}</span><span class="t2">${zahl(prof.xp)} XP · noch ${zahl(L.b - prof.xp)} bis Level ${L.n + 1}</span><span class="xpbar"><i style="width:${L.p.toFixed(1)}%"></i></span></span><span class="badgezahl">🏅 ${nb}/${BADGES.length}</span>`;
+  const e = $('entdecktText'); if (e) e.textContent = `Entdeckt ${prof.ent.length} von ${WERKE.length} Tieren`;
+}
+function profilAuf() {
+  klang('tap'); const L = lvStand();
+  const naechstFrei = Object.keys(FREI).map(Number).filter(l => l > L.n).sort((a, b) => a - b)[0];
+  const besten = ['a', '0', '1', '2', '3', '4', '5', '6'].map(k => bestWert(k)).reduce((a, b) => Math.max(a, b), 0);
+  $('profilblatt').innerHTML = `<button type="button" class="zu" aria-label="Schließen" style="position:absolute;top:12px;right:12px">×</button>
+    <div class="pkopf">${ringHtml(L.n, L.p)}<div><h2>Level ${L.n}<br>${esc(titelVon(L.n))}</h2><p>${zahl(prof.xp)} XP, noch ${zahl(L.b - prof.xp)} XP bis Level ${L.n + 1}</p></div></div>
+    <div class="xpbar" style="margin:-4px 0 14px"><i style="width:${L.p.toFixed(1)}%"></i></div>
+    <div class="pstat"><div><b>${prof.spiele}</b><span>Spiele</span></div><div><b>${prof.runden}</b><span>Runden</span></div><div><b>${prof.ent.length}</b><span>Tiere entdeckt</span></div><div><b>${zahl(besten)}</b><span>Rekord</span></div></div>
+    ${naechstFrei ? `<p class="phinweis">Ab Level ${naechstFrei} wird frei: ${esc(FREI[naechstFrei])}.</p>` : ''}
+    <p class="phinweis" style="background:rgba(255,194,51,.1);border-left-color:var(--sonne)">XP gibt es für jede Spielrunde (bis 100), für jedes neu entdeckte Tier im Lernmodus (10) und einmal am Tag als Tagesbonus (50).</p>
+    <p class="ptitel">Abzeichen ${Object.keys(prof.bad).length} von ${BADGES.length}</p>
+    <div class="badges">${BADGES.map(b => `<div class="badge${prof.bad[b.id] ? '' : ' gesperrt'}"><span class="bi">${prof.bad[b.id] ? b.ic : '🔒'}</span><b>${esc(b.n)}</b><span>${esc(b.t)}</span></div>`).join('')}</div>
+    <button type="button" class="knopf leise voll" id="profilZu">Schließen</button>`;
+  zeige('profilblatt', true); $('profilblatt').scrollTop = 0;
+  const zu = () => { zeige('profilblatt', false); klang('tap'); };
+  $('profilblatt').querySelector('.zu').onclick = zu; $('profilZu').onclick = zu;
+}
+function tagesbonus() {
+  const t = heute(); if (prof.tage.includes(t)) return; prof.tage.push(t); if (prof.tage.length > 400) prof.tage = prof.tage.slice(-400); speichern();
+  toast(`<span class="ic">☀️</span><div><small>Tagesbonus</small><b>+50 XP</b><span>Schön, dass du heute dabei bist</span></div>`); xpDazu(50);
+  if (prof.tage.length >= 3) abzeichen('treue');
+}
+function entdecke(w) {
+  if (prof.ent.includes(w.i)) return false;
+  prof.ent.push(w.i); speichern(); xpDazu(10);
+  const n = prof.ent.length; if (n >= 25) abzeichen('ent25'); if (n >= 100) abzeichen('ent100'); if (n >= WERKE.length) abzeichen('entalle');
+  if (prof.ent.filter(i => BEDROHT.has(WERKE[i].d.s)).length >= 10) abzeichen('bedroht');
+  if (prof.ent.filter(i => WERKE[i].route).length >= 5) abzeichen('wanderer');
+  return true;
+}
+let spielProfi = lsGet('tg2_profi') === '1';
+function profiKnopf() {
+  const b = $('profiBtn'), frei = levelVon(prof.xp) >= PROFI_AB; if (!frei) spielProfi = false;
+  b.disabled = !frei; b.setAttribute('aria-pressed', String(spielProfi));
+  b.innerHTML = frei ? `${spielProfi ? '⭐' : '☆'} Profi-Modus ${spielProfi ? 'an' : 'aus'} · ohne Lebensraum-Hinweis, doppelte XP` : `🔒 Profi-Modus ab Level ${PROFI_AB}`;
+}
+$('profil').onclick = profilAuf;
+$('profiBtn').onclick = () => { spielProfi = !spielProfi; lsSet('tg2_profi', spielProfi ? '1' : '0'); profiKnopf(); klang('tap'); layout(false); };
 
 /* ---------- Spiel ---------- */
 let spielKat = lsGet('tg2_kat') || 'a';
 function spielPool(k) { return SPIELBAR.filter(w => k === 'a' || w.e === +k); }
 function katName(k) { return k === 'a' ? 'Alle Tiere' : EPN[+k]; }
 function zeigeWahl(an) {
-  $('wahl').hidden = !an; $('startunten').querySelector('.zeile').hidden = an; $('bestText').hidden = an;
+  $('wahl').hidden = !an; $('startunten').querySelector('.zeile').hidden = an; $('profil').hidden = an; $('bestText').hidden = an;
   if (!an) return;
   const n = k => spielPool(k).length;
   $('wahlchips').innerHTML = `<button type="button" data-k="a" aria-pressed="${spielKat === 'a'}">Alle ${n('a')}</button>` + EPN.map((t, k) => `<button type="button" data-k="${k}" aria-pressed="${spielKat === String(k)}">${t} ${n(String(k))}</button>`).join('');
+  profiKnopf();
   $('wahlchips').querySelectorAll('button').forEach(b => b.onclick = () => { spielKat = b.dataset.k; lsSet('tg2_kat', spielKat); $('wahlchips').querySelectorAll('button').forEach(x => x.setAttribute('aria-pressed', String(x === b))); klang('tap'); });
   layout(false);
 }
@@ -519,7 +670,7 @@ function startSpiel(kat) {
   if (k === 'a') { for (const w of pool) { if ((cnt[w.e] || 0) >= 4) continue; cnt[w.e] = (cnt[w.e] || 0) + 1; ord.push(w); if (ord.length === n) break; } }
   else ord.push(...pool.slice(0, n));
   zeigeWahl(false); setMode('spiel');
-  game = { order: ord, r: 0, pts: 0, res: [], phase: 'ask', bonus: false, zehn: null, kat: k, n };
+  game = { order: ord, r: 0, pts: 0, res: [], phase: 'ask', bonus: false, zehn: null, kat: k, n, profi: spielProfi, xp: 0, serie: 0, abgeschlossen: false };
   setScore(0, true);
   frage();
 }
@@ -533,7 +684,7 @@ function punkteZeile() {
 function frage() {
   const w = game.order[game.r]; game.phase = 'ask'; guess = null; gArc = null; gA = null; sel = -1;
   $('rtxt').textContent = (game.r < game.n ? `Runde ${game.r + 1} von ${game.n}` : `Bonusrunde ${game.r + 1 - game.n}`) + (game.kat === 'a' ? '' : ' · ' + EPN[+game.kat]); punkteZeile();
-  $('frage').innerHTML = `<img src="${BILD + w.key}_k.jpg" alt="${esc(w.t)}" data-lupe="${w.i}"><div><small>Wo lebt dieses Tier?</small><h2>${esc(w.t)}</h2><div class="chips"><span class="chip">${esc(EPN[w.e])}</span><span class="chip"><i style="background:rgb(${LR[w.h].c})"></i>${LR[w.h].n}</span></div></div>`;
+  $('frage').innerHTML = `<img src="${BILD + w.key}_k.jpg" alt="${esc(w.t)}" data-lupe="${w.i}"><div><small>Wo lebt dieses Tier?</small><h2>${esc(w.t)}</h2><div class="chips"><span class="chip">${esc(EPN[w.e])}</span>${game.profi ? '<span class="chip">⭐ Profi</span>' : `<span class="chip"><i style="background:rgb(${LR[w.h].c})"></i>${LR[w.h].n}</span>`}</div></div>`;
   $('frage').style.animation = 'none'; void $('frage').offsetWidth; $('frage').style.animation = '';
   zeige('ergebnis', false); zeige('frage', true); zeige('tippen', true); zeige('zoom', true);
   layout(false); setZoom(1);
@@ -547,13 +698,20 @@ function tippe(u) {
   const th2 = ende ? ang(gg, ende) : 0;
   gArc = ende && th2 > 0.004 ? arcPoints(gg, ende, 56) : null; gArcStart = performance.now(); sel = w.i; arcStart = gArcStart;
   game.pts += p; game.res.push({ w, p, d });
+  const xp = Math.round(p / 10) * (game.profi ? 2 : 1); game.xp += xp; game.serie = p >= 700 ? game.serie + 1 : 0;
+  prof.runden++; if (p >= 700) { prof.treffer++; if (!prof.reg.includes(w.r)) prof.reg.push(w.r); } speichern();
   if (game.r === game.n - 1 && !game.bonus) game.zehn = game.pts; punkteZeile();
   setScore(game.pts);
   klang(p >= 900 ? 'top' : p >= 400 ? 'gut' : 'schade'); if (p >= 900) konfetti();
   const urteil = p >= 900 ? 'Volltreffer!' : p >= 700 ? 'Sehr nah dran' : p >= 400 ? 'Ganz gut' : p >= 150 ? 'Noch ein Stück weg' : 'Weit daneben';
   const letzte = game.r === game.n - 1 && !game.bonus, bonus = game.bonus;
+  setTimeout(() => {
+    tagesbonus(); xpDazu(xp); abzeichen('start');
+    if (p >= 900) abzeichen('voll'); if (game.serie >= 3) abzeichen('serie3'); if (game.serie >= 5) abzeichen('serie5');
+    if (prof.reg.length >= 6) abzeichen('welt'); if (game.r + 1 >= game.n + 10) abzeichen('bonus');
+  }, 700);
   const satz = (String(w.d.x).match(/[^.!?]+[.!?]+/) || [w.d.x])[0].trim();
-  $('ergebnis').innerHTML = `<div class="urteil"><img class="mini" src="${BILD + w.key}_k.jpg" alt="${esc(w.t)}" data-lupe="${w.i}"><div class="uk"><span class="gross">${urteil}</span><span class="tn">${esc(w.t)}</span></div><span class="pk">+${zahl(p)}<small>Punkte</small></span></div>
+  $('ergebnis').innerHTML = `<div class="urteil"><img class="mini" src="${BILD + w.key}_k.jpg" alt="${esc(w.t)}" data-lupe="${w.i}"><div class="uk"><span class="gross">${urteil}${game.serie >= 2 ? `<span class="serie">🔥 ${game.serie}er-Serie</span>` : ''}</span><span class="tn">${esc(w.t)}</span></div><span class="pk">+${zahl(p)}<small>Punkte</small><span class="xp">+${xp} XP</span></span></div>
     <p class="abstand">${d < 1 ? 'Mitten ins <b>Verbreitungsgebiet</b> getippt.' : `<b>${kmText(d)}</b> daneben.`} Verbreitung: ${esc(w.d.v)}.</p>
     <p class="wusstest"><strong>Wusstest du?</strong> ${esc(satz)}</p>
     <div class="ezeile">${bonus ? '<button type="button" class="knopf leise" id="beenden">Beenden</button>' : ''}<button type="button" class="knopf" id="weiter">${letzte ? 'Ergebnis ansehen' : bonus ? 'Nächste Bonusrunde' : 'Nächste Runde'}</button></div>`;
@@ -570,11 +728,17 @@ function schlussBild() {
   const s = game.pts, k = game.kat, b = bestWert(k), z = game.zehn === null ? s : game.zehn, neu = z > b; if (neu) lsSet('tg2_best' + (k !== 'a' ? '_' + k : ''), String(z));
   const rk = (k === 'a' ? '' : ' bei ' + EPN[+k]) + ' in ' + game.n + ' Runden';
   const quote = s / Math.max(1000, game.res.length * 1000), sterne = quote >= 0.7 ? 3 : quote >= 0.45 ? 2 : quote >= 0.2 ? 1 : 0;
+  if (!game.abgeschlossen) {
+    game.abgeschlossen = true; prof.spiele++; if (k !== 'a' && !prof.gru.includes(k)) prof.gru.push(k); speichern();
+    setTimeout(() => { if (sterne === 3 && game.res.length >= game.n) abzeichen('meister'); if (game.profi) abzeichen('profi'); if (prof.gru.length >= 7) abzeichen('gruppen'); }, 900);
+  }
+  const L = lvStand();
   zeige('ergebnis', false); zeige('hudbox', false); zeige('tippen', false); zeige('zoom', false);
   gArc = null; guess = null; sel = -1;
   $('schluss').innerHTML = `<div class="tafel"><h2>${sterne === 3 ? 'Weltklasse!' : sterne === 2 ? 'Stark gespielt' : sterne === 1 ? 'Guter Start' : 'Das geht noch besser'}</h2>
     <div class="summe">${zahl(s)}<small>von ${zahl(game.res.length * 1000)} Punkten</small></div>
     <div class="sterne" aria-label="${sterne} von 3 Sternen">${[1, 2, 3].map(k => `<i class="${k <= sterne ? 'an' : ''}">★</i>`).join('')}</div>
+    <div class="schlussxp"><div class="z"><span>Level ${L.n} · ${esc(titelVon(L.n))}</span><b>+${zahl(game.xp)} XP${game.profi ? ' ⭐' : ''}</b></div><div class="xpbar"><i style="width:${L.p.toFixed(1)}%"></i></div></div>
     <p class="bestzeile">${neu ? `<b>Neuer Rekord${rk}!</b>` : `Dein Rekord${rk} liegt bei <b>${zahl(Math.max(b, z))} Punkten</b>.`}</p>
     <div class="liste">${game.res.map(r => `<div><img src="${BILD + r.w.key}_k.jpg" alt="${esc(r.w.t)}" data-lupe="${r.w.i}"><span>${esc(r.w.t)}</span><em class="${r.p >= 700 ? 'a' : r.p >= 300 ? 'b' : 'c'}">${zahl(r.p)}</em></div>`).join('')}</div>
     <div class="schlussknoepfe"><button type="button" class="knopf" id="weiterspielen">Weiterspielen mit Bonusrunden</button><button type="button" class="knopf leise" id="nochmal">Neues Spiel</button><div class="zeile"><button type="button" class="knopf mint" id="zuLernen">Lernen</button><button type="button" class="knopf leise" id="zuStart">Start</button></div></div></div>`;
@@ -587,7 +751,7 @@ function schlussBild() {
 /* ---------- Lernen ---------- */
 function sichtbarW(w) { const f = mode === 'start' && !$('wahl').hidden ? spielKat : filterF; return f === 'a' || w.e === +f; }
 function startLernen() {
-  klang('tap'); setMode('lernen'); filterF = 'a'; queue = []; hist = []; baueFilter(); layout(false);
+  klang('tap'); profilZeile(); setMode('lernen'); filterF = 'a'; queue = []; hist = []; baueFilter(); layout(false);
 }
 function baueFilter() {
   const f = $('filter'), n = g => WERKE.filter(w => g === 'a' || w.e === g).length;
@@ -595,12 +759,12 @@ function baueFilter() {
   f.querySelectorAll('button').forEach(b => b.onclick = () => { filterF = b.dataset.f; queue = []; if (!document.getElementById('karte').hidden) schliesseKarte(); f.querySelectorAll('button').forEach(x => x.setAttribute('aria-pressed', String(x === b))); klang('tap'); });
 }
 function fakt(k, v, breit) { return `<div${breit ? ' class="breit"' : ''}><dt>${k}</dt><dd>${esc(v)}</dd></div>`; }
-function kartenHtml(w) {
+function kartenHtml(w, neu) {
   const d = w.d, st = d.s;
   const status = st === 'LC' ? '<span class="chip gut">' + RLN.LC + '</span>' : (st === 'CR' || st === 'EN' || st === 'VU') ? `<span class="chip rot">${RLN[st]}</span>` : (st === 'EX' || st === 'EW') ? `<span class="chip rot">${RLN[st]}${d.ex ? ' ' + esc(d.ex) : ''}</span>` : st === 'NT' ? `<span class="chip">${RLN.NT}</span>` : '';
   let h = `<div class="kbild"><img src="${BILD + w.key}.jpg" alt="${esc(w.t)}" data-lupe="${w.i}"><span class="gr">⤢ groß</span><button type="button" class="zu" aria-label="Schließen">×</button><h2>${esc(w.t)}</h2></div>
     <p class="wiss">${esc(w.a)}</p>
-    <div class="chips"><span class="chip">${esc(EPN[w.e])}</span><span class="chip"><i style="background:rgb(${farbe(w)})"></i>${LR[w.h].n}</span><span class="chip">${esc(w.r)}</span>${status}</div>
+    <div class="chips">${neu ? '<span class="chip neuchip">✨ Neu entdeckt · +10 XP</span>' : ''}<span class="chip">${esc(EPN[w.e])}</span><span class="chip"><i style="background:rgb(${farbe(w)})"></i>${LR[w.h].n}</span><span class="chip">${esc(w.r)}</span>${status}</div>
     <dl class="fakten">${fakt('Verbreitung', d.v, true)}${fakt('Größe', d.lt)}${fakt('Gewicht', d.gw)}${fakt('Alter', d.al)}${fakt('Nahrung', d.na)}`;
   if (w.route) h += fakt('Wanderung', 'rund ' + kmText(w.route.th * 6371) + (w.route.zu ? ' im Kreis' : ' je Richtung'), true);
   if (w.neo) h += fakt('Eingeschleppt', d.ne.ort, true);
@@ -613,7 +777,8 @@ function oeffneKarte(w, zurueck) {
   if (!zurueck && sel >= 0 && sel !== w.i) hist.push(sel);
   queue = queue.filter(x => x !== w);
   sel = w.i; arcStart = performance.now();
-  const k = $('karte'); k.innerHTML = kartenHtml(w); k.scrollTop = 0; zeige('karte', true); zeige('lernoben', false); zeige('lernunten', false); zeige('zoom', false);
+  const neu = entdecke(w);
+  const k = $('karte'); k.innerHTML = kartenHtml(w, neu); k.scrollTop = 0; zeige('karte', true); zeige('lernoben', false); zeige('lernunten', false); zeige('zoom', false);
   k.querySelector('.zu').onclick = schliesseKarte;
   $('kWeiter').onclick = naechstesTier;
   $('kZurueck').onclick = () => { const i = hist.pop(); if (i !== undefined) oeffneKarte(WERKE[i], true); };
@@ -879,7 +1044,7 @@ function render(tms) {
   requestAnimationFrame(render);
 }
 resize(); frameTrig(); layout(true); startText(); requestAnimationFrame(render);
-window.__tg = { state: () => ({ mode, bereit, zoom, R, cx, cy, game: game && { r: game.r, phase: game.phase, pts: game.pts } }), WERKE, tippe, proj: (lat, lon) => { frameTrig(); const p = proj(toVec(lat * D2R, lon * D2R)); return { x: p.x, y: p.y, z: p.z }; }, thumbs: () => thumbsDrawn.map(t => ({ i: t.w.i, x: t.tx, y: t.ty })), setView: (a, b) => { lon0 = a; lat0 = b; lonT = latT = null; auto = false; }, oeffneKarte, startSpiel, lupeAuf, zeigeWahl, startLernen, goStart, game: () => game };
+window.__tg = { state: () => ({ mode, bereit, zoom, R, cx, cy, game: game && { r: game.r, phase: game.phase, pts: game.pts } }), WERKE, tippe, proj: (lat, lon) => { frameTrig(); const p = proj(toVec(lat * D2R, lon * D2R)); return { x: p.x, y: p.y, z: p.z }; }, thumbs: () => thumbsDrawn.map(t => ({ i: t.w.i, x: t.tx, y: t.ty })), setView: (a, b) => { lon0 = a; lat0 = b; lonT = latT = null; auto = false; }, oeffneKarte, startSpiel, lupeAuf, zeigeWahl, prof: () => prof, xpDazu, abzeichen, profilAuf, startLernen, goStart, game: () => game };
 })();
 </script>
 </body>

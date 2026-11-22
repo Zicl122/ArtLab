@@ -1,0 +1,422 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Luftsaiten</title>
+<style>
+  :root { color-scheme: dark; --bg: #07081a; --fg: #f3efe2; --muted: rgba(243, 239, 226, .68); }
+  html, body { height: 100%; margin: 0; background: var(--bg); color: var(--fg); }
+  body { font: 300 18px/1.5 Georgia, "Times New Roman", serif; overflow: hidden; -webkit-text-size-adjust: 100%; touch-action: none; -webkit-user-select: none; user-select: none; }
+  canvas#buehne { position: fixed; inset: 0; width: 100%; height: 100%; display: block; touch-action: none; }
+  #start { position: fixed; inset: 0; display: flex; flex-direction: column; justify-content: center; align-items: flex-start;
+    padding: 24px max(24px, env(safe-area-inset-left)); max-width: 580px; margin: 0 auto; box-sizing: border-box; gap: 14px; overflow-y: auto; touch-action: pan-y; }
+  #start h1 { font-weight: 400; font-size: clamp(2rem, 7vw, 3rem); line-height: 1.1; margin: 0; letter-spacing: -.01em; }
+  #start p { margin: 0; color: var(--muted); }
+  #start .klein { font-size: .85rem; }
+  #start ul { margin: 0; padding-left: 1.1em; color: var(--muted); font-size: 1rem; }
+  #start li { margin: .3em 0; }
+  #start .knoepfe { display: flex; flex-wrap: wrap; gap: 10px; }
+  button { font: inherit; color: var(--bg); background: var(--fg); border: 0; border-radius: 999px; padding: .7em 1.6em; cursor: pointer; touch-action: manipulation; }
+  button.zweit { background: transparent; color: var(--fg); border: 1px solid rgba(243, 239, 226, .45); }
+  button:focus-visible { outline: 2px solid var(--fg); outline-offset: 4px; }
+  button[disabled] { opacity: .5; cursor: default; }
+  #meldung { color: var(--muted); min-height: 1.5em; }
+  #meldung.fehler { color: #ff9fc4; }
+  .leiste { position: fixed; left: 0; right: 0; bottom: 0; display: flex; flex-wrap: wrap; gap: 8px; justify-content: center;
+    padding: 0 12px calc(14px + env(safe-area-inset-bottom)); pointer-events: none; }
+  .leiste button { pointer-events: auto; font-size: 15px; line-height: 1; padding: 11px 16px; color: #f1f0f7;
+    background: rgba(9, 10, 28, .6); border: 1px solid rgba(255, 255, 255, .24); -webkit-backdrop-filter: blur(6px); backdrop-filter: blur(6px); }
+  .leiste button[aria-pressed="true"] { background: rgba(243, 239, 226, .92); color: #07081a; border-color: transparent; }
+  .oben { position: fixed; left: 0; right: 0; top: max(62px, calc(env(safe-area-inset-top) + 50px)); text-align: center; pointer-events: none; padding: 0 16px; }
+  #hinweis { margin: 0 auto; max-width: 30em; color: var(--muted); text-shadow: 0 0 12px #000, 0 0 4px #000; transition: opacity 1.6s ease; font-size: 1rem; }
+  #hinweis.weg { opacity: 0; }
+  #toast { margin: 8px 0 0; color: var(--fg); text-shadow: 0 0 12px #000, 0 0 4px #000; opacity: 0; transition: opacity .35s ease; font-size: 1.1rem; }
+  #toast.da { opacity: 1; }
+  [hidden] { display: none !important; }
+  .zurueck{position:fixed;top:max(12px,env(safe-area-inset-top));left:max(12px,env(safe-area-inset-left));z-index:9999;font:400 14px/1 Georgia,serif;color:#f1f0f7;background:rgba(9,10,28,.55);border:1px solid rgba(255,255,255,.22);border-radius:999px;padding:9px 14px;text-decoration:none;-webkit-backdrop-filter:blur(6px);backdrop-filter:blur(6px);touch-action:manipulation}
+</style>
+</head>
+<body>
+<a class="zurueck" href="index.html" aria-label="Zurück zur Übersicht">← Übersicht</a>
+<canvas id="buehne" aria-label="Saiten, die in die Luft gezeichnet und mit dem Finger angezupft werden"></canvas>
+<video id="kamera" playsinline muted hidden></video>
+
+<section id="start">
+  <h1>Luftsaiten</h1>
+  <p>Spanne Saiten in die Luft und spiele darauf. Wie bei einer Gitarre gilt: Je länger die Saite, desto tiefer der Ton. Eine doppelt so lange Saite klingt genau eine Oktave tiefer.</p>
+  <ul>
+    <li><b>Spannen</b> Kneife Daumen und Zeigefinger zusammen und ziehe. Beim Loslassen bleibt die Saite in der Luft stehen.</li>
+    <li><b>Zupfen</b> Streiche mit dem ausgestreckten Zeigefinger durch eine Saite.</li>
+    <li><b>Akkord</b> Streiche mit einer Bewegung durch mehrere Saiten.</li>
+  </ul>
+  <p class="klein">Ohne Kamera geht es mit Finger oder Maus auf dem Bildschirm. Das Kamerabild bleibt auf diesem Gerät und wird nirgendwohin gesendet. Mach den Ton am Gerät lauter.</p>
+  <div class="knoepfe"><button id="knopf" type="button">Kamera starten</button><button id="ohneKamera" class="zweit" type="button">Ohne Kamera spielen</button></div>
+  <p id="meldung" role="status"></p>
+</section>
+
+<div class="oben"><p id="hinweis" hidden></p><p id="toast" role="status"></p></div>
+
+<div class="leiste" id="leiste" hidden>
+  <button id="bModus" type="button" aria-pressed="false">Bildschirm: Spielen</button>
+  <button id="bTon" type="button">Töne: Pentatonik</button>
+  <button id="bZurueck" type="button">Letzte Saite weg</button>
+  <button id="bLoeschen" type="button">Alle löschen</button>
+</div>
+
+<script type="module">
+// ---------- Einstellungen ----------
+const PINCH_AN = 0.30, PINCH_AUS = 0.44, PINCH_FRAMES = 3;   // wie in der Lichtzeichnung
+const MIN_LAENGE = 0.07;          // kürzeste Saite im Verhältnis zur kürzeren Bildschirmseite
+const MAX_SAITEN = 12;
+const F_REF = 196, L_REF = 0.5;   // eine Saite halb so lang wie die kürzere Bildschirmseite klingt als G3 (196 Hz)
+const F_MIN = 65.41, F_MAX = 1046.5;   // C2 bis C6
+const SCHUTZ_MS = 140;            // dieselbe Saite kann frühestens nach dieser Zeit wieder anschlagen
+const EURO_MIN = 1.6, EURO_BETA = 9;
+const SKALEN = [
+  { name: "Pentatonik", stufen: [0, 2, 4, 7, 9] },
+  { name: "Dur", stufen: [0, 2, 4, 5, 7, 9, 11] },
+  { name: "frei", stufen: null }
+];
+const NOTEN = ["C", "Cis", "D", "Dis", "E", "F", "Fis", "G", "Gis", "A", "B", "H"];
+
+// ---------- Aufbau ----------
+const cv = document.getElementById("buehne"), ctx = cv.getContext("2d");
+const video = document.getElementById("kamera");
+const $ = id => document.getElementById(id);
+const knopf = $("knopf"), meldung = $("meldung"), startBox = $("start"), hinweis = $("hinweis"), toast = $("toast"), leiste = $("leiste");
+let W = 0, H = 0, S = 1, DPR = 1, SK = 1;
+function groesse() {
+  const altS = S, altW = W, altH = H;
+  DPR = Math.min(window.devicePixelRatio || 1, 2);
+  W = window.innerWidth; H = window.innerHeight; S = Math.min(W, H); SK = Math.max(.7, Math.min(1.5, W / 1280));
+  cv.width = Math.round(W * DPR); cv.height = Math.round(H * DPR);
+  // beim Drehen des Geräts bleiben die Saiten an derselben relativen Stelle
+  if (altW && saiten.length) for (const s of saiten) { s.x0 *= W / altW; s.x1 *= W / altW; s.y0 *= H / altH; s.y1 *= H / altH; stimmen(s); }
+}
+const saiten = [];
+window.addEventListener("resize", groesse);
+
+function sagen(t, f) { meldung.textContent = t; meldung.classList.toggle("fehler", !!f); }
+let toastTimer = 0;
+function zeigeToast(t) { toast.textContent = t; toast.classList.add("da"); clearTimeout(toastTimer); toastTimer = setTimeout(() => toast.classList.remove("da"), 1500); }
+function zeigeHinweis(t) { hinweis.textContent = t; hinweis.hidden = false; hinweis.classList.remove("weg"); }
+
+// ---------- Ton: Karplus-Strong, wie eine gezupfte Saite ----------
+let ac = null, bus = null, entsperrt = false;
+function audioBauen() {
+  const AC = window.AudioContext || window.webkitAudioContext; if (!AC) return;
+  const k = new AC();
+  const n = Math.floor(k.sampleRate * 2.6), ib = k.createBuffer(2, n, k.sampleRate);
+  for (let c = 0; c < 2; c++) { const d = ib.getChannelData(c); for (let i = 0; i < n; i++) d[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / n, 3); }
+  const hall = k.createConvolver(); hall.buffer = ib;
+  const nass = k.createGain(); nass.gain.value = .32;
+  const trocken = k.createGain(); trocken.gain.value = .9;
+  const koerper = k.createBiquadFilter(); koerper.type = "peaking"; koerper.frequency.value = 220; koerper.Q.value = .9; koerper.gain.value = 4;   // etwas Gitarrenkorpus
+  const comp = k.createDynamicsCompressor();
+  const b = k.createGain();
+  b.connect(koerper); koerper.connect(trocken); koerper.connect(hall); hall.connect(nass);
+  trocken.connect(comp); nass.connect(comp); comp.connect(k.destination);
+  ac = k; bus = b;
+}
+function audioBereit() {
+  try { if (navigator.audioSession) navigator.audioSession.type = "playback"; } catch (e) {}
+  try {
+    if (!ac) audioBauen(); if (!ac) return false;
+    if (ac.state !== "running") { const p = ac.resume(); if (p && p.catch) p.catch(() => {}); }
+    if (!entsperrt) { const s = ac.createBufferSource(); s.buffer = ac.createBuffer(1, 1, 22050); s.connect(ac.destination); s.start(0); entsperrt = true; }
+  } catch (e) { return false; }
+  return true;
+}
+const klangSpeicher = new Map();
+function saitenKlang(f) {
+  const key = Math.round(f * 10);
+  if (klangSpeicher.has(key)) return klangSpeicher.get(key);
+  const sr = ac.sampleRate, N = Math.max(2, Math.round(sr / f - .5));
+  const dauer = f < 150 ? 4.5 : f < 400 ? 3.4 : 2.4, len = Math.floor(sr * dauer);
+  const buf = ac.createBuffer(1, len, sr), out = buf.getChannelData(0), d = new Float32Array(N);
+  let last = 0;
+  for (let i = 0; i < N; i++) { const r = Math.random() * 2 - 1; last += (r - last) * .6; d[i] = last; }
+  const verlust = f < 150 ? .9995 : f < 400 ? .9991 : .9986;
+  let p = 0;
+  for (let i = 0; i < len; i++) { const q = (p + 1) % N, v = d[p]; out[i] = v; d[p] = (v + d[q]) * .5 * verlust; p = q; }
+  const aus = Math.floor(sr * .3); for (let i = 0; i < aus; i++) out[len - 1 - i] *= i / aus;
+  let m = 0; for (let i = 0; i < len; i++) m = Math.max(m, Math.abs(out[i])); if (m) for (let i = 0; i < len; i++) out[i] /= m;
+  if (klangSpeicher.size > 60) klangSpeicher.clear();
+  klangSpeicher.set(key, buf); return buf;
+}
+let zupfZaehler = 0;
+function tonAn(s, staerke) {
+  zupfZaehler++;
+  if (!ac || !bus || ac.state !== "running") return;
+  const src = ac.createBufferSource(); src.buffer = saitenKlang(s.f);
+  const g = ac.createGain(); g.gain.value = .18 + .5 * staerke;
+  const tp = ac.createBiquadFilter(); tp.type = "lowpass"; tp.frequency.value = 1800 + 4200 * staerke;   // fester angeschlagen klingt heller
+  const pan = ac.createStereoPanner ? ac.createStereoPanner() : null;
+  src.connect(tp); tp.connect(g);
+  if (pan) { pan.pan.value = Math.max(-.8, Math.min(.8, ((s.x0 + s.x1) / 2 / W) * 1.6 - .8)); g.connect(pan); pan.connect(bus); } else g.connect(bus);
+  src.start(ac.currentTime + .004);
+}
+
+// ---------- Saiten ----------
+let skala = 0;
+function stimmen(s) {
+  s.L = Math.hypot(s.x1 - s.x0, s.y1 - s.y0);
+  // Physik: Die Frequenz ist umgekehrt proportional zur Länge (bei gleicher Spannung und gleichem Material)
+  let f = F_REF * (L_REF * S) / Math.max(1, s.L);
+  f = Math.max(F_MIN, Math.min(F_MAX, f));
+  const st = SKALEN[skala].stufen;
+  let midi = 69 + 12 * Math.log2(f / 440);
+  if (st) {
+    let best = Math.round(midi), bd = 99;
+    for (let m = Math.floor(midi) - 2; m <= Math.ceil(midi) + 2; m++) if (st.includes(((m % 12) + 12) % 12) && Math.abs(m - midi) < bd) { bd = Math.abs(m - midi); best = m; }
+    midi = best; f = 440 * Math.pow(2, (midi - 69) / 12);
+  }
+  s.f = f;
+  const mr = Math.round(midi);
+  s.name = NOTEN[((mr % 12) + 12) % 12] + (Math.floor(mr / 12) - 1) + (st ? "" : (Math.abs(midi - mr) > .15 ? (midi > mr ? " +" : " −") : ""));
+  s.hue = (((mr % 12) + 12) % 12) * 30 + 200;   // jede Note hat ihre Farbe
+}
+function saiteHinzu(x0, y0, x1, y1) {
+  const s = { x0, y0, x1, y1, amp: 0, t0: 0, gezupft: {} };
+  stimmen(s);
+  saiten.push(s);
+  if (saiten.length > MAX_SAITEN) { saiten.shift(); zeigeToast("Höchstens " + MAX_SAITEN + " Saiten, die älteste ist weg"); }
+  zupfen(s, .6);
+  return s;
+}
+function zupfen(s, staerke) {
+  const jetzt = performance.now();
+  if (jetzt - (s.letzt || 0) < SCHUTZ_MS) return;
+  s.letzt = jetzt; s.t0 = jetzt / 1000; s.amp = (5 + 12 * staerke) * SK;
+  tonAn(s, staerke);
+}
+// Schneidet die Bewegung von a nach b die Saite?
+function schneidet(ax, ay, bx, by, s) {
+  const d = (bx - ax) * (s.y1 - s.y0) - (by - ay) * (s.x1 - s.x0);
+  if (Math.abs(d) < 1e-6) return false;
+  const t = ((s.x0 - ax) * (s.y1 - s.y0) - (s.y0 - ay) * (s.x1 - s.x0)) / d;
+  const u = ((s.x0 - ax) * (by - ay) - (s.y0 - ay) * (bx - ax)) / d;
+  return t >= 0 && t <= 1 && u >= -.02 && u <= 1.02;
+}
+function streichen(ax, ay, bx, by, dt) {
+  const weg = Math.hypot(bx - ax, by - ay);
+  if (weg < 1) return;
+  const tempo = weg / Math.max(dt, .008) / S;   // Bildschirmbreiten pro Sekunde
+  const staerke = Math.max(.15, Math.min(1, tempo / 2.5));
+  // Saiten in der Reihenfolge anschlagen, in der der Finger sie kreuzt, wie beim Schlagen über eine Gitarre
+  const treffer = [];
+  for (const s of saiten) if (schneidet(ax, ay, bx, by, s)) {
+    const d = (bx - ax) * (s.y1 - s.y0) - (by - ay) * (s.x1 - s.x0);
+    const t = ((s.x0 - ax) * (s.y1 - s.y0) - (s.y0 - ay) * (s.x1 - s.x0)) / d;
+    treffer.push([t, s]);
+  }
+  treffer.sort((a, b) => a[0] - b[0]);
+  treffer.forEach(([t, s], i) => setTimeout(() => zupfen(s, staerke), i * 18));
+}
+
+// ---------- Zeichnen einer neuen Saite (Gummiband) ----------
+const neu = { an: false, x0: 0, y0: 0, x1: 0, y1: 0, fx: null, fy: null };
+function spannenStart(x, y) { neu.an = true; neu.x0 = x; neu.y0 = y; neu.x1 = x; neu.y1 = y; neu.fx = {}; neu.fy = {}; }
+function spannenZiehen(x, y, dt) { neu.x1 = euro(neu.fx, x, dt); neu.y1 = euro(neu.fy, y, dt); }
+function spannenEnde() {
+  if (!neu.an) return; neu.an = false;
+  if (Math.hypot(neu.x1 - neu.x0, neu.y1 - neu.y0) < MIN_LAENGE * S) { zeigeToast("Zu kurz, zieh etwas weiter"); return; }
+  saiteHinzu(neu.x0, neu.y0, neu.x1, neu.y1);
+  if (!erste) { erste = true; zeigeHinweis(kameraAn ? "Jetzt mit offenem Zeigefinger durch die Saite streichen" : "Jetzt auf Spielen stellen und durch die Saite wischen"); setTimeout(() => hinweis.classList.add("weg"), 5000); }
+}
+let erste = false;
+function euro(f, x, dt) {
+  dt = Math.min(Math.max(dt, .001), .1);
+  const al = c => 1 / (1 + 1 / (2 * Math.PI * c) / dt);
+  if (f.x === undefined) { f.x = x; f.dx = 0; return x; }
+  const dx = (x - f.x) / dt; f.dx += (dx - f.dx) * al(1);
+  f.x += (x - f.x) * al(EURO_MIN + EURO_BETA * Math.abs(f.dx) / W); return f.x;
+}
+
+// ---------- Hände ----------
+const rahmen = { dx: 0, dy: 0, dw: 1, dh: 1 };
+let haende = [], naechsteId = 1, zeichnerId = -1;
+function aufnehmen(liste) {
+  if (!liste.length) { for (let i = haende.length - 1; i >= 0; i--) if (++haende[i].alter > 6) haende.splice(i, 1); return; }
+  zuordnen(liste.map(h => h.map(p => [W - (rahmen.dx + p.x * rahmen.dw), rahmen.dy + p.y * rahmen.dh])));
+}
+function zuordnen(liste) {
+  const frei = haende.slice(), n = [];
+  for (const pts of liste) {
+    let best = -1, bd = 1e9;
+    frei.forEach((h, i) => { const d = Math.hypot(h.pts[0][0] - pts[0][0], h.pts[0][1] - pts[0][1]); if (d < bd) { bd = d; best = i; } });
+    if (best >= 0 && bd < W * .4) { const h = frei.splice(best, 1)[0]; h.pts = pts; h.alter = 0; n.push(h); }
+    else n.push({ id: naechsteId++, pts, alter: 0, pinch: false, pz: 0, spitze: null, offen: 0 });
+  }
+  haende = n;
+}
+const dist = (a, b) => Math.hypot(a[0] - b[0], a[1] - b[1]);
+const pinchWert = p => dist(p[4], p[8]) / Math.max(1, dist(p[0], p[9]));
+// Zeigefinger gestreckt? Spitze weiter vom Handgelenk entfernt als das Mittelgelenk.
+const zeigefingerOffen = p => dist(p[8], p[0]) > dist(p[6], p[0]) * 1.1;
+
+function handlungen(dt) {
+  for (const h of haende) {
+    const r = pinchWert(h.pts);
+    h.pinch = h.pinch ? r < PINCH_AUS : r < PINCH_AN;
+    h.pz = h.pinch ? h.pz + (h.alter === 0 ? 1 : 0) : 0;
+  }
+  // Spannen mit der kneifenden Hand
+  let z = haende.find(h => h.id === zeichnerId && h.pinch);
+  if (!z && zeichnerId >= 0) { spannenEnde(); zeichnerId = -1; }
+  if (!z) { z = haende.find(h => h.pinch && h.alter === 0 && h.pz >= PINCH_FRAMES); if (z) { zeichnerId = z.id; const p = z.pts; spannenStart((p[4][0] + p[8][0]) / 2, (p[4][1] + p[8][1]) / 2); } }
+  else { const p = z.pts; spannenZiehen((p[4][0] + p[8][0]) / 2, (p[4][1] + p[8][1]) / 2, dt); }
+  // Zupfen mit der Zeigefingerspitze jeder anderen Hand, die nicht kneift
+  for (const h of haende) {
+    const spitze = h.pts[8];
+    const darf = h !== z && !h.pinch && h.alter === 0 && zeigefingerOffen(h.pts) && pinchWert(h.pts) > PINCH_AUS;
+    if (darf && h.spitze) streichen(h.spitze[0], h.spitze[1], spitze[0], spitze[1], dt);
+    h.spitze = darf ? [spitze[0], spitze[1]] : null;
+  }
+}
+
+// ---------- Finger und Maus auf dem Bildschirm ----------
+let bildschirmZeichnen = false;
+const zeiger = new Map();
+cv.addEventListener("pointerdown", e => {
+  audioBereit();
+  cv.setPointerCapture(e.pointerId);
+  zeiger.set(e.pointerId, { x: e.clientX, y: e.clientY, t: performance.now() });
+  if (bildschirmZeichnen && !neu.an) { spannenStart(e.clientX, e.clientY); neu.zeiger = e.pointerId; }
+});
+cv.addEventListener("pointermove", e => {
+  const z = zeiger.get(e.pointerId); if (!z) return;
+  const jetzt = performance.now(), dt = (jetzt - z.t) / 1000;
+  if (neu.an && neu.zeiger === e.pointerId) { neu.x1 = e.clientX; neu.y1 = e.clientY; }
+  else streichen(z.x, z.y, e.clientX, e.clientY, dt);
+  z.x = e.clientX; z.y = e.clientY; z.t = jetzt;
+});
+const loslassen = e => { if (neu.an && neu.zeiger === e.pointerId) spannenEnde(); zeiger.delete(e.pointerId); };
+cv.addEventListener("pointerup", loslassen); cv.addEventListener("pointercancel", loslassen);
+
+// ---------- Zeichnen auf dem Bildschirm ----------
+let kameraAn = false;
+function kameraRahmen() {
+  const vw = video.videoWidth, vh = video.videoHeight; if (!vw) return false;
+  const s = Math.max(W / vw, H / vh);
+  rahmen.dw = vw * s; rahmen.dh = vh * s; rahmen.dx = (W - rahmen.dw) / 2; rahmen.dy = (H - rahmen.dh) / 2;
+  return true;
+}
+function saiteZeichnen(s, t, vorschau) {
+  const dx = s.x1 - s.x0, dy = s.y1 - s.y0, L = Math.hypot(dx, dy) || 1, nx = -dy / L, ny = dx / L;
+  // Schwingung als stehende Welle: in der Mitte am stärksten, an den Enden fest. Tiefe Saiten schwingen sichtbar langsamer.
+  const alter = t - s.t0, a = vorschau ? 0 : s.amp * Math.exp(-alter * (s.f < 200 ? .9 : 1.6));
+  const fv = Math.min(14, 2 + s.f / 45);
+  const schwing = a > .2 ? a * Math.sin(2 * Math.PI * fv * alter) : 0;
+  const pts = [];
+  const N = 28;
+  for (let i = 0; i <= N; i++) { const u = i / N, o = schwing * Math.sin(Math.PI * u); pts.push([s.x0 + dx * u + nx * o, s.y0 + dy * u + ny * o]); }
+  const farbe = vorschau ? "rgba(255,255,255,.55)" : `hsla(${s.hue},90%,62%,${.75 + Math.min(.25, a / 20)})`;
+  ctx.lineCap = "round"; ctx.lineJoin = "round";
+  const pfad = () => { ctx.beginPath(); pts.forEach((p, i) => i ? ctx.lineTo(p[0], p[1]) : ctx.moveTo(p[0], p[1])); };
+  ctx.shadowColor = vorschau ? "rgba(255,255,255,.6)" : `hsla(${s.hue},95%,60%,1)`;
+  ctx.shadowBlur = (14 + Math.min(20, a * 2)) * SK;
+  ctx.strokeStyle = farbe; ctx.lineWidth = (5 + Math.min(4, a / 4)) * SK; pfad(); ctx.stroke();
+  ctx.shadowBlur = 0;
+  ctx.strokeStyle = "rgba(255,250,240,.95)"; ctx.lineWidth = 1.6 * SK; pfad(); ctx.stroke();
+  // Wirbel an den Enden
+  for (const [x, y] of [[s.x0, s.y0], [s.x1, s.y1]]) { ctx.fillStyle = vorschau ? "rgba(255,255,255,.7)" : `hsla(${s.hue},80%,75%,1)`; ctx.beginPath(); ctx.arc(x, y, 4.5 * SK, 0, 6.2832); ctx.fill(); }
+  // Notenname
+  if (!vorschau || L > MIN_LAENGE * S) {
+    const mx = (s.x0 + s.x1) / 2 + nx * 18 * SK, my = (s.y0 + s.y1) / 2 + ny * 18 * SK;
+    ctx.font = `400 ${Math.round(15 * SK + 3)}px Georgia, serif`; ctx.textAlign = "center"; ctx.textBaseline = "middle";
+    ctx.fillStyle = "rgba(0,0,0,.55)"; ctx.fillText(s.name, mx + 1, my + 1);
+    ctx.fillStyle = vorschau ? "rgba(255,255,255,.85)" : "rgba(255,250,240,.92)"; ctx.fillText(s.name, mx, my);
+  }
+}
+function zeichnen(t) {
+  ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
+  ctx.globalCompositeOperation = "source-over";
+  ctx.fillStyle = "#07081a"; ctx.fillRect(0, 0, W, H);
+  if (kameraAn && kameraRahmen()) {
+    ctx.save(); ctx.translate(W, 0); ctx.scale(-1, 1); ctx.drawImage(video, rahmen.dx, rahmen.dy, rahmen.dw, rahmen.dh); ctx.restore();
+    ctx.fillStyle = "rgba(7,8,26,.6)"; ctx.fillRect(0, 0, W, H);
+  }
+  for (const s of saiten) saiteZeichnen(s, t, false);
+  if (neu.an) { const v = { x0: neu.x0, y0: neu.y0, x1: neu.x1, y1: neu.y1, t0: 0, amp: 0 }; stimmen(v); saiteZeichnen(v, t, true); }
+  // Hand-Anzeige
+  for (const h of haende) {
+    if (h.alter) continue;
+    const p = h.pts;
+    if (h.pinch) {
+      const mx = (p[4][0] + p[8][0]) / 2, my = (p[4][1] + p[8][1]) / 2;
+      ctx.strokeStyle = "rgba(255,255,255,.95)"; ctx.lineWidth = 2; ctx.beginPath(); ctx.arc(mx, my, 6 * SK, 0, 6.2832); ctx.stroke();
+    } else if (h.spitze) {
+      ctx.fillStyle = "rgba(255,250,240,.9)"; ctx.shadowColor = "#fff"; ctx.shadowBlur = 12; ctx.beginPath(); ctx.arc(p[8][0], p[8][1], 6 * SK, 0, 6.2832); ctx.fill(); ctx.shadowBlur = 0;
+    } else {
+      ctx.strokeStyle = "rgba(255,255,255,.45)"; ctx.lineWidth = 1.5; ctx.beginPath(); ctx.arc(p[8][0], p[8][1], 9 * SK, 0, 6.2832); ctx.stroke();
+    }
+  }
+}
+
+// ---------- Hauptschleife ----------
+let landmarker = null, letzteZeit = -1, letztes = performance.now(), laeuft = false;
+function schleife(now) {
+  const dt = Math.min((now - letztes) / 1000, .1); letztes = now;
+  if (kameraAn && landmarker && !window.__hande && video.readyState >= 2 && video.currentTime !== letzteZeit) {
+    letzteZeit = video.currentTime;
+    kameraRahmen();
+    aufnehmen(landmarker.detectForVideo(video, now).landmarks || []);
+    handlungen(dt);
+  }
+  if (window.__hande) { zuordnen(window.__hande); handlungen(dt); }   // Testhaken
+  zeichnen(now / 1000);
+  requestAnimationFrame(schleife);
+}
+function losgehen() {
+  startBox.hidden = true; leiste.hidden = false;
+  groesse();
+  if (!laeuft) { laeuft = true; requestAnimationFrame(schleife); }
+}
+
+// ---------- Knöpfe ----------
+const bModus = $("bModus");
+function modusSetzen(z) { if (!z) hinweis.classList.add("weg"); bildschirmZeichnen = z; bModus.setAttribute("aria-pressed", z); bModus.textContent = z ? "Bildschirm: Spannen" : "Bildschirm: Spielen"; }
+bModus.addEventListener("click", () => { modusSetzen(!bildschirmZeichnen); zeigeToast(bildschirmZeichnen ? "Mit dem Finger auf dem Bildschirm Saiten spannen" : "Mit dem Finger auf dem Bildschirm spielen"); });
+$("bTon").addEventListener("click", e => {
+  skala = (skala + 1) % SKALEN.length; e.currentTarget.textContent = "Töne: " + SKALEN[skala].name;
+  saiten.forEach(stimmen);
+  zeigeToast(skala === 2 ? "Freie Tonhöhe, genau nach Länge" : "Töne rasten in der " + SKALEN[skala].name + "-Tonleiter ein");
+});
+$("bZurueck").addEventListener("click", () => { if (saiten.pop()) zeigeToast("Letzte Saite entfernt"); });
+$("bLoeschen").addEventListener("click", () => { saiten.length = 0; zeigeToast("Alle Saiten gelöscht"); });
+
+async function modellLaden() {
+  const { FilesetResolver, HandLandmarker } = await import("./vendor/vision_bundle.mjs");
+  const fileset = await FilesetResolver.forVisionTasks("./vendor/wasm");
+  const basis = { modelAssetPath: "./vendor/hand_landmarker.task" };
+  const opt = { runningMode: "VIDEO", numHands: 2, minHandDetectionConfidence: .5, minHandPresenceConfidence: .5, minTrackingConfidence: .5 };
+  try { return await HandLandmarker.createFromOptions(fileset, { baseOptions: { ...basis, delegate: "GPU" }, ...opt }); }
+  catch (e) { return await HandLandmarker.createFromOptions(fileset, { baseOptions: { ...basis, delegate: "CPU" }, ...opt }); }
+}
+knopf.addEventListener("click", async () => {
+  audioBereit();
+  knopf.disabled = true;
+  sagen("Handerkennung wird geladen, das dauert einen Moment.");
+  try { landmarker = await modellLaden(); }
+  catch (e) { console.error(e); sagen("Die Handerkennung konnte nicht geladen werden. Du kannst ohne Kamera spielen.", true); knopf.disabled = false; return; }
+  sagen("Kamera wird gestartet.");
+  try {
+    const strom = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "user", width: { ideal: 1280 }, height: { ideal: 720 } }, audio: false });
+    video.srcObject = strom; await video.play();
+  } catch (e) { console.error(e); sagen("Kein Zugriff auf die Kamera. Erlaube die Kamera im Browser oder spiele ohne Kamera.", true); knopf.disabled = false; return; }
+  kameraAn = true; audioBereit();
+  losgehen();
+  zeigeHinweis("Kneife Daumen und Zeigefinger zusammen und ziehe eine Saite");
+});
+$("ohneKamera").addEventListener("click", () => {
+  audioBereit(); losgehen(); modusSetzen(true);
+  zeigeHinweis("Ziehe mit dem Finger eine Saite. Dann auf Spielen stellen und durchwischen.");
+});
+groesse();
+
+window.__saiten = { saiten, get zupfZaehler() { return zupfZaehler; }, losgehen, saiteHinzu, streichen, modusSetzen, get neu() { return neu; }, get haende() { return haende; } };
+</script>
+</body>
+</html>

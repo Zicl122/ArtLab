@@ -1,0 +1,465 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Fotosynthese-Labor</title>
+<style>
+  /* VOICE: helles Schullabor am Morgen, ruhig und genau
+     IDEA: ein Laborraum mit fünf Tischen, man geht von Station zu Station
+     PICTURE: Raum von oben, dann der Versuchsaufbau groß mit blubbernder Wasserpest
+     COLOUR+TYPE: Laborweiß, Blattgrün, Wasserblau, Lampengelb; Systemschrift, ein kursives Serifenwort
+     LAYOUT: Raum als Startbild, am Tisch Aufbau links und Regler rechts, unter 820px gestapelt */
+  @font-face { font-family: "Instrument Serif"; font-style: italic; font-weight: 400; font-display: swap; src: url(fonts/instrument-serif-latin-400-italic.woff2) format("woff2"); }
+  :root { color-scheme: light; --bg: #EEF4F1; --card: #FFFFFF; --ink: #10241C; --muted: #5B6E66; --line: rgba(16,36,28,.1);
+    --gruen: #2E9E5B; --gruen-d: #1F7A44; --wasser: #CFEAF3; --gelb: #FFD84A; --rot: #E0453A;
+    --shadow: 0 1px 0 #fff inset, 0 14px 30px -18px rgba(16,36,28,.35), 0 0 0 1px rgba(16,36,28,.05);
+    --sans: -apple-system, BlinkMacSystemFont, "SF Pro Display", Inter, "Segoe UI", system-ui, sans-serif; --serif: "Instrument Serif", Georgia, serif; }
+  * { box-sizing: border-box; min-width: 0; }
+  body { margin: 0; background: var(--bg); color: var(--ink); font: 400 16px/1.5 var(--sans); -webkit-font-smoothing: antialiased; overflow-x: clip; }
+  button, input, select { font: inherit; }
+  .leiste { position: sticky; top: 0; z-index: 20; display: flex; align-items: center; gap: 10px; padding: 10px max(3vw, 14px); background: color-mix(in srgb, var(--bg) 85%, transparent); backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px); border-bottom: 1px solid var(--line); }
+  .leiste a { color: var(--muted); text-decoration: none; font-weight: 600; font-size: .95rem; white-space: nowrap; }
+  .leiste .titel { font-weight: 800; letter-spacing: -.03em; font-size: 1.1rem; margin-right: auto; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .leiste .titel em { font-family: var(--serif); font-weight: 400; font-size: 1.15em; color: var(--gruen); }
+  .pille { border: 0; background: var(--card); box-shadow: var(--shadow); border-radius: 999px; padding: 8px 14px; font-weight: 700; font-size: .9rem; cursor: pointer; white-space: nowrap; color: var(--ink); }
+  .pille b { color: var(--gruen); }
+  main { max-width: 1200px; margin: 0 auto; padding: 16px max(3vw, 14px) 48px; }
+  h1 { font-weight: 800; font-size: clamp(2rem, 5.5vw, 3.2rem); line-height: 1; letter-spacing: -.045em; margin: 10px 0 8px; }
+  h1 em, h2 em { font-family: var(--serif); font-weight: 400; color: var(--gruen); letter-spacing: -.01em; }
+  .unter { color: var(--muted); margin: 0 0 16px; max-width: 46em; }
+
+  /* Raum */
+  .raum { position: relative; background: var(--card); border-radius: 28px; box-shadow: var(--shadow); overflow: hidden; }
+  .raum svg { display: block; width: 100%; height: auto; }
+  .tisch-g { cursor: pointer; }
+  .tisch-g:focus { outline: none; }
+  .tisch-g:focus-visible .platte, .tisch-g:hover .platte { stroke: var(--gruen); stroke-width: 4; }
+  .hinweis-raum { position: absolute; left: 16px; bottom: 14px; background: rgba(255,255,255,.9); border-radius: 12px; padding: 6px 12px; font-size: .9rem; color: var(--muted); box-shadow: var(--shadow); }
+
+  /* Tischansicht */
+  .tischkopf { display: flex; flex-wrap: wrap; align-items: end; justify-content: space-between; gap: 10px; margin: 6px 0 14px; }
+  .tischkopf .nr { font-size: 12px; letter-spacing: .12em; text-transform: uppercase; font-weight: 800; color: var(--gruen); }
+  .tischkopf h2 { margin: 2px 0 0; font-size: clamp(1.7rem, 4.5vw, 2.4rem); font-weight: 800; letter-spacing: -.04em; line-height: 1.05; }
+  .wege { display: flex; gap: 8px; flex-wrap: wrap; }
+  .wege button { border: 0; border-radius: 999px; padding: 10px 16px; min-height: 44px; font-weight: 700; cursor: pointer; background: var(--card); box-shadow: var(--shadow); color: var(--ink); }
+  .bahn { display: grid; grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr); gap: 16px; align-items: start; }
+  @media (max-width: 820px) { .bahn { grid-template-columns: minmax(0, 1fr); } }
+  .buehne { background: linear-gradient(180deg, #F7FBF9, #E6EFEA); border-radius: 28px; box-shadow: var(--shadow); overflow: hidden; position: relative; }
+  .buehne svg { display: block; width: 100%; height: auto; }
+  .zaehler { position: absolute; right: 14px; top: 14px; background: var(--ink); color: #fff; border-radius: 16px; padding: 8px 14px; text-align: right; font-variant-numeric: tabular-nums; }
+  .zaehler b { display: block; font-size: 1.8rem; line-height: 1; }
+  .zaehler span { font-size: .78rem; opacity: .75; }
+  .karte { background: var(--card); border-radius: 24px; box-shadow: var(--shadow); padding: 18px; }
+  .karte + .karte { margin-top: 14px; }
+  .lbl { font-size: 12px; letter-spacing: .12em; text-transform: uppercase; font-weight: 800; color: var(--muted); margin: 0 0 6px; }
+  .auftrag p { margin: 0; font-size: 1.05rem; font-weight: 600; }
+  .regler label { display: flex; justify-content: space-between; gap: 10px; font-weight: 600; }
+  .regler output { font-variant-numeric: tabular-nums; white-space: nowrap; color: var(--gruen-d); font-weight: 800; }
+  input[type=range] { width: 100%; height: 34px; accent-color: var(--gruen); }
+  .fest { color: var(--muted); font-size: .88rem; margin: 4px 0 0; }
+  .farben { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 6px; }
+  .farben button { border: 2px solid transparent; border-radius: 999px; padding: 8px 14px; min-height: 42px; font-weight: 700; cursor: pointer; background: #F1F5F3; color: var(--ink); display: inline-flex; gap: 8px; align-items: center; }
+  .farben button i { width: 14px; height: 14px; border-radius: 50%; border: 1px solid rgba(0,0,0,.15); }
+  .farben button[aria-pressed=true] { border-color: var(--ink); background: #fff; }
+  .messen { width: 100%; margin-top: 14px; border: 0; border-radius: 18px; min-height: 52px; font-weight: 800; font-size: 1.05rem; color: #fff; cursor: pointer;
+    background-image: linear-gradient(180deg, rgba(255,255,255,.25), transparent 55%), linear-gradient(135deg, #2E9E5B, #138A86); box-shadow: 0 12px 22px -12px rgba(46,158,91,.9); }
+  .messen:disabled { opacity: .55; cursor: wait; }
+  .tab { width: 100%; border-collapse: collapse; font-variant-numeric: tabular-nums; font-size: .95rem; }
+  .tab th, .tab td { text-align: right; padding: 6px 4px; border-bottom: 1px solid var(--line); }
+  .tab th:first-child, .tab td:first-child { text-align: left; }
+  .tab th { font-size: 12px; color: var(--muted); font-weight: 700; }
+  .leer { color: var(--muted); font-size: .95rem; margin: 0; }
+  .diagramm { width: 100%; height: 190px; display: block; margin-top: 8px; }
+  .auswertung { background: #E3F4E9; }
+  .auswertung h3 { margin: 0 0 6px; font-size: 1.1rem; }
+  .auswertung p { margin: 0 0 8px; }
+  .auswertung p:last-child { margin: 0; }
+  .gesperrt { color: var(--muted); }
+  .stempel { display: inline-block; background: var(--gelb); color: #2b2100; font-weight: 800; font-size: 12px; letter-spacing: .08em; text-transform: uppercase; padding: 4px 10px; border-radius: 8px; transform: rotate(-3deg); }
+  .schritte { display: grid; gap: 8px; margin-top: 12px; }
+  .schritte button { text-align: left; border: 0; border-radius: 16px; min-height: 48px; padding: 10px 14px; font-weight: 700; cursor: pointer; background: #F1F5F3; color: var(--ink); }
+  .schritte button.jetzt { background: var(--ink); color: #fff; }
+  .schritte button:disabled { opacity: .45; cursor: default; }
+  .wahl { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 6px; }
+  .wahl button { border: 2px solid transparent; border-radius: 14px; padding: 8px 12px; min-height: 42px; font-weight: 700; background: #F1F5F3; cursor: pointer; color: var(--ink); }
+  .wahl button[aria-pressed=true] { border-color: var(--ink); background: #fff; }
+  .check { display: flex; gap: 10px; align-items: center; margin-top: 12px; font-weight: 600; }
+  .check input { width: 22px; height: 22px; accent-color: var(--gruen); }
+  dialog { width: min(94vw, 680px); max-height: 86vh; border: 0; border-radius: 26px; padding: 0; box-shadow: 0 30px 80px -20px rgba(0,0,0,.4); }
+  dialog::backdrop { background: rgba(10,30,20,.4); backdrop-filter: blur(4px); }
+  .dlg { padding: 22px; display: grid; gap: 12px; }
+  .dlg h2 { margin: 0; font-size: 1.4rem; letter-spacing: -.03em; }
+  .dlg pre { margin: 0; white-space: pre-wrap; background: #F1F5F3; border-radius: 16px; padding: 14px; max-height: 50vh; overflow: auto; font: 400 .92rem/1.5 ui-monospace, Menlo, monospace; }
+  .dlg .reihe { display: flex; gap: 8px; flex-wrap: wrap; }
+  .dlg button { border: 0; border-radius: 999px; padding: 10px 18px; font-weight: 700; cursor: pointer; background: #F1F5F3; color: var(--ink); }
+  .dlg button.primaer { background: var(--ink); color: #fff; }
+  [hidden] { display: none !important; }
+  :focus-visible { outline: 3px solid var(--gelb); outline-offset: 2px; }
+  @media (prefers-reduced-motion: reduce) { * { transition: none !important; animation: none !important; } }
+</style>
+</head>
+<body>
+<div class="leiste">
+  <a href="index.html">← Übersicht</a>
+  <span class="titel">Fotosynthese-<em>Labor</em></span>
+  <button type="button" class="pille" id="heftKnopf">Laborheft <b id="heftZahl">0</b></button>
+</div>
+<main>
+  <section id="raumAnsicht">
+    <h1>Fünf Tische, eine <em>Pflanze</em></h1>
+    <p class="unter">Wie viel Sauerstoff bildet die Wasserpest? Geh von Tisch zu Tisch, verändere immer nur einen Faktor und zähle die Bläschen. Am letzten Tisch weist du nach, wo im Blatt Stärke entstanden ist.</p>
+    <div class="raum">
+      <svg id="raumSvg" viewBox="0 0 1000 600" role="group" aria-label="Laborraum mit fünf Tischen"></svg>
+      <div class="hinweis-raum" id="fortschritt">Tippe auf einen Tisch</div>
+    </div>
+  </section>
+
+  <section id="tischAnsicht" hidden>
+    <div class="tischkopf">
+      <div><span class="nr" id="tNr"></span><h2 id="tName"></h2></div>
+      <div class="wege"><button type="button" id="zurRaum">Zum Raum</button><button type="button" id="vor">Nächster Tisch →</button></div>
+    </div>
+    <div class="bahn">
+      <div>
+        <div class="buehne"><svg id="szene" viewBox="0 0 600 440" aria-label="Versuchsaufbau"></svg><div class="zaehler" id="zaehler" hidden><b id="zZahl">0</b><span>Bläschen pro Minute</span></div></div>
+      </div>
+      <div id="seite"></div>
+    </div>
+  </section>
+</main>
+
+<dialog id="heft" aria-labelledby="heftTitel">
+  <div class="dlg">
+    <h2 id="heftTitel">Laborheft</h2>
+    <pre id="heftText"></pre>
+    <div class="reihe"><button type="button" class="primaer" id="heftKopieren">Kopieren</button><button type="button" id="heftLeeren">Leeren</button><button type="button" id="heftZu">Schließen</button></div>
+  </div>
+</dialog>
+
+<script>
+{
+const $ = s => document.querySelector(s);
+const NS = "http://www.w3.org/2000/svg";
+const el = (tag, attrs = {}, parent) => { const e = document.createElementNS(NS, tag); for (const k in attrs) e.setAttribute(k, attrs[k]); if (parent) parent.appendChild(e); return e; };
+const fmt = (v, d = 0) => v.toLocaleString("de-DE", { minimumFractionDigits: d, maximumFractionDigits: d });
+
+/* ---------- Modell ----------
+   Lichtstärke fällt mit dem Quadrat der Entfernung, Licht und CO2 sättigen,
+   es zählt der Faktor im Minimum, Temperatur nach RGT-Regel mit Denaturierung oberhalb von etwa 35 °C. */
+const FARBEN = { weiss: { name: "Weiß", f: 1, c: "#FFF6C8" }, rot: { name: "Rot", f: .95, c: "#FF4B3E" }, gelb: { name: "Gelb", f: .45, c: "#FFD21F" }, gruen: { name: "Grün", f: .15, c: "#3CCB5A" }, blau: { name: "Blau", f: .85, c: "#3B7BFF" } };
+const tRoh = T => Math.pow(2, (T - 25) / 10) / (1 + Math.exp((T - 37) / 2.5));
+let tMax = 0; for (let T = 0; T <= 55; T += .5) tMax = Math.max(tMax, tRoh(T));
+function rate(p) {
+  const I = 100 * Math.pow(10 / p.d, 2) * FARBEN[p.col].f;
+  const fL = (I / (I + 20)) / (100 / 120);
+  const ce = p.c + .02, fC = (ce / (ce + .12)) / (1.02 / 1.14);
+  return 60 * Math.min(fL, fC) * tRoh(p.T) / tMax;
+}
+const rausch = () => { let s = 0; for (let i = 0; i < 6; i++) s += Math.random(); return (s - 3) / 1.4; };
+
+const TISCHE = [
+  { name: "Lichtstärke", frage: "Wie hängt die Zahl der Bläschen vom Abstand der Lampe ab?", key: "d", label: "Abstand der Lampe", unit: "cm", min: 10, max: 60, step: 5, start: 30, fest: { c: .5, T: 25, col: "weiss" }, festText: "Gleich bleiben 0,5 % Hydrogencarbonat, 25 °C, weißes Licht.",
+    erkl: ["Je weiter die Lampe weg ist, desto weniger Bläschen. Die Lichtstärke nimmt mit dem Quadrat der Entfernung ab, bei doppeltem Abstand kommt nur noch ein Viertel des Lichts an.", "Ganz nah an der Lampe steigt die Kurve kaum noch. Dann begrenzt nicht mehr das Licht, sondern ein anderer Faktor, hier das CO₂. Das ist das Prinzip des begrenzenden Faktors.", "Im echten Versuch erwärmt eine nahe Lampe auch das Wasser. Darum stellt man eine Wasserküvette als Wärmeschutz dazwischen."] },
+  { name: "Lichtfarbe", frage: "Bei welcher Lichtfarbe arbeitet die Pflanze am besten?", key: "col", label: "Farbfilter", fest: { d: 15, c: .5, T: 25 }, festText: "Gleich bleiben 15 cm Abstand, 0,5 % Hydrogencarbonat, 25 °C.",
+    erkl: ["Hinter Rot und Blau steigen die meisten Bläschen auf, hinter Grün die wenigsten.", "Chlorophyll absorbiert vor allem rotes und blaues Licht. Grünes Licht wird großteils reflektiert oder durchgelassen, deshalb sehen Blätter grün aus und können damit wenig anfangen.", "Engelmann hat das 1882 mit Bakterien gezeigt, die sich dort sammelten, wo eine Alge im roten und blauen Licht viel Sauerstoff bildete."] },
+  { name: "Kohlenstoffdioxid", frage: "Was passiert, wenn mehr CO₂ im Wasser ist?", key: "c", label: "Natriumhydrogencarbonat", unit: "%", min: 0, max: 1, step: .1, start: .2, dez: 1, fest: { d: 10, T: 25, col: "weiss" }, festText: "Gleich bleiben 10 cm Abstand, 25 °C, weißes Licht.",
+    erkl: ["Hydrogencarbonat gibt im Wasser CO₂ ab. Mit mehr CO₂ steigen zuerst deutlich mehr Bläschen auf.", "Ab etwa 0,5 % flacht die Kurve ab. Die Pflanze kann CO₂ nicht schneller einbauen, als Licht und Enzyme es erlauben.", "Auch ohne Zusatz kommen ein paar Bläschen, weil im Wasser immer etwas CO₂ gelöst ist."] },
+  { name: "Temperatur", frage: "Arbeitet die Pflanze im warmen Wasser immer schneller?", key: "T", label: "Wassertemperatur", unit: "°C", min: 5, max: 50, step: 5, start: 15, fest: { d: 10, c: .8, col: "weiss" }, festText: "Gleich bleiben 10 cm Abstand, 0,8 % Hydrogencarbonat, weißes Licht.",
+    erkl: ["Bis etwa 30 °C steigt die Zahl der Bläschen. Nach der RGT-Regel laufen enzymatische Reaktionen bei 10 °C mehr etwa doppelt so schnell.", "Darüber fällt die Kurve steil ab. Die Enzyme der Fotosynthese, zum Beispiel RuBisCO, verlieren ihre Form und werden denaturiert.", "Die Kurve ist also keine Gerade, sondern hat ein Optimum."] },
+  { name: "Stärkenachweis", iod: true, frage: "Wo im Blatt entsteht Stärke?",
+    erkl: ["Iodlösung färbt Stärke blauschwarz. Ohne Stärke bleibt das Blatt gelbbraun.", "Stärke entsteht nur dort, wo Licht auf grünes Blattgewebe fällt. Unter der Schablone und in den weißen Teilen des panaschierten Blatts fehlt sie, dort fehlt Licht oder Chlorophyll.", "Die Pflanze muss vorher zwei Tage ins Dunkle. Sonst ist das ganze Blatt schon voller Stärke vom Vortag, und man sieht keinen Unterschied."] }
+];
+
+/* ---------- Zustand ---------- */
+let S = { mess: [[], [], [], [], []], iod: [], werte: TISCHE.map(t => t.start ?? (t.key === "col" ? "weiss" : null)) };
+try { const g = JSON.parse(localStorage.getItem("fs-labor")); if (g && g.mess) S = Object.assign(S, g); } catch (e) {}
+const speichern = () => { try { localStorage.setItem("fs-labor", JSON.stringify(S)); } catch (e) {} };
+let aktiv = null, figur = { x: 500, y: 560 };
+
+function fertig(i) {
+  if (TISCHE[i].iod) return S.iod.length >= 2;
+  return new Set(S.mess[i].map(m => m.x)).size >= 4;
+}
+
+/* ---------- Raum ---------- */
+const POS = [[190, 175], [500, 150], [810, 175], [320, 405], [680, 405]];
+function ikone(i, g, x, y) {
+  if (i === 0) { el("circle", { cx: x - 40, cy: y - 18, r: 14, fill: "#FFD84A" }, g); el("rect", { x: x - 2, y: y - 40, width: 26, height: 40, rx: 6, fill: "#CFEAF3", stroke: "#7FB8C9" }, g); }
+  if (i === 1) { ["#FF4B3E", "#FFD21F", "#3CCB5A", "#3B7BFF"].forEach((c, k) => el("rect", { x: x - 44 + k * 22, y: y - 40, width: 16, height: 34, rx: 4, fill: c, opacity: .85 }, g)); }
+  if (i === 2) { el("rect", { x: x - 16, y: y - 42, width: 32, height: 42, rx: 6, fill: "#CFEAF3", stroke: "#7FB8C9" }, g); [[-6, -14], [4, -24], [-2, -32]].forEach(([a, b]) => el("circle", { cx: x + a, cy: y + b, r: 4, fill: "#fff", stroke: "#7FB8C9" }, g)); }
+  if (i === 3) { el("rect", { x: x - 5, y: y - 46, width: 10, height: 42, rx: 5, fill: "#fff", stroke: "#888" }, g); el("rect", { x: x - 3, y: y - 26, width: 6, height: 20, fill: "#E0453A" }, g); el("circle", { cx: x, cy: y - 6, r: 7, fill: "#E0453A" }, g); }
+  if (i === 4) { el("path", { d: `M${x - 40} ${y - 20} C ${x - 20} ${y - 48}, ${x + 20} ${y - 48}, ${x + 40} ${y - 20} C ${x + 20} ${y + 6}, ${x - 20} ${y + 6}, ${x - 40} ${y - 20} Z`, fill: "#2E9E5B" }, g); el("path", { d: `M${x - 8} ${y - 30} l4 9 10 1 -8 6 3 10 -9 -6 -9 6 3 -10 -8 -6 10 -1z`, fill: "#1E2240" }, g); }
+}
+function raumZeichnen() {
+  const s = $("#raumSvg"); s.innerHTML = "";
+  const d = el("defs", {}, s);
+  const p = el("pattern", { id: "fliesen", width: 50, height: 50, patternUnits: "userSpaceOnUse" }, d);
+  el("rect", { width: 50, height: 50, fill: "#F4F7F5" }, p); el("path", { d: "M50 0H0V50", fill: "none", stroke: "#DDE6E1", "stroke-width": 2 }, p);
+  el("rect", { width: 1000, height: 600, fill: "url(#fliesen)" }, s);
+  el("rect", { width: 1000, height: 44, fill: "#D7E4DD" }, s);
+  [120, 420, 720].forEach(x => { el("rect", { x, y: 6, width: 160, height: 30, rx: 6, fill: "#BFE3F2" }, s); el("line", { x1: x + 80, y1: 6, x2: x + 80, y2: 36, stroke: "#fff", "stroke-width": 3 }, s); });
+  el("rect", { x: 450, y: 586, width: 100, height: 14, fill: "#C7B08A" }, s);
+  el("text", { x: 432, y: 596, "text-anchor": "end", "font-size": 15, fill: "#5B6E66", "font-weight": 600 }, s).textContent = "Tür";
+  POS.forEach(([x, y], i) => {
+    const g = el("g", { class: "tisch-g", tabindex: 0, role: "button", "aria-label": `Tisch ${i + 1}, ${TISCHE[i].name}${fertig(i) ? ", erledigt" : ""}` }, s);
+    el("rect", { x: x - 115, y: y - 70, width: 230, height: 120, rx: 18, fill: "#000", opacity: .08, transform: "translate(6 8)" }, g);
+    el("rect", { class: "platte", x: x - 115, y: y - 70, width: 230, height: 120, rx: 18, fill: "#3A4A55", stroke: "#2B3840", "stroke-width": 2 }, g);
+    el("rect", { x: x - 105, y: y - 60, width: 210, height: 100, rx: 12, fill: "#4A5C68" }, g);
+    ikone(i, g, x, y + 10);
+    el("text", { x, y: y + 76, "text-anchor": "middle", "font-size": 18, "font-weight": 800, fill: "#10241C" }, g).textContent = `Tisch ${i + 1} · ${TISCHE[i].name}`;
+    if (fertig(i)) { const st = el("g", { transform: `translate(${x + 92} ${y - 70}) rotate(8)` }, g); el("circle", { r: 20, fill: "#FFD84A" }, st); el("path", { d: "M-8 0 l6 6 11 -12", fill: "none", stroke: "#2b2100", "stroke-width": 4, "stroke-linecap": "round", "stroke-linejoin": "round" }, st); }
+    const los = () => gehe(i);
+    g.addEventListener("click", los);
+    g.addEventListener("keydown", e => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); los(); } });
+  });
+  const f = el("g", { id: "figur", transform: `translate(${figur.x} ${figur.y})` }, s);
+  el("ellipse", { cx: 0, cy: 6, rx: 20, ry: 8, fill: "#000", opacity: .12 }, f);
+  el("circle", { cx: 0, cy: -14, r: 18, fill: "#fff", stroke: "#10241C", "stroke-width": 3 }, f);
+  el("circle", { cx: 0, cy: -14, r: 9, fill: "#2E9E5B" }, f);
+  const n = TISCHE.filter((_, i) => fertig(i)).length;
+  $("#fortschritt").textContent = n ? `${n} von 5 Tischen erledigt` : "Tippe auf einen Tisch";
+}
+function gehe(i) {
+  const [x, y] = POS[i], ziel = { x, y: y + 112 }, start = { ...figur }, f = $("#figur");
+  const ruhig = matchMedia("(prefers-reduced-motion: reduce)").matches, dauer = ruhig ? 0 : 650, t0 = performance.now();
+  const schritt = t => {
+    const k = dauer ? Math.min(1, (t - t0) / dauer) : 1, e = k < .5 ? 2 * k * k : 1 - Math.pow(-2 * k + 2, 2) / 2;
+    figur = { x: start.x + (ziel.x - start.x) * e, y: start.y + (ziel.y - start.y) * e };
+    if (f) f.setAttribute("transform", `translate(${figur.x} ${figur.y})`);
+    if (k < 1) requestAnimationFrame(schritt); else setTimeout(() => oeffnen(i), ruhig ? 0 : 120);
+  };
+  requestAnimationFrame(schritt);
+}
+
+/* ---------- Szene mit Wasserpest ---------- */
+let blasen = [], gas = 0, laeuft = null, letzte = 0, spawn = 0;
+function param(i) { const t = TISCHE[i]; return Object.assign({ d: 10, c: .5, T: 25, col: "weiss" }, t.fest, { [t.key]: S.werte[i] }); }
+function szeneZeichnen(i) {
+  const s = $("#szene"); s.innerHTML = "";
+  const t = TISCHE[i];
+  el("rect", { x: 0, y: 380, width: 600, height: 60, fill: "#4A5C68" }, s);
+  el("rect", { x: 0, y: 376, width: 600, height: 8, fill: "#3A4A55" }, s);
+  if (t.iod) { iodSzene(s); return; }
+  const p = param(i), I = Math.min(1, Math.pow(10 / p.d, 2)), lx = 190 - (p.d - 10) * 3.2, farbe = FARBEN[p.col];
+  const warm = Math.max(0, Math.min(1, (p.T - 5) / 45));
+  // Lichtkegel
+  el("polygon", { id: "kegel", points: `${lx + 18},${232} ${lx + 18},${268} 380,${360} 380,${150}`, fill: p.col === "weiss" ? "#FFF3B0" : farbe.c, opacity: (0.08 + .45 * I * farbe.f).toFixed(2) }, s);
+  // Lampe
+  el("rect", { x: lx - 6, y: 250, width: 10, height: 130, fill: "#6B7780" }, s);
+  el("rect", { x: lx - 30, y: 372, width: 58, height: 10, rx: 4, fill: "#6B7780" }, s);
+  el("path", { d: `M${lx - 26} 222 L${lx + 20} 226 L${lx + 20} 274 L${lx - 26} 278 Z`, fill: "#2B3840" }, s);
+  el("circle", { cx: lx + 18, cy: 250, r: 13, fill: "#FFE36B" }, s);
+  // Lineal bei Tisch 1
+  if (t.key === "d") { el("rect", { x: 40, y: 392, width: 190, height: 22, rx: 4, fill: "#F2E3B3" }, s); for (let cm = 10; cm <= 60; cm += 10) { const x = 190 - (cm - 10) * 3.2 + 18; el("line", { x1: x, y1: 392, x2: x, y2: 402, stroke: "#6b5a14", "stroke-width": 2 }, s); el("text", { x, y: 412, "text-anchor": "middle", "font-size": 10, fill: "#6b5a14", "font-weight": 700 }, s).textContent = cm; } }
+  // Filter bei Tisch 2
+  if (t.key === "col") el("rect", { x: 222, y: 196, width: 12, height: 120, rx: 3, fill: farbe.c, opacity: p.col === "weiss" ? .15 : .75, stroke: "#fff" }, s);
+  // Becherglas
+  const wasser = t.key === "T" ? `rgb(${Math.round(190 + 60 * warm)},${Math.round(232 - 40 * warm)},${Math.round(243 - 90 * warm)})` : "#CFEAF3";
+  el("path", { d: "M262 150 L262 362 Q262 376 276 376 L444 376 Q458 376 458 362 L458 150", fill: "none", stroke: "#9DBFCC", "stroke-width": 4 }, s);
+  el("path", { d: "M264 176 L264 360 Q264 374 278 374 L442 374 Q456 374 456 360 L456 176 Z", fill: wasser, opacity: .9 }, s);
+  if (t.key === "c") { const c = p.c; for (let k = 0; k < Math.round(c * 30); k++) el("circle", { cx: 275 + Math.random() * 170, cy: 186 + Math.random() * 180, r: 1.6, fill: "#fff", opacity: .7 }, s); el("text", { x: 360, y: 368, "text-anchor": "middle", "font-size": 13, "font-weight": 700, fill: "#3F6F80" }, s).textContent = `NaHCO₃ ${fmt(c, 1)} %`; }
+  // Wasserpest
+  el("path", { d: "M360 368 C 352 330, 368 300, 360 262", fill: "none", stroke: "#2E7D3F", "stroke-width": 4 }, s);
+  for (let k = 0; k < 9; k++) { const y = 360 - k * 11, x = 360 + Math.sin(k) * 4, a = k % 2 ? 1 : -1; el("ellipse", { cx: x + a * 12, cy: y, rx: 13, ry: 4, fill: "#3E9B4F", transform: `rotate(${a * -28} ${x + a * 12} ${y})` }, s); }
+  // Trichter und Reagenzglas
+  el("path", { d: "M304 300 L416 300 L372 246 L372 196 L348 196 L348 246 Z", fill: "rgba(255,255,255,.35)", stroke: "#9DBFCC", "stroke-width": 3 }, s);
+  el("rect", { x: 344, y: 70, width: 32, height: 160, rx: 14, fill: "#CFEAF3", stroke: "#9DBFCC", "stroke-width": 3 }, s);
+  el("rect", { id: "gas", x: 347, y: 73, width: 26, height: 0, rx: 11, fill: "#fff" }, s);
+  el("g", { id: "blasen" }, s);
+  // Thermometer bei Tisch 4
+  if (t.key === "T") { el("rect", { x: 420, y: 110, width: 14, height: 240, rx: 7, fill: "#fff", stroke: "#888", "stroke-width": 2 }, s); el("rect", { x: 423, y: 340 - 4.6 * p.T, width: 8, height: 4.6 * p.T + 6, fill: "#E0453A" }, s); el("circle", { cx: 427, cy: 352, r: 10, fill: "#E0453A" }, s); el("text", { x: 444, y: 345 - 4.6 * p.T, "font-size": 14, "font-weight": 800, fill: "#10241C" }, s).textContent = `${p.T} °C`; }
+}
+function blasenSchleife(t) {
+  if (!aktiv && aktiv !== 0) return;
+  const g = $("#blasen"); if (!g) { laeuft = requestAnimationFrame(blasenSchleife); return; }
+  const dt = Math.min(.05, (t - (letzte || t)) / 1000); letzte = t;
+  const r = rate(param(aktiv)) / 60 * 3.5;
+  spawn += r * dt;
+  while (spawn >= 1) { spawn -= 1; blasen.push({ x: 360 + (Math.random() - .5) * 6, y: 262, r: 2.5 + Math.random() * 2.5, v: 28 + Math.random() * 18, w: Math.random() * 6 }); }
+  g.innerHTML = "";
+  blasen = blasen.filter(b => {
+    b.y -= b.v * dt; b.w += dt * 6;
+    const xx = b.y > 246 ? b.x + Math.sin(b.w) * 2 : 360 + Math.sin(b.w) * 4;
+    if (b.y < 73 + gas) { gas = Math.min(140, gas + .12); return false; }
+    el("circle", { cx: xx, cy: b.y, r: b.r, fill: "#fff", stroke: "#8CC4D6", "stroke-width": 1 }, g);
+    return true;
+  });
+  const gr = $("#gas"); if (gr) gr.setAttribute("height", gas.toFixed(1));
+  if (gas >= 120) gas = 20;
+  laeuft = requestAnimationFrame(blasenSchleife);
+}
+
+/* ---------- Tischansicht ---------- */
+function oeffnen(i) {
+  aktiv = i; blasen = []; gas = 30;
+  $("#raumAnsicht").hidden = true; $("#tischAnsicht").hidden = false;
+  $("#tNr").textContent = `Tisch ${i + 1} von 5`; $("#tName").textContent = TISCHE[i].name;
+  $("#vor").textContent = i < 4 ? `Zu Tisch ${i + 2} →` : "Zurück zu Tisch 1 →";
+  $("#zaehler").hidden = true;
+  szeneZeichnen(i); seiteZeichnen(i);
+  window.scrollTo({ top: 0 });
+  cancelAnimationFrame(laeuft); letzte = 0; laeuft = requestAnimationFrame(blasenSchleife);
+}
+function wertText(i, v) { const t = TISCHE[i]; return t.key === "col" ? FARBEN[v].name : `${fmt(v, t.dez || 0)} ${t.unit}`; }
+function seiteZeichnen(i) {
+  const t = TISCHE[i], box = $("#seite");
+  if (t.iod) { iodSeite(box); return; }
+  const regler = t.key === "col"
+    ? `<p class="lbl">${t.label}</p><div class="farben" id="farben">${Object.entries(FARBEN).map(([k, f]) => `<button type="button" data-c="${k}" aria-pressed="${S.werte[i] === k}"><i style="background:${f.c}"></i>${f.name}</button>`).join("")}</div>`
+    : `<div class="regler"><label for="wert">${t.label} <output id="wertOut">${wertText(i, S.werte[i])}</output></label><input id="wert" type="range" min="${t.min}" max="${t.max}" step="${t.step}" value="${S.werte[i]}"></div>`;
+  box.innerHTML = `
+    <div class="karte auftrag"><p class="lbl">Auftrag</p><p>${t.frage}</p><p class="fest">Miss mindestens vier verschiedene Einstellungen. ${t.festText}</p></div>
+    <div class="karte">${regler}<button type="button" class="messen" id="messen">Eine Minute Bläschen zählen</button></div>
+    <div class="karte"><p class="lbl">Messwerte</p><div id="tabelle"></div><svg class="diagramm" id="dia" role="img" aria-label="Diagramm der Messwerte"></svg></div>
+    <div class="karte auswertung" id="ausw"></div>`;
+  if (t.key === "col") $("#farben").addEventListener("click", e => { const b = e.target.closest("button"); if (!b) return; S.werte[i] = b.dataset.c; speichern(); $("#farben").querySelectorAll("button").forEach(x => x.setAttribute("aria-pressed", x === b)); szeneZeichnen(i); });
+  else $("#wert").addEventListener("input", e => { S.werte[i] = +e.target.value; $("#wertOut").textContent = wertText(i, S.werte[i]); speichern(); szeneZeichnen(i); });
+  $("#messen").addEventListener("click", () => messen(i));
+  messwerte(i);
+}
+function messen(i) {
+  const k = $("#messen"), z = $("#zaehler"), zz = $("#zZahl");
+  const wahr = rate(param(i)), wert = Math.max(0, Math.round(wahr * (1 + .06 * rausch())));
+  k.disabled = true; z.hidden = false; zz.textContent = "0";
+  const dauer = matchMedia("(prefers-reduced-motion: reduce)").matches ? 0 : 2600, t0 = performance.now();
+  const lauf = t => {
+    const q = dauer ? Math.min(1, (t - t0) / dauer) : 1;
+    zz.textContent = Math.round(wert * q); k.textContent = q < 1 ? `Zähle … ${Math.ceil(60 * (1 - q))} s` : "Eine Minute Bläschen zählen";
+    if (q < 1) requestAnimationFrame(lauf);
+    else { k.disabled = false; S.mess[i].push({ x: S.werte[i], y: wert }); speichern(); messwerte(i); heftZahl(); }
+  };
+  requestAnimationFrame(lauf);
+}
+function messwerte(i) {
+  const t = TISCHE[i], m = S.mess[i];
+  $("#tabelle").innerHTML = m.length
+    ? `<table class="tab"><thead><tr><th>Nr.</th><th>${t.label}</th><th>Bläschen/min</th></tr></thead><tbody>${m.map((r, k) => `<tr><td>${k + 1}</td><td>${wertText(i, r.x)}</td><td>${r.y}</td></tr>`).join("")}</tbody></table>`
+    : `<p class="leer">Noch keine Messung. Stell den Regler ein und zähle.</p>`;
+  diagramm(i);
+  const a = $("#ausw");
+  if (fertig(i)) a.innerHTML = `<span class="stempel">Ausgewertet</span><h3 style="margin-top:10px">Was du beobachten kannst</h3>${t.erkl.map(p => `<p>${p}</p>`).join("")}`;
+  else { const n = new Set(m.map(r => r.x)).size; a.innerHTML = `<p class="lbl">Auswertung</p><p class="gesperrt">Noch ${4 - n} ${4 - n === 1 ? "Einstellung" : "verschiedene Einstellungen"} messen, dann erscheint die Erklärung. Überleg vorher, was du erwartest.</p>`; }
+}
+function diagramm(i) {
+  const s = $("#dia"), t = TISCHE[i], m = S.mess[i]; s.innerHTML = "";
+  const W = s.clientWidth || 400, H = 190, L = 40, R = 10, T = 10, B = 28;
+  s.setAttribute("viewBox", `0 0 ${W} ${H}`);
+  const yMax = 70, Y = v => T + (H - T - B) * (1 - v / yMax);
+  for (let v = 0; v <= 60; v += 20) { el("line", { x1: L, x2: W - R, y1: Y(v), y2: Y(v), stroke: "#E2E9E5" }, s); el("text", { x: L - 6, y: Y(v) + 4, "text-anchor": "end", "font-size": 11, fill: "#5B6E66" }, s).textContent = v; }
+  if (t.key === "col") {
+    const ks = Object.keys(FARBEN), bw = (W - L - R) / ks.length;
+    ks.forEach((k, n) => {
+      const ys = m.filter(r => r.x === k).map(r => r.y), x = L + n * bw;
+      if (ys.length) { const mw = ys.reduce((a, b) => a + b, 0) / ys.length; el("rect", { x: x + bw * .2, y: Y(mw), width: bw * .6, height: Y(0) - Y(mw), rx: 6, fill: FARBEN[k].c, stroke: k === "weiss" ? "#C9B86A" : "none" }, s); }
+      el("text", { x: x + bw / 2, y: H - 8, "text-anchor": "middle", "font-size": 11, fill: "#5B6E66" }, s).textContent = FARBEN[k].name;
+    });
+    return;
+  }
+  const X = v => L + (W - L - R) * (v - t.min) / (t.max - t.min);
+  for (let v = t.min; v <= t.max + 1e-9; v += (t.max - t.min) / 5) el("text", { x: X(v), y: H - 8, "text-anchor": "middle", "font-size": 11, fill: "#5B6E66" }, s).textContent = fmt(v, t.dez || 0);
+  m.forEach(r => el("circle", { cx: X(r.x), cy: Y(r.y), r: 5, fill: "#2E9E5B", stroke: "#fff", "stroke-width": 2 }, s));
+}
+
+/* ---------- Tisch 5, Stärkenachweis ---------- */
+let I5 = { blatt: "schablone", dunkel: true, h: 6, stufe: 0 };
+const BLATT = "M70 220 C 130 90, 330 80, 470 220 C 330 350, 130 350, 70 220 Z";
+function mix(a, b, k) { const p = h => [1, 3, 5].map(j => parseInt(h.slice(j, j + 2), 16)); const A = p(a), B2 = p(b); return `rgb(${A.map((v, j) => Math.round(v + (B2[j] - v) * k)).join(",")})`; }
+function staerke() { const basis = I5.dunkel ? 0 : .85; return { licht: Math.min(1, basis + I5.h / 7), dunkel: basis }; }
+function iodSzene(s) {
+  const st = I5.stufe, sk = staerke(), IODLEER = "#C98B2E", IODVOLL = "#1E2240";
+  el("ellipse", { cx: 280, cy: 236, rx: 250, ry: 150, fill: "#fff", opacity: .6, stroke: "#C9D8DF", "stroke-width": 4 }, s);
+  if (st === 1) { el("circle", { cx: 520, cy: 70, r: 34, fill: "#FFD84A" }, s); for (let k = 0; k < 10; k++) { const a = k / 10 * Math.PI * 2; el("line", { x1: 520 + Math.cos(a) * 44, y1: 70 + Math.sin(a) * 44, x2: 520 + Math.cos(a) * 58, y2: 70 + Math.sin(a) * 58, stroke: "#FFD84A", "stroke-width": 5, "stroke-linecap": "round" }, s); } }
+  const d = el("defs", {}, s); const cp = el("clipPath", { id: "blattClip" }, d); el("path", { d: BLATT }, cp);
+  el("line", { x1: 30, y1: 236, x2: 72, y2: 222, stroke: st >= 2 ? "#D8CBA0" : "#2E7D3F", "stroke-width": 6, "stroke-linecap": "round" }, s);
+  const g = el("g", { "clip-path": "url(#blattClip)" }, s);
+  const rand = I5.blatt === "panasch";
+  let aussen, innen;
+  if (st < 2) { aussen = rand ? "#EEF0D8" : "#3E9B4F"; innen = "#3E9B4F"; }
+  else if (st === 2) { aussen = "#F2EAD0"; innen = "#EFE4C4"; }
+  else { aussen = rand ? IODLEER : mix(IODLEER, IODVOLL, sk.licht); innen = mix(IODLEER, IODVOLL, sk.licht); }
+  el("path", { d: BLATT, fill: aussen }, g);
+  if (rand) el("path", { d: BLATT, fill: innen, transform: "translate(270 220) scale(.62 .55) translate(-270 -220)" }, g);
+  if (!rand) {
+    const stern = "M270 150 l20 42 46 6 -34 32 9 46 -41 -23 -41 23 9 -46 -34 -32 46 -6z";
+    if (st < 2) el("path", { d: stern, fill: "#B8C0C6", stroke: "#8E979E", "stroke-width": 2 }, g);
+    else if (st === 3) el("path", { d: stern, fill: mix(IODLEER, IODVOLL, sk.dunkel) }, g);
+  }
+  el("path", { d: "M80 220 C 200 214, 340 214, 462 220", fill: "none", stroke: "rgba(0,0,0,.15)", "stroke-width": 3 }, g);
+  for (let k = 0; k < 6; k++) { const x = 140 + k * 55; el("path", { d: `M${x} 218 q 20 -30 50 -54 M${x} 222 q 20 30 50 54`, fill: "none", stroke: "rgba(0,0,0,.1)", "stroke-width": 2 }, g); }
+  const txt = ["Frisches Blatt", "Im Licht", "In heißem Ethanol entfärbt", "Mit Iodlösung beträufelt"][st];
+  el("text", { x: 300, y: 412, "text-anchor": "middle", "font-size": 16, "font-weight": 800, fill: "#fff" }, s).textContent = txt;
+}
+function iodSeite(box) {
+  const t = TISCHE[4], st = I5.stufe;
+  box.innerHTML = `
+    <div class="karte auftrag"><p class="lbl">Auftrag</p><p>${t.frage}</p><p class="fest">Mach den Versuch mindestens zweimal mit unterschiedlichen Einstellungen.</p></div>
+    <div class="karte">
+      <p class="lbl">Blatt</p>
+      <div class="wahl" id="blattWahl"><button type="button" data-b="schablone" aria-pressed="${I5.blatt === "schablone"}">Mit Stern-Schablone</button><button type="button" data-b="panasch" aria-pressed="${I5.blatt === "panasch"}">Panaschiert, grün mit weißem Rand</button></div>
+      <label class="check"><input type="checkbox" id="dunkel" ${I5.dunkel ? "checked" : ""}> Pflanze vorher 48 Stunden im Dunkeln</label>
+      <div class="regler" style="margin-top:10px"><label for="std">Belichtung <output id="stdOut">${I5.h} Stunden</output></label><input id="std" type="range" min="0" max="8" step="1" value="${I5.h}"></div>
+      <div class="schritte">
+        <button type="button" data-s="1" class="${st === 0 ? "jetzt" : ""}" ${st !== 0 ? "disabled" : ""}>1 · Ins Licht stellen</button>
+        <button type="button" data-s="2" class="${st === 1 ? "jetzt" : ""}" ${st !== 1 ? "disabled" : ""}>2 · In heißem Ethanol entfärben</button>
+        <button type="button" data-s="3" class="${st === 2 ? "jetzt" : ""}" ${st !== 2 ? "disabled" : ""}>3 · Iodlösung auftropfen</button>
+        <button type="button" data-s="0" ${st !== 3 ? "disabled" : ""}>Neues Blatt</button>
+      </div>
+    </div>
+    <div class="karte"><p class="lbl">Ergebnisse</p><div id="iodListe"></div></div>
+    <div class="karte auswertung" id="ausw"></div>`;
+  const sperre = st > 0;
+  box.querySelectorAll("#blattWahl button, #dunkel, #std").forEach(x => x.disabled = sperre);
+  $("#blattWahl").addEventListener("click", e => { const b = e.target.closest("button"); if (!b || sperre) return; I5.blatt = b.dataset.b; seiteZeichnen(4); szeneZeichnen(4); });
+  $("#dunkel").addEventListener("change", e => { I5.dunkel = e.target.checked; });
+  $("#std").addEventListener("input", e => { I5.h = +e.target.value; $("#stdOut").textContent = `${I5.h} ${I5.h === 1 ? "Stunde" : "Stunden"}`; });
+  box.querySelector(".schritte").addEventListener("click", e => {
+    const b = e.target.closest("button"); if (!b || b.disabled) return;
+    I5.stufe = +b.dataset.s;
+    if (I5.stufe === 3) { S.iod.push(iodBefund()); speichern(); heftZahl(); }
+    szeneZeichnen(4); seiteZeichnen(4);
+  });
+  $("#iodListe").innerHTML = S.iod.length ? `<table class="tab"><tbody>${S.iod.map((r, k) => `<tr><td>${k + 1}. ${r}</td></tr>`).join("")}</tbody></table>` : `<p class="leer">Noch kein Blatt untersucht.</p>`;
+  const a = $("#ausw");
+  if (fertig(4)) a.innerHTML = `<span class="stempel">Ausgewertet</span><h3 style="margin-top:10px">Was du beobachten kannst</h3>${t.erkl.map(p => `<p>${p}</p>`).join("")}`;
+  else a.innerHTML = `<p class="lbl">Auswertung</p><p class="gesperrt">Untersuche noch ${2 - S.iod.length} ${2 - S.iod.length === 1 ? "Blatt" : "Blätter"}. Tipp, probier auch einmal ohne Dunkelphase.</p>`;
+}
+function farbwort(k) { return k > .75 ? "blauschwarz" : k > .4 ? "dunkel gefleckt" : k > .15 ? "leicht bläulich" : "gelbbraun"; }
+function iodBefund() {
+  const sk = staerke(), dk = I5.dunkel ? "vorher im Dunkeln" : "ohne Dunkelphase", h = `${I5.h} h Licht`;
+  if (I5.blatt === "panasch") return `Panaschiertes Blatt, ${dk}, ${h}. Grüne Mitte ${farbwort(sk.licht)}, weißer Rand gelbbraun.`;
+  return `Blatt mit Stern-Schablone, ${dk}, ${h}. Belichtete Fläche ${farbwort(sk.licht)}, Stern ${farbwort(sk.dunkel)}.`;
+}
+
+/* ---------- Navigation und Laborheft ---------- */
+function zumRaum() { cancelAnimationFrame(laeuft); aktiv = null; $("#tischAnsicht").hidden = true; $("#raumAnsicht").hidden = false; raumZeichnen(); }
+$("#zurRaum").addEventListener("click", zumRaum);
+$("#vor").addEventListener("click", () => oeffnen((aktiv + 1) % 5));
+function heftText() {
+  const z = [];
+  TISCHE.forEach((t, i) => {
+    if (t.iod) { if (S.iod.length) { z.push(`Tisch 5, ${t.name}`); S.iod.forEach((r, k) => z.push(`  ${k + 1}. ${r}`)); z.push(""); } return; }
+    if (!S.mess[i].length) return;
+    z.push(`Tisch ${i + 1}, ${t.name}`);
+    S.mess[i].forEach((r, k) => z.push(`  ${k + 1}. ${t.label} ${wertText(i, r.x)}, ${r.y} Bläschen pro Minute`));
+    z.push("");
+  });
+  return z.length ? z.join("\n").trim() : "Noch keine Einträge. Geh an einen Tisch und miss etwas.";
+}
+function heftZahl() { $("#heftZahl").textContent = S.mess.reduce((a, m) => a + m.length, 0) + S.iod.length; }
+$("#heftKnopf").addEventListener("click", () => { $("#heftText").textContent = heftText(); $("#heftKopieren").textContent = "Kopieren"; $("#heft").showModal ? $("#heft").showModal() : $("#heft").setAttribute("open", ""); });
+$("#heftZu").addEventListener("click", () => $("#heft").close());
+$("#heft").addEventListener("click", e => { if (e.target === $("#heft")) $("#heft").close(); });
+$("#heftKopieren").addEventListener("click", async () => { try { await navigator.clipboard.writeText($("#heftText").textContent); $("#heftKopieren").textContent = "Kopiert"; } catch (e) { $("#heftKopieren").textContent = "Bitte markieren"; } });
+let leerenBestaetigt = false;
+$("#heftLeeren").addEventListener("click", () => {
+  if (!leerenBestaetigt) { leerenBestaetigt = true; $("#heftLeeren").textContent = "Wirklich alles löschen?"; setTimeout(() => { leerenBestaetigt = false; $("#heftLeeren").textContent = "Leeren"; }, 3000); return; }
+  S.mess = [[], [], [], [], []]; S.iod = []; speichern(); heftZahl(); $("#heftText").textContent = heftText(); leerenBestaetigt = false; $("#heftLeeren").textContent = "Leeren";
+  if (aktiv !== null) seiteZeichnen(aktiv); else raumZeichnen();
+});
+const ro = new ResizeObserver(() => { if (aktiv !== null && !TISCHE[aktiv].iod && $("#dia")) diagramm(aktiv); }); ro.observe(document.body);
+raumZeichnen(); heftZahl();
+}
+</script>
+</body>
+</html>

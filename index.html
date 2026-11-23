@@ -10,18 +10,16 @@
      Karten blenden beim Scrollen ein (Scroll Reveal) */
   @font-face { font-family: "Instrument Serif"; font-style: italic; font-weight: 400; font-display: swap; src: url(fonts/instrument-serif-latin-400-italic.woff2) format("woff2"); }
   :root {
-    color-scheme: light dark;
-    --bg: #F2F2F7; --card: #FFFFFF; --ink: #0F1020; --muted: #68687A; --line: rgba(15,16,32,.09);
-    --soft: rgba(120,120,140,.13); --acc: #D93A2B;
+    color-scheme: dark;
+    --bg: #07070C; --card: #15151C; --ink: #F5F5FA; --muted: #9C9CB0; --line: rgba(255,255,255,.1);
+    --soft: rgba(160,160,190,.17); --acc: #FF7A5C;
     --grad: linear-gradient(135deg, #F2542D, #D61F69);
-    --shadow: 0 1px 0 rgba(255,255,255,.9) inset, 0 14px 34px -18px rgba(30,20,60,.35), 0 0 0 1px rgba(15,16,32,.04);
+    --shadow: 0 0 0 1px rgba(255,255,255,.07), 0 16px 34px -18px rgba(0,0,0,.85);
     --sans: -apple-system, BlinkMacSystemFont, "SF Pro Display", Inter, "Segoe UI", system-ui, sans-serif;
     --serif: "Instrument Serif", Georgia, serif;
   }
-  @media (prefers-color-scheme: dark) {
-    :root { --bg: #050509; --card: #16161D; --ink: #F5F5FA; --muted: #9C9CB0; --line: rgba(255,255,255,.1); --soft: rgba(160,160,190,.17); --acc: #FF7A5C;
-      --shadow: 0 0 0 1px rgba(255,255,255,.07), 0 16px 34px -18px rgba(0,0,0,.85); }
-  }
+  :root[data-theme="light"] { color-scheme: light; --bg: #F2F2F7; --card: #FFFFFF; --ink: #0F1020; --muted: #68687A; --line: rgba(15,16,32,.09); --soft: rgba(120,120,140,.13); --acc: #D93A2B;
+    --shadow: 0 1px 0 rgba(255,255,255,.9) inset, 0 14px 34px -18px rgba(30,20,60,.35), 0 0 0 1px rgba(15,16,32,.04); }
   * { box-sizing: border-box; min-width: 0; }
   html { -webkit-text-size-adjust: 100%; scroll-padding-top: 80px; }
   body { margin: 0; background: var(--bg); color: var(--ink); font: 400 17px/1.5 var(--sans); -webkit-font-smoothing: antialiased; overflow-x: clip; }
@@ -36,10 +34,30 @@
   .leiste nav a { text-decoration: none; font-weight: 600; font-size: .95rem; color: var(--muted); padding: .5em .85em; border-radius: 999px; white-space: nowrap; }
   .leiste nav a:hover { color: var(--ink); background: var(--soft); }
 
+  .thema { width: 40px; height: 40px; border-radius: 50%; border: 0; background: var(--soft); color: var(--ink); display: grid; place-items: center; cursor: pointer; flex: none; }
+  .thema svg { width: 19px; height: 19px; }
+  .rechts { display: flex; align-items: center; gap: 6px; }
+
+  /* Die beiden Einstiegskarten */
+  .orga { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 400px), 1fr)); gap: 16px; margin-top: 16px; }
+  .okarte { position: relative; overflow: hidden; border-radius: 32px; padding: 24px 24px 26px; color: #fff; display: flex; flex-direction: column; gap: 10px; min-height: 230px; outline: 1px solid rgba(255,255,255,.08); outline-offset: -1px;
+    background: radial-gradient(70% 80% at 100% 0, #22D3EE 0, transparent 60%), radial-gradient(60% 70% at 0 100%, #7C3AED 0, transparent 62%), #0E0F1A; box-shadow: 0 24px 48px -28px rgba(34,211,238,.55); }
+  .okarte.warm { background: radial-gradient(70% 80% at 100% 0, #FF5A36 0, transparent 60%), radial-gradient(60% 70% at 0 100%, #D61F69 0, transparent 62%), radial-gradient(40% 40% at 70% 110%, #FFD84A 0, transparent 60%), #0E0F1A; box-shadow: 0 24px 48px -28px rgba(214,31,105,.6); }
+  .okarte::after { content: ""; position: absolute; inset: 0; pointer-events: none; background: linear-gradient(118deg, rgba(255,255,255,.22), rgba(255,255,255,.03) 34%, transparent 55%); }
+  .okarte > * { position: relative; z-index: 1; }
+  .okarte .symbol { width: 52px; height: 52px; border-radius: 16px; display: grid; place-items: center; background: rgba(255,255,255,.14); box-shadow: inset 0 0 0 1px rgba(255,255,255,.3); backdrop-filter: blur(8px); }
+  .okarte .symbol svg { width: 26px; height: 26px; }
+  .okarte .klein-lbl { font-size: 12px; letter-spacing: .12em; text-transform: uppercase; font-weight: 700; opacity: .8; margin-top: 6px; }
+  .okarte h2 { margin: 0; font-size: clamp(1.6rem, 4vw, 2rem); font-weight: 800; letter-spacing: -.04em; line-height: 1.05; }
+  .okarte h2 em { font-family: var(--serif); font-style: italic; font-weight: 400; letter-spacing: -.01em; }
+  .okarte p { margin: 0; opacity: .88; font-size: 1rem; max-width: 30em; }
+  .okarte .btn { margin-top: auto; align-self: flex-start; }
+  .okarte .sticker { position: absolute; top: 22px; right: 22px; transform: rotate(5deg); }
+
   main { max-width: 1180px; margin: 0 auto; padding: 14px max(4vw, 16px) 64px; }
 
   /* Kopfkarte mit Farbwolke */
-  .hero { position: relative; overflow: hidden; border-radius: 40px; color: #fff; padding: clamp(26px, 5vw, 64px) clamp(22px, 5vw, 64px) clamp(30px, 5vw, 64px);
+  .hero { position: relative; overflow: hidden; border-radius: 40px; outline: 1px solid rgba(255,255,255,.08); outline-offset: -1px; color: #fff; padding: clamp(26px, 5vw, 64px) clamp(22px, 5vw, 64px) clamp(30px, 5vw, 64px);
     background:
       radial-gradient(60% 70% at 88% 8%, #FF5A36 0, transparent 62%),
       radial-gradient(55% 60% at 6% 96%, #7C3AED 0, transparent 62%),
@@ -73,21 +91,19 @@
   .chip[aria-pressed="true"] i { background: #fff; }
   .anzahl { margin: 2px 4px 0; color: var(--muted); font-size: .92rem; }
 
-  /* Farbe je Projektart, nur als Punkt und Etikett */
-  [data-typ="anleitung"] { --c1: #0B8FA0; }
-  [data-typ="bild"]      { --c1: #7C3AED; }
-  [data-typ="kamera"]    { --c1: #D61F69; }
-  [data-typ="lernspiel"] { --c1: #E08A00; }
-  [data-typ="einheit"]   { --c1: #2563EB; }
-  [data-typ="werkzeug"]  { --c1: #12805A; }
-  @media (prefers-color-scheme: dark) {
-    [data-typ="anleitung"] { --c1: #35D0E3; } [data-typ="bild"] { --c1: #B79BFF; } [data-typ="kamera"] { --c1: #FF7AAE; }
-    [data-typ="lernspiel"] { --c1: #FFD84A; } [data-typ="einheit"] { --c1: #7FB0FF; } [data-typ="werkzeug"] { --c1: #4ADE9B; }
-  }
+  /* Farbe je Fach */
+  [data-fach="kunst"]     { --c1: #FF7AAE; }
+  [data-fach="biologie"]  { --c1: #4ADE9B; }
+  [data-fach="sprachen"]  { --c1: #FFD84A; }
+  [data-fach="allgemein"] { --c1: #35D0E3; }
+  [data-theme="light"] [data-fach="kunst"] { --c1: #D61F69; }
+  [data-theme="light"] [data-fach="biologie"] { --c1: #12805A; }
+  [data-theme="light"] [data-fach="sprachen"] { --c1: #B26B00; }
+  [data-theme="light"] [data-fach="allgemein"] { --c1: #0B8FA0; }
 
   /* Karten */
   .raster { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 420px), 1fr)); gap: 22px; }
-  .kachel { background: var(--card); border-radius: 30px; overflow: hidden; display: flex; flex-direction: column; box-shadow: var(--shadow); }
+  .kachel { background: linear-gradient(180deg, color-mix(in srgb, var(--c1) 9%, var(--card)), var(--card) 45%); border-radius: 30px; overflow: hidden; display: flex; flex-direction: column; box-shadow: var(--shadow); }
   .kachel[hidden] { display: none; }
   .bild { display: block; aspect-ratio: 8 / 5; overflow: hidden; background: #0E0F1A; }
   .bild img { width: 100%; height: 100%; object-fit: cover; display: block; transition: transform .6s ease; }
@@ -131,12 +147,12 @@
   @media (max-width: 560px) { .leiste nav a.weg { display: none; } .hero { border-radius: 32px; } }
   @media (max-width: 440px) { .qr { display: none; } .unten { padding: 16px 18px 20px; } }
 </style>
-<script>document.documentElement.classList.add("js")</script>
+<script>document.documentElement.classList.add("js");try{document.documentElement.dataset.theme=localStorage.getItem("artlab-thema")||"dark"}catch(e){document.documentElement.dataset.theme="dark"}</script>
 </head>
 <body>
 <div class="leiste">
   <a class="marke" href="./">Art<em>Lab</em></a>
-  <nav aria-label="Seiten"><a href="#projekte">Projekte</a><a class="weg" href="vibe-coding.html">Anleitung</a><a href="ueber-dieses-projekt.html">Über</a></nav>
+  <div class="rechts"><nav aria-label="Seiten"><a href="#projekte">Projekte</a><a class="weg" href="vibe-coding.html">Anleitung</a><a href="ueber-dieses-projekt.html">Über</a></nav><button type="button" class="thema" id="thema" aria-label="Hell oder dunkel"></button></div>
 </div>
 <main>
   <header class="hero">
@@ -149,10 +165,11 @@
     </div>
   </header>
 
+  <section class="orga" id="orga" aria-label="Zum Einstieg"></section>
+
   <section id="projekte" aria-label="Projekte">
     <div class="filter">
-      <div><p class="lbl">Fach</p><div class="chips" id="faecher" role="group" aria-label="Fach"></div></div>
-      <div><p class="lbl">Art</p><div class="chips" id="arten" role="group" aria-label="Art des Projekts"></div></div>
+      <div class="chips" id="faecher" role="group" aria-label="Fach"></div>
       <p class="anzahl" id="anzahl" aria-live="polite"></p>
     </div>
     <div class="raster" id="raster"></div>
@@ -175,7 +192,7 @@
 <script>
 // Neue Projekte: einfach einen weiteren Eintrag ergänzen.
 // fach: kunst, biologie, sprachen oder allgemein
-// typ: anleitung, bild, kamera, lernspiel, einheit oder werkzeug
+// fach "allgemein" erscheint oben als große Einstiegskarte
 // tipp: true legt einen gelben Tipp-Sticker auf die Karte (sparsam verwenden)
 const PROJEKTE = [
   {
@@ -378,9 +395,10 @@ const PROJEKTE = [
     alt: "Dunkle Erdkugel mit Lichtern der Nachtseite und vielen runden Tierbildern über Nordamerika",
   },
 ];
-const FAECHER = [["alle", "Alle"], ["kunst", "Kunst"], ["biologie", "Biologie"], ["sprachen", "Sprachen"], ["allgemein", "Allgemein"]];
-const ARTEN = { anleitung: "Anleitung", bild: "Bild zum Anfassen", kamera: "Kamera und Hand", lernspiel: "Lernspiel", einheit: "Unterrichtseinheit", werkzeug: "Werkzeug" };
+const FAECHER = [["alle", "Alle"], ["kunst", "Kunst"], ["biologie", "Biologie"], ["sprachen", "Sprachen"]];
 const fachName = f => (FAECHER.find(x => x[0] === f) || [, ""])[1];
+const SYMBOLE = { "vibe-coding.html": '<path d="M12 2l2.2 6.6L21 11l-6.8 2.4L12 20l-2.2-6.6L3 11l6.8-2.4z" fill="currentColor" stroke="none"/>', "ueber-dieses-projekt.html": '<circle cx="12" cy="12" r="9"/><path d="M12 11v6M12 7.5v.5"/>' };
+const orga = document.getElementById("orga");
 
 function qrSvg(adresse) { const q = qrcode(0, "M"); q.addData(adresse); q.make(); return q.createSvgTag({ scalable: true, margin: 0 }); }
 const PFEIL = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg>';
@@ -388,13 +406,25 @@ const imNetz = location.protocol === "http:" || location.protocol === "https:";
 const raster = document.getElementById("raster");
 
 PROJEKTE.forEach((p, i) => {
+  if (p.fach === "allgemein") {
+    const o = document.createElement("article");
+    const erste = !orga.children.length;
+    o.className = "okarte reveal" + (erste ? "" : " warm");
+    o.innerHTML = `${erste ? "" : '<span class="sticker">Zuerst lesen</span>'}
+      <span class="symbol"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${SYMBOLE[p.seite] || ""}</svg></span>
+      <span class="klein-lbl">${p.seite === "vibe-coding.html" ? "Anleitung" : "Über das Projekt"}</span>
+      <h2>${p.titel}</h2><p>${p.text}</p>
+      <a class="btn glas" href="${p.seite}">Öffnen${PFEIL}</a>`;
+    orga.appendChild(o);
+    return;
+  }
   const k = document.createElement("article");
   k.className = "kachel reveal" + (p.tipp ? " tipp" : "");
   k.dataset.typ = p.typ; k.dataset.fach = p.fach;
   k.innerHTML = `
     <a class="bild" href="${p.seite}" tabindex="-1" aria-hidden="true"><img src="${p.bild}" alt="${p.alt}" loading="lazy"></a>
     <div class="unten">
-      <span class="etikett"><i></i>${fachName(p.fach)} · ${ARTEN[p.typ] || ""}</span>
+      <span class="etikett"><i></i>${fachName(p.fach)}</span>
       <h2><a href="${p.seite}">${p.titel}</a></h2>
       <p>${p.text}</p>
       <div class="fuss">
@@ -432,34 +462,33 @@ const beobachter = "IntersectionObserver" in window ? new IntersectionObserver(e
 }, { rootMargin: "0px 0px -8% 0px", threshold: .08 }) : null;
 document.querySelectorAll(".reveal").forEach(el => beobachter ? beobachter.observe(el) : el.classList.add("da"));
 
-// Filter nach Fach und Art
-let fach = "alle", typ = null;
-const faecher = document.getElementById("faecher"), arten = document.getElementById("arten");
+// Filter nach Fach
+let fach = "alle";
+const faecher = document.getElementById("faecher");
 faecher.innerHTML = FAECHER.map(([id, n]) => `<button type="button" class="chip" data-f="${id}">${n}</button>`).join("");
-arten.innerHTML = Object.entries(ARTEN).map(([id, n]) => `<button type="button" class="chip" data-t="${id}" data-typ="${id}" aria-pressed="false"><i></i>${n}</button>`).join("");
-function filtern() {
+function filtern(erstesMal) {
   let n = 0;
   document.querySelectorAll(".kachel").forEach(k => {
-    const ok = (fach === "alle" || k.dataset.fach === fach) && (!typ || k.dataset.typ === typ);
-    k.hidden = !ok; if (ok) { n++; k.classList.add("da"); }
+    const ok = fach === "alle" || k.dataset.fach === fach;
+    k.hidden = !ok; if (ok) { n++; if (!erstesMal) k.classList.add("da"); }
   });
   faecher.querySelectorAll("button").forEach(b => b.setAttribute("aria-pressed", b.dataset.f === fach));
-  arten.querySelectorAll("button").forEach(b => b.setAttribute("aria-pressed", b.dataset.t === typ));
   document.getElementById("anzahl").textContent = n === 1 ? "1 Projekt" : n + " Projekte";
   document.getElementById("leer").hidden = n > 0;
 }
 faecher.addEventListener("click", e => { const b = e.target.closest("button"); if (!b) return; fach = b.dataset.f; try { history.replaceState(null, "", fach === "alle" ? "#projekte" : "#" + fach); } catch (x) {} filtern(); });
-arten.addEventListener("click", e => { const b = e.target.closest("button"); if (!b) return; typ = typ === b.dataset.t ? null : b.dataset.t; filtern(); });
-document.getElementById("zurueck").addEventListener("click", () => { fach = "alle"; typ = null; filtern(); });
+document.getElementById("zurueck").addEventListener("click", () => { fach = "alle"; filtern(); });
 const h = location.hash.slice(1);
 if (FAECHER.some(x => x[0] === h)) { fach = h; requestAnimationFrame(() => document.getElementById("projekte").scrollIntoView()); }
-// Beim ersten Aufbau nur zählen und markieren, das Einblenden übernimmt der Beobachter
-(function start() {
-  let n = 0;
-  document.querySelectorAll(".kachel").forEach(k => { const ok = (fach === "alle" || k.dataset.fach === fach); k.hidden = !ok; if (ok) n++; });
-  faecher.querySelectorAll("button").forEach(b => b.setAttribute("aria-pressed", b.dataset.f === fach));
-  document.getElementById("anzahl").textContent = n === 1 ? "1 Projekt" : n + " Projekte";
-})();
+filtern(true);
+
+// Hell oder dunkel, Start ist dunkel
+const themaKnopf = document.getElementById("thema");
+const SONNE = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg>';
+const MOND = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg>';
+function themaZeigen() { const d = document.documentElement.dataset.theme !== "light"; themaKnopf.innerHTML = d ? SONNE : MOND; themaKnopf.setAttribute("aria-label", d ? "Helle Ansicht" : "Dunkle Ansicht"); }
+themaKnopf.addEventListener("click", () => { const neu = document.documentElement.dataset.theme === "light" ? "dark" : "light"; document.documentElement.dataset.theme = neu; try { localStorage.setItem("artlab-thema", neu); } catch (e) {} themaZeigen(); });
+themaZeigen();
 </script>
 </body>
 </html>

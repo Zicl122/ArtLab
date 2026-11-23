@@ -72,6 +72,8 @@
   .kopf p { color: var(--muted); margin: 14px auto 0; max-width: 36em; }
   .kopf::after { content: ""; display: block; width: 96px; height: 5px; border-radius: 3px; background: linear-gradient(90deg, #22d3ee, #3b82f6); margin: 26px auto 0; }
 
+  .sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+  #projekte { padding-top: clamp(8px, 2vh, 24px); }
   /* Suche */
   .suche { display: grid; gap: 16px; justify-items: center; margin-bottom: 30px; }
   .feld { position: relative; width: min(100%, 640px); }
@@ -179,9 +181,7 @@
   </header>
 
   <section id="projekte" aria-labelledby="projTitel">
-    <div class="kopf">
-      <h2 id="projTitel">Was möchtest du <em>ausprobieren</em>?</h2>
-    </div>
+    <h2 id="projTitel" class="sr">Projekte</h2>
     <div class="suche">
       <label class="feld"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg><input id="q" type="search" placeholder="Suchen, etwa Van Gogh" aria-label="Projekte durchsuchen" autocomplete="off"></label>
       <div class="seg" id="faecher" role="group" aria-label="Fach"></div>

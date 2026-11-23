@@ -183,7 +183,6 @@
   <section id="projekte" aria-labelledby="projTitel">
     <h2 id="projTitel" class="sr">Projekte</h2>
     <div class="suche">
-      <label class="feld"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg><input id="q" type="search" placeholder="Suchen, etwa Van Gogh" aria-label="Projekte durchsuchen" autocomplete="off"></label>
       <div class="seg" id="faecher" role="group" aria-label="Fach"></div>
       <div class="chips" id="arten" role="group" aria-label="Art des Projekts"></div>
       <p class="anzahl" id="anzahl" aria-live="polite"></p>
@@ -192,7 +191,7 @@
     <div class="leerstand" id="leer" hidden><p>Dazu gibt es noch nichts.</p><button type="button" id="zurueck">Alles zeigen</button></div>
   </section>
 
-  <footer><span>Claus Zirwes, Universität zu Köln</span><a href="impressum.html">Impressum</a><a href="datenschutz.html">Datenschutz</a></footer>
+  <footer><span>Claus Zirwes</span><a href="impressum.html">Impressum</a><a href="datenschutz.html">Datenschutz</a></footer>
 </main>
 
 <dialog id="promptDialog" aria-labelledby="pdTitel">
@@ -478,16 +477,15 @@ pdKopieren.addEventListener("click", async () => {
   if (ok) setTimeout(() => { pdKopieren.textContent = "Kopieren"; }, 2200);
 });
 
-// Suche nach Fach, Art und Stichwort
+// Filter nach Fach und Art
 let fach = "alle", typ = null;
-const q = document.getElementById("q"), faecher = document.getElementById("faecher"), arten = document.getElementById("arten");
+const faecher = document.getElementById("faecher"), arten = document.getElementById("arten");
 faecher.innerHTML = FAECHER.map(([id, n]) => `<button type="button" data-f="${id}">${n}</button>`).join("");
 arten.innerHTML = Object.entries(ARTEN).map(([id, a]) => `<button type="button" data-t="${id}" data-typ="${id}" aria-pressed="false">${svgIcon(a.icon)}${a.name}</button>`).join("");
 function filtern() {
-  const woerter = q.value.toLowerCase().trim().split(/\s+/).filter(Boolean);
   let n = 0;
   document.querySelectorAll(".kachel").forEach(k => {
-    const ok = (fach === "alle" || k.dataset.fach === fach) && (!typ || k.dataset.typ === typ) && woerter.every(w => k.dataset.such.includes(w));
+    const ok = (fach === "alle" || k.dataset.fach === fach) && (!typ || k.dataset.typ === typ);
     k.hidden = !ok; if (ok) n++;
   });
   faecher.querySelectorAll("button").forEach(b => b.setAttribute("aria-pressed", b.dataset.f === fach));
@@ -497,8 +495,7 @@ function filtern() {
 }
 faecher.addEventListener("click", e => { const b = e.target.closest("button"); if (!b) return; fach = b.dataset.f; try { history.replaceState(null, "", fach === "alle" ? "#projekte" : "#" + fach); } catch (x) {} filtern(); });
 arten.addEventListener("click", e => { const b = e.target.closest("button"); if (!b) return; typ = typ === b.dataset.t ? null : b.dataset.t; filtern(); });
-q.addEventListener("input", filtern);
-document.getElementById("zurueck").addEventListener("click", () => { fach = "alle"; typ = null; q.value = ""; filtern(); });
+document.getElementById("zurueck").addEventListener("click", () => { fach = "alle"; typ = null; filtern(); });
 const h = location.hash.slice(1);
 if (FAECHER.some(x => x[0] === h)) { fach = h; requestAnimationFrame(() => document.getElementById("projekte").scrollIntoView()); }
 filtern();

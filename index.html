@@ -5,190 +5,158 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Vibe Coding im Unterricht</title>
 <style>
-  /* Nachthimmel mit Raster, Glaskarten mit farbigem Rand je Projektart, Verläufe in Cyan, Blau und Violett */
+  /* Stil A Farbwolke: heller Grund, dunkle Kopfkarte mit Farbwolke, weiche weiße Karten,
+     schwere enge Überschriften, ein kursives Serifenwort, gelber Sticker, wenige schiefe Elemente,
+     Karten blenden beim Scrollen ein (Scroll Reveal) */
+  @font-face { font-family: "Instrument Serif"; font-style: italic; font-weight: 400; font-display: swap; src: url(fonts/instrument-serif-latin-400-italic.woff2) format("woff2"); }
   :root {
-    color-scheme: dark;
-    --bg: #060a1a;
-    --text: #f3f5fb;
-    --muted: rgba(226,232,245,.68);
-    --line: rgba(148,170,220,.16);
-    --cyan: #22d3ee;
-    --focus: #7dd3fc;
-    --verlauf: linear-gradient(100deg, #22d3ee, #3b82f6 55%, #8b5cf6);
+    color-scheme: light dark;
+    --bg: #F2F2F7; --card: #FFFFFF; --ink: #0F1020; --muted: #68687A; --line: rgba(15,16,32,.09);
+    --soft: rgba(120,120,140,.13); --acc: #D93A2B;
+    --grad: linear-gradient(135deg, #F2542D, #D61F69);
+    --shadow: 0 1px 0 rgba(255,255,255,.9) inset, 0 14px 34px -18px rgba(30,20,60,.35), 0 0 0 1px rgba(15,16,32,.04);
+    --sans: -apple-system, BlinkMacSystemFont, "SF Pro Display", Inter, "Segoe UI", system-ui, sans-serif;
+    --serif: "Instrument Serif", Georgia, serif;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root { --bg: #050509; --card: #16161D; --ink: #F5F5FA; --muted: #9C9CB0; --line: rgba(255,255,255,.1); --soft: rgba(160,160,190,.17); --acc: #FF7A5C;
+      --shadow: 0 0 0 1px rgba(255,255,255,.07), 0 16px 34px -18px rgba(0,0,0,.85); }
   }
   * { box-sizing: border-box; min-width: 0; }
-  html, body { margin: 0; background: var(--bg); color: var(--text); }
-  html { scroll-padding-top: 84px; }
-  body { font: 400 17px/1.6 Inter, -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", system-ui, sans-serif; -webkit-font-smoothing: antialiased; -webkit-text-size-adjust: 100%; overflow-x: clip; }
-  body::before { content: ""; position: fixed; inset: 0; z-index: -2; pointer-events: none;
+  html { -webkit-text-size-adjust: 100%; scroll-padding-top: 80px; }
+  body { margin: 0; background: var(--bg); color: var(--ink); font: 400 17px/1.5 var(--sans); -webkit-font-smoothing: antialiased; overflow-x: clip; }
+  a { color: inherit; }
+  em.s { font-family: var(--serif); font-style: italic; font-weight: 400; letter-spacing: -.01em; }
+
+  /* Kopfleiste aus Glas */
+  .leiste { position: sticky; top: 0; z-index: 10; display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 12px max(4vw, 18px); background: color-mix(in srgb, var(--bg) 78%, transparent); backdrop-filter: blur(18px) saturate(1.6); -webkit-backdrop-filter: blur(18px) saturate(1.6); border-bottom: 1px solid var(--line); }
+  .marke { text-decoration: none; font-weight: 800; font-size: 1.4rem; letter-spacing: -.045em; }
+  .marke em { font-family: var(--serif); font-style: italic; font-weight: 400; font-size: 1.18em; letter-spacing: -.01em; color: #D61F69; }
+  .leiste nav { display: flex; gap: 4px; }
+  .leiste nav a { text-decoration: none; font-weight: 600; font-size: .95rem; color: var(--muted); padding: .5em .85em; border-radius: 999px; white-space: nowrap; }
+  .leiste nav a:hover { color: var(--ink); background: var(--soft); }
+
+  main { max-width: 1180px; margin: 0 auto; padding: 14px max(4vw, 16px) 64px; }
+
+  /* Kopfkarte mit Farbwolke */
+  .hero { position: relative; overflow: hidden; border-radius: 40px; color: #fff; padding: clamp(26px, 5vw, 64px) clamp(22px, 5vw, 64px) clamp(30px, 5vw, 64px);
     background:
-      radial-gradient(70vw 55vh at 0% 0%, rgba(59,130,246,.22), transparent 70%),
-      radial-gradient(55vw 60vh at 100% 40%, rgba(139,92,246,.16), transparent 70%),
-      radial-gradient(60vw 45vh at 20% 105%, rgba(34,211,238,.12), transparent 70%),
-      linear-gradient(rgba(148,170,220,.07) 1px, transparent 1px) 0 0 / 110px 110px,
-      linear-gradient(90deg, rgba(148,170,220,.07) 1px, transparent 1px) 0 0 / 110px 110px,
-      var(--bg); }
-  body::after { content: ""; position: fixed; inset: 0; z-index: -1; pointer-events: none; opacity: .75;
-    background-image:
-      radial-gradient(2px 2px at 8% 22%, #7dd3fc 50%, transparent 51%),
-      radial-gradient(1.5px 1.5px at 23% 71%, #c4b5fd 50%, transparent 51%),
-      radial-gradient(2.4px 2.4px at 41% 12%, #93c5fd 50%, transparent 51%),
-      radial-gradient(1.5px 1.5px at 57% 48%, #a5f3fc 50%, transparent 51%),
-      radial-gradient(2.2px 2.2px at 69% 83%, #93c5fd 50%, transparent 51%),
-      radial-gradient(1.6px 1.6px at 82% 27%, #e9d5ff 50%, transparent 51%),
-      radial-gradient(2px 2px at 93% 62%, #7dd3fc 50%, transparent 51%),
-      radial-gradient(1.4px 1.4px at 14% 91%, #c4b5fd 50%, transparent 51%),
-      radial-gradient(1.6px 1.6px at 48% 94%, #a5f3fc 50%, transparent 51%); }
+      radial-gradient(60% 70% at 88% 8%, #FF5A36 0, transparent 62%),
+      radial-gradient(55% 60% at 6% 96%, #7C3AED 0, transparent 62%),
+      radial-gradient(42% 46% at 72% 100%, #22D3EE 0, transparent 66%),
+      radial-gradient(34% 38% at 18% 0, #FFD84A 0, transparent 60%),
+      #0E0F1A;
+    box-shadow: 0 30px 60px -30px rgba(124,58,237,.7), inset 0 1px 0 rgba(255,255,255,.35); }
+  .hero::after { content: ""; position: absolute; inset: 0; pointer-events: none; border-radius: inherit; background: linear-gradient(118deg, rgba(255,255,255,.28) 0, rgba(255,255,255,.05) 32%, transparent 52%); }
+  .hero > * { position: relative; z-index: 1; }
+  .sticker { display: inline-block; background: #FFD84A; color: #2b2100; font-weight: 800; font-size: 12.5px; letter-spacing: .09em; text-transform: uppercase; padding: 6px 12px; border-radius: 10px; transform: rotate(-3deg); box-shadow: 0 6px 14px -6px rgba(0,0,0,.5); }
+  h1 { font-weight: 800; font-size: clamp(2.6rem, 8.5vw, 5.4rem); line-height: .96; letter-spacing: -.05em; margin: 22px 0 16px; text-wrap: balance; max-width: 12em; }
+  h1 em { font-family: var(--serif); font-style: italic; font-weight: 400; font-size: 1.12em; letter-spacing: -.01em; color: #FFD84A; }
+  .hero p { margin: 0; max-width: 32em; font-size: clamp(1.02rem, 2.2vw, 1.2rem); font-weight: 500; opacity: .9; }
+  .knoepfe { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 28px; }
+  .btn { display: inline-flex; align-items: center; gap: 8px; min-height: 48px; padding: 0 22px; border-radius: 24px; color: #fff; font-weight: 700; font-size: 1rem; text-decoration: none; letter-spacing: -.01em; border: 0; cursor: pointer; font-family: inherit; touch-action: manipulation; white-space: nowrap;
+    background-image: linear-gradient(180deg, rgba(255,255,255,.3), rgba(255,255,255,0) 55%), var(--grad);
+    box-shadow: inset 0 1px 0 rgba(255,255,255,.5), 0 10px 20px -10px rgba(214,31,105,.8); transition: transform .15s ease; }
+  .btn:active { transform: scale(.96); }
+  .btn svg { width: 18px; height: 18px; flex: none; }
+  .btn.glas { background: rgba(255,255,255,.16); box-shadow: inset 0 0 0 1px rgba(255,255,255,.35); backdrop-filter: blur(8px); }
+  .btn.alt { background: var(--soft); color: var(--acc); box-shadow: none; }
+  .btn.klein { min-height: 42px; padding: 0 17px; font-size: .95rem; border-radius: 21px; }
 
-  /* Kopfleiste */
-  .leiste { position: sticky; top: 0; z-index: 10; display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 14px max(4vw, 18px); background: rgba(5,8,22,.82); backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px); border-bottom: 1px solid var(--line); }
-  .marke { display: flex; align-items: center; gap: 10px; color: var(--text); text-decoration: none; font-weight: 800; font-size: 1.35rem; letter-spacing: -.025em; white-space: nowrap; }
-  .marke em { font-style: italic; background: linear-gradient(100deg, #22d3ee, #3b82f6); -webkit-background-clip: text; background-clip: text; color: transparent; padding-right: .05em; }
-  .marke svg { width: 30px; height: 30px; flex: none; }
-  .leiste nav { display: flex; gap: 6px; }
-  .leiste nav a { color: var(--muted); text-decoration: none; font-weight: 600; font-size: .95rem; padding: .5em .8em; border-radius: 999px; white-space: nowrap; }
-  .leiste nav a:hover { color: var(--text); background: rgba(255,255,255,.06); }
+  /* Filter */
+  .filter { margin: 34px 0 24px; display: grid; gap: 14px; }
+  .lbl { font-size: 12px; letter-spacing: .12em; text-transform: uppercase; color: var(--muted); font-weight: 700; margin: 0 4px; }
+  .chips { display: flex; flex-wrap: wrap; gap: 8px; padding: 4px 2px; }
+  .chip { font: inherit; font-weight: 600; font-size: .95rem; color: var(--muted); background: var(--card); border: 0; border-radius: 20px; padding: 10px 17px; min-height: 42px; cursor: pointer; box-shadow: var(--shadow); display: inline-flex; align-items: center; gap: 8px; transition: transform .2s ease; touch-action: manipulation; }
+  .chip i { width: 9px; height: 9px; border-radius: 50%; background: var(--c1); flex: none; }
+  .chip[aria-pressed="true"] { color: #fff; transform: rotate(-3deg); background-image: linear-gradient(180deg, rgba(255,255,255,.28), rgba(255,255,255,0) 55%), var(--grad); box-shadow: 0 12px 20px -10px rgba(214,31,105,.8), inset 0 1px 0 rgba(255,255,255,.5); }
+  .chip[aria-pressed="true"] i { background: #fff; }
+  .anzahl { margin: 2px 4px 0; color: var(--muted); font-size: .92rem; }
 
-  main { max-width: 1160px; margin: 0 auto; padding: 0 max(4vw, 18px) 64px; }
-
-  /* Bühne, linksbündig */
-  .buehne { padding: clamp(48px, 11vh, 120px) 0 clamp(40px, 7vh, 72px); max-width: 800px; }
-  .augenbraue { display: inline-flex; align-items: center; gap: .6em; color: var(--cyan); font-weight: 700; font-size: .82rem; letter-spacing: .2em; text-transform: uppercase; margin: 0 0 22px; }
-  .augenbraue svg { width: 1.15em; height: 1.15em; }
-  h1 { font-weight: 800; font-size: clamp(2.7rem, 9vw, 5rem); line-height: 1.02; letter-spacing: -.04em; margin: 0 0 .5em; text-wrap: balance; }
-  h1 em, h2 em { font-style: italic; background: var(--verlauf); -webkit-background-clip: text; background-clip: text; color: transparent; padding-right: .07em; }
-  .buehne p.lead { margin: 0; color: var(--muted); font-size: clamp(1.08rem, 2.4vw, 1.3rem); line-height: 1.6; max-width: 34em; }
-  .knopfreihe { display: flex; flex-wrap: wrap; gap: 14px 22px; align-items: center; margin-top: 36px; }
-  .gross { display: inline-flex; align-items: center; gap: .6em; font-weight: 700; font-size: 1.08rem; text-decoration: none; padding: 1em 1.8em; border-radius: 999px; color: #07101f; background: linear-gradient(100deg, #67e8f9, #3b82f6); box-shadow: 0 12px 40px -12px rgba(34,211,238,.65); transition: transform .15s ease; touch-action: manipulation; }
-  .gross svg { width: 1.1em; height: 1.1em; }
-  .gross:hover { transform: translateY(-2px); }
-  .zweit { display: inline-flex; align-items: center; gap: .8em; color: var(--text); text-decoration: none; font-weight: 600; }
-  .zweit span { width: 46px; height: 46px; border-radius: 50%; border: 1px solid var(--line); display: grid; place-items: center; background: rgba(255,255,255,.04); }
-  .zweit svg { width: 18px; height: 18px; }
-
-  /* Abschnittskopf, zentriert mit Strich darunter */
-  .kopf { text-align: center; margin: clamp(28px, 5vh, 56px) auto 30px; max-width: 760px; }
-  .kopf h2 { font-weight: 800; font-size: clamp(2rem, 6vw, 3rem); line-height: 1.08; letter-spacing: -.035em; margin: 0; text-wrap: balance; }
-  .kopf p { color: var(--muted); margin: 14px auto 0; max-width: 36em; }
-  .kopf::after { content: ""; display: block; width: 96px; height: 5px; border-radius: 3px; background: linear-gradient(90deg, #22d3ee, #3b82f6); margin: 26px auto 0; }
-
-  .sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
-  #projekte { padding-top: clamp(8px, 2vh, 24px); }
-  /* Suche */
-  .suche { display: grid; gap: 16px; justify-items: center; margin-bottom: 30px; }
-  .feld { position: relative; width: min(100%, 640px); }
-  .feld svg { position: absolute; left: 18px; top: 50%; translate: 0 -50%; width: 20px; height: 20px; color: var(--muted); pointer-events: none; }
-  .feld input { width: 100%; font: inherit; font-size: 16px; color: var(--text); background: rgba(10,15,35,.85); border: 1px solid var(--line); border-radius: 16px; padding: 15px 18px 15px 50px; outline: none; }
-  .feld input::placeholder { color: rgba(226,232,245,.45); }
-  .feld input:focus { border-color: rgba(34,211,238,.6); box-shadow: 0 0 0 4px rgba(34,211,238,.15); }
-  .seg { display: flex; flex-wrap: wrap; justify-content: center; gap: 4px; padding: 6px; border-radius: 28px; border: 1px solid var(--line); background: rgba(255,255,255,.04); max-width: 100%; overflow-x: auto; scrollbar-width: none; }
-  .seg::-webkit-scrollbar { display: none; }
-  .seg button { flex: none; font: inherit; font-weight: 600; font-size: .98rem; color: var(--muted); background: transparent; border: 0; border-radius: 999px; padding: .62em 1.2em; cursor: pointer; min-height: 44px; touch-action: manipulation; }
-  .seg button[aria-pressed="true"] { color: #07101f; background: linear-gradient(100deg, #67e8f9, #3b82f6); box-shadow: 0 6px 22px -8px rgba(34,211,238,.7); }
-  .chips { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; }
-  .chips button { font: inherit; font-weight: 600; font-size: .92rem; color: var(--text); background: transparent; border: 1px solid color-mix(in srgb, var(--c1) 45%, transparent); border-radius: 999px; padding: .5em 1em .5em .8em; cursor: pointer; display: inline-flex; align-items: center; gap: .45em; min-height: 42px; touch-action: manipulation; }
-  .chips button svg { width: 1.05em; height: 1.05em; color: var(--c1); }
-  .chips button[aria-pressed="true"] { background: color-mix(in srgb, var(--c1) 22%, transparent); border-color: var(--c1); }
-  .anzahl { margin: 0; color: var(--muted); font-size: .92rem; }
-
-  /* Farben je Projektart */
-  [data-typ="anleitung"] { --c1: #22d3ee; --c2: #3b82f6; }
-  [data-typ="bild"]      { --c1: #a78bfa; --c2: #d946ef; }
-  [data-typ="kamera"]    { --c1: #f472b6; --c2: #fb7185; }
-  [data-typ="lernspiel"] { --c1: #fbbf24; --c2: #f97316; }
-  [data-typ="einheit"]   { --c1: #60a5fa; --c2: #6366f1; }
-  [data-typ="werkzeug"]  { --c1: #34d399; --c2: #22d3ee; }
+  /* Farbe je Projektart, nur als Punkt und Etikett */
+  [data-typ="anleitung"] { --c1: #0B8FA0; }
+  [data-typ="bild"]      { --c1: #7C3AED; }
+  [data-typ="kamera"]    { --c1: #D61F69; }
+  [data-typ="lernspiel"] { --c1: #E08A00; }
+  [data-typ="einheit"]   { --c1: #2563EB; }
+  [data-typ="werkzeug"]  { --c1: #12805A; }
+  @media (prefers-color-scheme: dark) {
+    [data-typ="anleitung"] { --c1: #35D0E3; } [data-typ="bild"] { --c1: #B79BFF; } [data-typ="kamera"] { --c1: #FF7AAE; }
+    [data-typ="lernspiel"] { --c1: #FFD84A; } [data-typ="einheit"] { --c1: #7FB0FF; } [data-typ="werkzeug"] { --c1: #4ADE9B; }
+  }
 
   /* Karten */
-  .raster { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 440px), 1fr)); gap: 24px; }
-  .kachel { position: relative; border-radius: 30px; overflow: hidden; display: flex; flex-direction: column;
-    border: 1.5px solid color-mix(in srgb, var(--c1) 50%, transparent);
-    background: linear-gradient(170deg, color-mix(in srgb, var(--c1) 13%, #0b1124) 0%, #070b1a 75%);
-    box-shadow: 0 0 0 1px rgba(0,0,0,.2), 0 20px 60px -30px color-mix(in srgb, var(--c1) 55%, transparent);
-    transition: border-color .25s ease, box-shadow .25s ease, transform .25s ease; }
-  .kachel:hover { border-color: var(--c1); box-shadow: 0 0 34px -8px color-mix(in srgb, var(--c1) 55%, transparent); transform: translateY(-2px); }
+  .raster { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 420px), 1fr)); gap: 22px; }
+  .kachel { background: var(--card); border-radius: 30px; overflow: hidden; display: flex; flex-direction: column; box-shadow: var(--shadow); }
   .kachel[hidden] { display: none; }
-  .bild { display: block; aspect-ratio: 8 / 5; background: #03050f; overflow: hidden; border-bottom: 1px solid color-mix(in srgb, var(--c1) 25%, transparent); }
-  .bild img { width: 100%; height: 100%; object-fit: cover; display: block; transition: transform .5s ease; }
-  .bild:hover img, .bild:focus-visible img { transform: scale(1.03); }
-  .unten { padding: 22px 24px 24px; display: flex; flex-direction: column; gap: 14px; flex: 1; }
-  .marker { display: flex; align-items: center; gap: 14px; }
-  .symbol { flex: none; width: 52px; height: 52px; border-radius: 16px; display: grid; place-items: center; color: var(--c1); border: 1px solid color-mix(in srgb, var(--c1) 40%, transparent); background: color-mix(in srgb, var(--c1) 10%, transparent); box-shadow: 0 0 22px -6px color-mix(in srgb, var(--c1) 60%, transparent); }
-  .symbol svg { width: 24px; height: 24px; }
-  .etikett { color: var(--c1); font-weight: 700; font-size: .78rem; letter-spacing: .18em; text-transform: uppercase; line-height: 1.3; }
-  .kachel h2 { font-weight: 800; font-size: 1.45rem; line-height: 1.18; letter-spacing: -.025em; margin: 0; }
-  .kachel h2 a { color: inherit; text-decoration: none; }
-  .kachel p { margin: 0; color: var(--muted); font-size: .98rem; line-height: 1.6; }
-  .fuss { display: flex; gap: 18px; align-items: flex-end; justify-content: space-between; margin-top: auto; padding-top: 6px; }
-  .aktionen { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; }
-  .oeffnen { display: inline-flex; align-items: center; gap: .5em; font-size: 1rem; font-weight: 700; color: #07101f; background: linear-gradient(100deg, var(--c1), var(--c2)); text-decoration: none; padding: .78em 1.35em; border-radius: 999px; white-space: nowrap; box-shadow: 0 10px 28px -12px var(--c1); transition: transform .15s ease; touch-action: manipulation; }
-  .oeffnen:hover { transform: translateY(-1px); }
-  .oeffnen:active { transform: scale(.96); }
-  .oeffnen svg { width: 1em; height: 1em; }
-  .startprompt { display: inline-flex; align-items: center; gap: .6em; font: inherit; text-align: left; color: var(--text); background: transparent; border: 1px solid color-mix(in srgb, var(--c1) 40%, transparent); padding: .5em 1em .5em .8em; border-radius: 18px; cursor: pointer; white-space: nowrap; touch-action: manipulation; }
-  .startprompt:hover { background: color-mix(in srgb, var(--c1) 12%, transparent); }
-  .startprompt svg { width: 1.3em; height: 1.3em; flex: none; color: var(--c1); }
-  .startprompt b { display: block; font-size: .92rem; font-weight: 700; line-height: 1.15; }
-  .startprompt small { display: block; font-size: .74rem; line-height: 1.2; color: var(--muted); }
-  .qr { flex: none; width: 104px; text-align: center; }
-  .qr .platte { background: #fff; border-radius: 12px; padding: 7px; line-height: 0; }
+  .bild { display: block; aspect-ratio: 8 / 5; overflow: hidden; background: #0E0F1A; }
+  .bild img { width: 100%; height: 100%; object-fit: cover; display: block; transition: transform .6s ease; }
+  .bild:hover img { transform: scale(1.03); }
+  .unten { padding: 18px 22px 22px; display: flex; flex-direction: column; gap: 8px; flex: 1; }
+  .etikett { display: flex; align-items: center; gap: 8px; font-size: 12px; letter-spacing: .12em; text-transform: uppercase; font-weight: 700; color: var(--c1); }
+  .etikett i { width: 8px; height: 8px; border-radius: 2px; background: var(--c1); transform: rotate(45deg); }
+  .kachel h2 { margin: 0; font-size: 1.5rem; font-weight: 800; letter-spacing: -.035em; line-height: 1.12; }
+  .kachel h2 a { text-decoration: none; }
+  .kachel p { margin: 0; color: var(--muted); font-size: .98rem; line-height: 1.5; }
+  .fuss { display: flex; gap: 16px; align-items: flex-end; justify-content: space-between; margin-top: auto; padding-top: 12px; }
+  .aktionen { display: flex; flex-wrap: wrap; gap: 8px; }
+  .qr { flex: none; width: 96px; text-align: center; }
+  .qr .platte { background: #fff; border-radius: 14px; padding: 7px; line-height: 0; box-shadow: 0 0 0 1px var(--line); }
   .qr svg { width: 100%; height: auto; display: block; }
-  .qr small { display: block; margin-top: 6px; font-size: .72rem; line-height: 1.25; color: var(--muted); }
-  .qr .leer { border: 1px dashed var(--line); color: var(--muted); font-size: .72rem; line-height: 1.3; padding: 10px 6px; border-radius: 12px; }
+  .qr small { display: block; margin-top: 6px; font-size: .7rem; line-height: 1.25; color: var(--muted); }
+  .qr .leer { border: 1px dashed var(--line); color: var(--muted); font-size: .7rem; line-height: 1.3; padding: 10px 6px; border-radius: 12px; }
   .leerstand { text-align: center; color: var(--muted); padding: 40px 0; }
-  .leerstand button { margin-top: 14px; font: inherit; font-weight: 700; color: #07101f; background: linear-gradient(100deg, #67e8f9, #3b82f6); border: 0; border-radius: 999px; padding: .7em 1.4em; cursor: pointer; }
 
-  footer { margin-top: 64px; padding-top: 22px; border-top: 1px solid var(--line); font-size: .9rem; color: var(--muted); display: flex; flex-wrap: wrap; gap: 8px 18px; }
-  footer a { color: inherit; }
+  /* Ein Tipp-Kärtchen pro Seite liegt leicht schief */
+  .kachel.tipp { position: relative; overflow: visible; }
+  .kachel.tipp .bild { border-radius: 30px 30px 0 0; }
+  .kachel.tipp::before { content: "Tipp"; position: absolute; top: -10px; right: 22px; z-index: 2; background: #FFD84A; color: #2b2100; font-weight: 800; font-size: 12px; letter-spacing: .1em; text-transform: uppercase; padding: 5px 11px; border-radius: 9px; transform: rotate(4deg); box-shadow: 0 6px 14px -6px rgba(0,0,0,.5); }
 
-  dialog { width: min(92vw, 640px); max-height: 86vh; padding: 0; border: 1px solid rgba(139,92,246,.4); border-radius: 26px; background: #0c1130; color: var(--text); }
-  dialog::backdrop { background: rgba(2, 4, 14, .78); backdrop-filter: blur(4px); }
+  /* Scroll Reveal */
+  .js .reveal { opacity: 0; transform: translateY(28px) scale(.985); transition: opacity .7s ease, transform .7s cubic-bezier(.2,.7,.2,1); transition-delay: var(--d, 0ms); }
+  .js .reveal.da { opacity: 1; transform: none; }
+  @media (prefers-reduced-motion: reduce) { .js .reveal { opacity: 1; transform: none; transition: none; } .bild img, .chip { transition: none; } }
+
+  footer { margin-top: 60px; padding-top: 20px; border-top: 1px solid var(--line); font-size: .9rem; color: var(--muted); display: flex; flex-wrap: wrap; gap: 8px 18px; }
+
+  dialog { width: min(92vw, 640px); max-height: 86vh; padding: 0; border: 0; border-radius: 30px; background: var(--card); color: var(--ink); box-shadow: 0 30px 80px -20px rgba(0,0,0,.5); }
+  dialog::backdrop { background: rgba(10,10,20,.5); backdrop-filter: blur(6px); }
   .dlg { padding: 24px; display: flex; flex-direction: column; gap: 14px; max-height: 86vh; }
-  .dlg h2 { font-weight: 800; font-size: 1.3rem; line-height: 1.2; letter-spacing: -.02em; margin: 0; }
-  .dlg p { margin: 0; color: var(--muted); font-size: .92rem; line-height: 1.45; }
-  .dlg pre { margin: 0; padding: 14px 16px; background: #050817; border: 1px solid var(--line); border-radius: 14px; font: inherit; font-size: .95rem; line-height: 1.5; white-space: pre-wrap; overflow-wrap: anywhere; overflow-y: auto; user-select: text; -webkit-user-select: text; }
-  .dlg .knoepfe { display: flex; gap: 10px; flex-wrap: wrap; }
-  .dlg button { font: inherit; font-weight: 700; font-size: .95rem; padding: .65em 1.3em; border-radius: 999px; cursor: pointer; border: 1px solid var(--line); background: transparent; color: var(--text); }
-  .dlg button.primaer { background: linear-gradient(100deg, #8b5cf6, #d946ef); color: #fff; border-color: transparent; }
+  .dlg h2 { font-weight: 800; font-size: 1.35rem; line-height: 1.15; letter-spacing: -.03em; margin: 0; }
+  .dlg p { margin: 0; color: var(--muted); font-size: .94rem; }
+  .dlg pre { margin: 0; padding: 14px 16px; background: var(--bg); border-radius: 18px; font: inherit; font-size: .95rem; line-height: 1.5; white-space: pre-wrap; overflow-wrap: anywhere; overflow-y: auto; user-select: text; -webkit-user-select: text; }
+  .dlg .reihe { display: flex; gap: 8px; flex-wrap: wrap; }
 
-  a:focus-visible, button:focus-visible { outline: 2px solid var(--focus); outline-offset: 3px; }
-  @media (max-width: 640px) { .leiste nav a.weg { display: none; } }
-  @media (max-width: 460px) { .seg button { padding: .55em .9em; } .fuss { flex-direction: column; align-items: flex-start; } .qr { width: 110px; } .unten { padding: 20px; } }
-  @media (prefers-reduced-motion: reduce) { .bild img, .gross, .oeffnen, .kachel { transition: none; } }
+  :focus-visible { outline: 3px solid #FFD84A; outline-offset: 2px; border-radius: 12px; }
+  @media (max-width: 560px) { .leiste nav a.weg { display: none; } .hero { border-radius: 32px; } }
+  @media (max-width: 440px) { .qr { display: none; } .unten { padding: 16px 18px 20px; } }
 </style>
+<script>document.documentElement.classList.add("js")</script>
 </head>
 <body>
 <div class="leiste">
-  <a class="marke" href="./">
-    <svg viewBox="0 0 32 32" fill="none" aria-hidden="true"><defs><linearGradient id="lg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#67e8f9"/><stop offset="1" stop-color="#3b82f6"/></linearGradient></defs><rect x="2" y="7" width="27" height="21" rx="6" stroke="url(#lg)" stroke-width="2.2"/><path d="M11 14l-4 3.5 4 3.5M20 14l4 3.5-4 3.5M17 13l-3 9" stroke="url(#lg)" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/><path d="M27 0l.9 2.1L30 3l-2.1.9L27 6l-.9-2.1L24 3l2.1-.9z" fill="#fff"/></svg>
-    <span>Art<em>Lab</em></span>
-  </a>
-  <nav aria-label="Seiten">
-    <a href="#projekte">Projekte</a>
-    <a class="weg" href="vibe-coding.html">Anleitung</a>
-    <a href="ueber-dieses-projekt.html">Über</a>
-  </nav>
+  <a class="marke" href="./">Art<em>Lab</em></a>
+  <nav aria-label="Seiten"><a href="#projekte">Projekte</a><a class="weg" href="vibe-coding.html">Anleitung</a><a href="ueber-dieses-projekt.html">Über</a></nav>
 </div>
 <main>
-  <header class="buehne">
-    <p class="augenbraue"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2l2.2 6.6L21 11l-6.8 2.4L12 20l-2.2-6.6L3 11l6.8-2.4z"/></svg>Selbst gebaut mit KI</p>
+  <header class="hero">
+    <span class="sticker">Selbst gebaut mit KI</span>
     <h1>Vibe Coding im <em>Unterricht</em></h1>
-    <p class="lead">Lernspiele, Bilder zum Anfassen und kleine Werkzeuge für Kunst, Biologie und Sprachen. Alles ist mit KI entstanden, ohne selbst zu programmieren. Zu jedem Projekt gibt es den Startprompt zum Nachbauen.</p>
-    <div class="knopfreihe">
-      <a class="gross" href="#projekte">Projekte entdecken<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 3v10M4 9l4 4 4-4"/></svg></a>
-      <a class="zweit" href="vibe-coding.html"><span><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M8 5v14l11-7z"/></svg></span>So fängst du an</a>
+    <p>Lernspiele, Bilder zum Anfassen und kleine Werkzeuge für Kunst, Biologie und Sprachen. Alles mit KI entstanden, ohne selbst zu programmieren. Zu jedem Projekt gibt es den Startprompt zum Nachbauen.</p>
+    <div class="knoepfe">
+      <a class="btn" href="#projekte">Projekte ansehen<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 5v14M6 13l6 6 6-6"/></svg></a>
+      <a class="btn glas" href="vibe-coding.html">So fängst du an</a>
     </div>
   </header>
 
-  <section id="projekte" aria-labelledby="projTitel">
-    <h2 id="projTitel" class="sr">Projekte</h2>
-    <div class="suche">
-      <div class="seg" id="faecher" role="group" aria-label="Fach"></div>
-      <div class="chips" id="arten" role="group" aria-label="Art des Projekts"></div>
+  <section id="projekte" aria-label="Projekte">
+    <div class="filter">
+      <div><p class="lbl">Fach</p><div class="chips" id="faecher" role="group" aria-label="Fach"></div></div>
+      <div><p class="lbl">Art</p><div class="chips" id="arten" role="group" aria-label="Art des Projekts"></div></div>
       <p class="anzahl" id="anzahl" aria-live="polite"></p>
     </div>
     <div class="raster" id="raster"></div>
-    <div class="leerstand" id="leer" hidden><p>Dazu gibt es noch nichts.</p><button type="button" id="zurueck">Alles zeigen</button></div>
+    <div class="leerstand" id="leer" hidden><p>Dazu gibt es noch nichts.</p><button type="button" class="btn klein" id="zurueck">Alles zeigen</button></div>
   </section>
 
   <footer><span>Claus Zirwes</span><a href="impressum.html">Impressum</a><a href="datenschutz.html">Datenschutz</a></footer>
@@ -199,15 +167,16 @@
     <h2 id="pdTitel"></h2>
     <p>So könntest du eine ähnliche Seite bauen. Kopiere den Auftrag, füge ihn bei Claude oder ChatGPT ein und passe ihn nach Lust und Laune an.</p>
     <pre id="pdText" tabindex="0"></pre>
-    <div class="knoepfe"><button type="button" class="primaer" id="pdKopieren">Kopieren</button><button type="button" id="pdZu">Schließen</button></div>
+    <div class="reihe"><button type="button" class="btn klein" id="pdKopieren">Kopieren</button><button type="button" class="btn klein alt" id="pdZu">Schließen</button></div>
   </div>
 </dialog>
 
 <script src="qrcode.js"></script>
 <script>
 // Neue Projekte: einfach einen weiteren Eintrag ergänzen.
-// fach: kunst, biologie, sprachen oder allgemein (fachübergreifend)
+// fach: kunst, biologie, sprachen oder allgemein
 // typ: anleitung, bild, kamera, lernspiel, einheit oder werkzeug
+// tipp: true legt einen gelben Tipp-Sticker auf die Karte (sparsam verwenden)
 const PROJEKTE = [
   {
     titel: "Worum es hier geht",
@@ -391,6 +360,7 @@ const PROJEKTE = [
     titel: "Kunstglobus",
     text: "Die 100 wichtigsten Kunstwerke und 50 Bauwerke der Welt auf einer drehbaren Erdkugel mit Tag und Nacht. Frei erkunden, mit dem Zeitregler durch 40.000 Jahre reisen, Rundgänge machen, das Werk des Tages und ein Tagesrätsel, dazu Spiele wie Zeitstrahl und Detailrätsel.",
     seite: "kunstglobus.html",
+    tipp: true,
     fach: "kunst",
     typ: "lernspiel",
     prompt: "Baue eine HTML-Seite ohne externe Bibliotheken mit einer drehbaren, zoombaren Erdkugel (WebGL, orthografische Projektion, Tag und Nacht nach echter Uhrzeit, hochaufgelöste Erdbilder werden nachgeladen) und 150 Einträgen: 100 Kunstwerke und 50 Bauwerke mit Bild, Künstler, Jahr, Epoche, Region, Entstehungsort und heutigem Standort. Die Punkte sitzen genau am Ort, Bilder aus derselben Stadt werden im Kreis aufgefächert. Ein Tipp öffnet eine Karte mit großem Bild, Eckdaten samt Standort und einem langen Text; ein Lichtbogen verbindet Entstehungsort und Standort. Unten ein Zeitregler mit Abspielknopf und eine Leiste mit Heute (Werk des Tages, tägliches Rätsel zum Teilen), Rundgänge (nach Zeit, Region und Thema, jederzeit verlassbar, freiwilliges Quiz mit Sternen), Spiele (Wo steht es, Zeitstrahl, Detailrätsel, Werk erkennen, Wer, Epoche, Gemischt) und Sammlung (entdeckte und sicher gekonnte Werke, Abzeichen, freiwillige Wiederholung). Fortschritt im Browser. Handy zuerst, Zurück-Link zur Übersicht.",
@@ -408,50 +378,28 @@ const PROJEKTE = [
     alt: "Dunkle Erdkugel mit Lichtern der Nachtseite und vielen runden Tierbildern über Nordamerika",
   },
 ];
-
 const FAECHER = [["alle", "Alle"], ["kunst", "Kunst"], ["biologie", "Biologie"], ["sprachen", "Sprachen"], ["allgemein", "Allgemein"]];
-const ARTEN = {
-  anleitung: { name: "Anleitung", icon: '<path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20V3H6.5A2.5 2.5 0 0 0 4 5.5z"/><path d="M6.5 17A2.5 2.5 0 0 0 4 19.5 2.5 2.5 0 0 0 6.5 22H20v-5"/>' },
-  bild: { name: "Bild zum Anfassen", icon: '<path d="M9 11V5a2 2 0 0 1 4 0v6"/><path d="M13 9a2 2 0 0 1 4 0v3"/><path d="M17 11a2 2 0 0 1 4 0v4a7 7 0 0 1-7 7h-1a7 7 0 0 1-6-3.4L4.5 15a2 2 0 0 1 3.4-2L9 14.5"/>' },
-  kamera: { name: "Kamera und Hand", icon: '<path d="M23 7l-7 5 7 5V7z"/><rect x="1" y="5" width="15" height="14" rx="2"/>' },
-  lernspiel: { name: "Lernspiel", icon: '<rect x="2" y="6" width="20" height="12" rx="4"/><path d="M6 12h4M8 10v4"/><circle cx="16" cy="11" r=".6" fill="currentColor"/><circle cx="18" cy="13" r=".6" fill="currentColor"/>' },
-  einheit: { name: "Unterrichtseinheit", icon: '<rect x="8" y="2" width="8" height="4" rx="1"/><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><path d="M9 14l2 2 4-4"/>' },
-  werkzeug: { name: "Werkzeug", icon: '<path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.8-3.8a6 6 0 0 1-7.9 7.9l-6.9 6.9a2.1 2.1 0 0 1-3-3l6.9-6.9a6 6 0 0 1 7.9-7.9z"/>' }
-};
-const svgIcon = i => `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${i}</svg>`;
+const ARTEN = { anleitung: "Anleitung", bild: "Bild zum Anfassen", kamera: "Kamera und Hand", lernspiel: "Lernspiel", einheit: "Unterrichtseinheit", werkzeug: "Werkzeug" };
 const fachName = f => (FAECHER.find(x => x[0] === f) || [, ""])[1];
 
-function qrSvg(adresse) {
-  const q = qrcode(0, "M");
-  q.addData(adresse);
-  q.make();
-  return q.createSvgTag({ scalable: true, margin: 0 });
-}
-
-const FUNKEL = '<svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M10 3l1.9 5.1L17 10l-5.1 1.9L10 17l-1.9-5.1L3 10l5.1-1.9z"/><path d="M18.5 12l.9 2.6 2.6.9-2.6.9-.9 2.6-.9-2.6-2.6-.9 2.6-.9z"/><path d="M18 3l.6 1.9 1.9.6-1.9.6L18 8l-.6-1.9-1.9-.6 1.9-.6z"/></svg>';
-const PFEIL = '<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 8h10M9 4l4 4-4 4"/></svg>';
+function qrSvg(adresse) { const q = qrcode(0, "M"); q.addData(adresse); q.make(); return q.createSvgTag({ scalable: true, margin: 0 }); }
+const PFEIL = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg>';
 const imNetz = location.protocol === "http:" || location.protocol === "https:";
 const raster = document.getElementById("raster");
 
 PROJEKTE.forEach((p, i) => {
-  const adresse = new URL(p.seite, location.href).href;
-  const art = ARTEN[p.typ] || ARTEN.werkzeug;
   const k = document.createElement("article");
-  k.className = "kachel";
-  k.dataset.typ = p.typ;
-  k.dataset.fach = p.fach;
-  k.dataset.such = [p.titel, p.text, art.name, fachName(p.fach)].join(" ").toLowerCase();
+  k.className = "kachel reveal" + (p.tipp ? " tipp" : "");
+  k.dataset.typ = p.typ; k.dataset.fach = p.fach;
   k.innerHTML = `
-    <a class="bild" href="${p.seite}" aria-label="${p.titel} öffnen" tabindex="-1"><img src="${p.bild}" alt="${p.alt}" loading="lazy"></a>
+    <a class="bild" href="${p.seite}" tabindex="-1" aria-hidden="true"><img src="${p.bild}" alt="${p.alt}" loading="lazy"></a>
     <div class="unten">
-      <div class="marker"><span class="symbol">${svgIcon(art.icon)}</span><span class="etikett">${fachName(p.fach)} · ${art.name}</span></div>
+      <span class="etikett"><i></i>${fachName(p.fach)} · ${ARTEN[p.typ] || ""}</span>
       <h2><a href="${p.seite}">${p.titel}</a></h2>
       <p>${p.text}</p>
       <div class="fuss">
-        <div class="aktionen"><a class="oeffnen" href="${p.seite}">Öffnen${PFEIL}</a>${p.prompt ? `<button type="button" class="startprompt" data-i="${i}" aria-label="Startprompt zu ${p.titel} anzeigen">${FUNKEL}<span><b>Startprompt</b><small>zum Nachbauen</small></span></button>` : ""}</div>
-        <div class="qr">${imNetz
-          ? `<div class="platte" role="img" aria-label="QR-Code zu ${p.titel}">${qrSvg(adresse)}</div><small>Mit dem Handy scannen</small>`
-          : `<div class="leer">QR-Code erscheint, sobald die Seite online liegt</div>`}</div>
+        <div class="aktionen"><a class="btn klein" href="${p.seite}">Öffnen${PFEIL}</a>${p.prompt ? `<button type="button" class="btn klein alt startprompt" data-i="${i}" aria-label="Startprompt zu ${p.titel} anzeigen">Startprompt</button>` : ""}</div>
+        <div class="qr">${imNetz ? `<div class="platte" role="img" aria-label="QR-Code zu ${p.titel}">${qrSvg(new URL(p.seite, location.href).href)}</div><small>Mit dem Handy scannen</small>` : `<div class="leer">QR-Code erscheint, sobald die Seite online liegt</div>`}</div>
       </div>
     </div>`;
   raster.appendChild(k);
@@ -469,24 +417,31 @@ raster.addEventListener("click", e => {
 document.getElementById("pdZu").addEventListener("click", () => dlg.close());
 dlg.addEventListener("click", e => { if (e.target === dlg) dlg.close(); });
 pdKopieren.addEventListener("click", async () => {
-  const t = pdText.textContent; let ok = false;
-  try { await navigator.clipboard.writeText(t); ok = true; } catch (e) {
+  let ok = false;
+  try { await navigator.clipboard.writeText(pdText.textContent); ok = true; } catch (e) {
     try { const r = document.createRange(); r.selectNodeContents(pdText); const s = getSelection(); s.removeAllRanges(); s.addRange(r); ok = document.execCommand("copy"); s.removeAllRanges(); } catch (e2) {}
   }
   pdKopieren.textContent = ok ? "Kopiert" : "Bitte markieren und kopieren";
   if (ok) setTimeout(() => { pdKopieren.textContent = "Kopieren"; }, 2200);
 });
 
+// Scroll Reveal: Karten blenden ein, sobald sie ins Bild kommen
+const beobachter = "IntersectionObserver" in window ? new IntersectionObserver(eintraege => {
+  let n = 0;
+  for (const e of eintraege) if (e.isIntersecting) { e.target.style.setProperty("--d", (n++ % 3) * 90 + "ms"); e.target.classList.add("da"); beobachter.unobserve(e.target); }
+}, { rootMargin: "0px 0px -8% 0px", threshold: .08 }) : null;
+document.querySelectorAll(".reveal").forEach(el => beobachter ? beobachter.observe(el) : el.classList.add("da"));
+
 // Filter nach Fach und Art
 let fach = "alle", typ = null;
 const faecher = document.getElementById("faecher"), arten = document.getElementById("arten");
-faecher.innerHTML = FAECHER.map(([id, n]) => `<button type="button" data-f="${id}">${n}</button>`).join("");
-arten.innerHTML = Object.entries(ARTEN).map(([id, a]) => `<button type="button" data-t="${id}" data-typ="${id}" aria-pressed="false">${svgIcon(a.icon)}${a.name}</button>`).join("");
+faecher.innerHTML = FAECHER.map(([id, n]) => `<button type="button" class="chip" data-f="${id}">${n}</button>`).join("");
+arten.innerHTML = Object.entries(ARTEN).map(([id, n]) => `<button type="button" class="chip" data-t="${id}" data-typ="${id}" aria-pressed="false"><i></i>${n}</button>`).join("");
 function filtern() {
   let n = 0;
   document.querySelectorAll(".kachel").forEach(k => {
     const ok = (fach === "alle" || k.dataset.fach === fach) && (!typ || k.dataset.typ === typ);
-    k.hidden = !ok; if (ok) n++;
+    k.hidden = !ok; if (ok) { n++; k.classList.add("da"); }
   });
   faecher.querySelectorAll("button").forEach(b => b.setAttribute("aria-pressed", b.dataset.f === fach));
   arten.querySelectorAll("button").forEach(b => b.setAttribute("aria-pressed", b.dataset.t === typ));
@@ -498,7 +453,13 @@ arten.addEventListener("click", e => { const b = e.target.closest("button"); if 
 document.getElementById("zurueck").addEventListener("click", () => { fach = "alle"; typ = null; filtern(); });
 const h = location.hash.slice(1);
 if (FAECHER.some(x => x[0] === h)) { fach = h; requestAnimationFrame(() => document.getElementById("projekte").scrollIntoView()); }
-filtern();
+// Beim ersten Aufbau nur zählen und markieren, das Einblenden übernimmt der Beobachter
+(function start() {
+  let n = 0;
+  document.querySelectorAll(".kachel").forEach(k => { const ok = (fach === "alle" || k.dataset.fach === fach); k.hidden = !ok; if (ok) n++; });
+  faecher.querySelectorAll("button").forEach(b => b.setAttribute("aria-pressed", b.dataset.f === fach));
+  document.getElementById("anzahl").textContent = n === 1 ? "1 Projekt" : n + " Projekte";
+})();
 </script>
 </body>
 </html>

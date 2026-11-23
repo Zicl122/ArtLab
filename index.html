@@ -94,16 +94,18 @@
   /* Farbe je Fach */
   [data-fach="kunst"]     { --c1: #FF7AAE; }
   [data-fach="biologie"]  { --c1: #4ADE9B; }
-  [data-fach="sprachen"]  { --c1: #FFD84A; }
+  [data-fach="unterricht"] { --c1: #FFD84A; }
+  [data-fach="playground"] { --c1: #B79BFF; }
   [data-fach="allgemein"] { --c1: #35D0E3; }
   [data-theme="light"] [data-fach="kunst"] { --c1: #D61F69; }
   [data-theme="light"] [data-fach="biologie"] { --c1: #12805A; }
-  [data-theme="light"] [data-fach="sprachen"] { --c1: #B26B00; }
+  [data-theme="light"] [data-fach="unterricht"] { --c1: #B26B00; }
+  [data-theme="light"] [data-fach="playground"] { --c1: #7C3AED; }
   [data-theme="light"] [data-fach="allgemein"] { --c1: #0B8FA0; }
 
   /* Karten */
   .raster { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 420px), 1fr)); gap: 22px; }
-  .kachel { background: linear-gradient(180deg, color-mix(in srgb, var(--c1) 9%, var(--card)), var(--card) 45%); border-radius: 30px; overflow: hidden; display: flex; flex-direction: column; box-shadow: var(--shadow); }
+  .kachel { background: linear-gradient(180deg, color-mix(in srgb, var(--c1) 11%, var(--card)), color-mix(in srgb, var(--c1) 4%, var(--card)) 60%); outline: 1px solid color-mix(in srgb, var(--c1) 22%, transparent); outline-offset: -1px; border-radius: 30px; overflow: hidden; display: flex; flex-direction: column; box-shadow: var(--shadow); }
   .kachel[hidden] { display: none; }
   .bild { display: block; aspect-ratio: 8 / 5; overflow: hidden; background: #0E0F1A; }
   .bild img { width: 100%; height: 100%; object-fit: cover; display: block; transition: transform .6s ease; }
@@ -191,7 +193,7 @@
 <script src="qrcode.js"></script>
 <script>
 // Neue Projekte: einfach einen weiteren Eintrag ergänzen.
-// fach: kunst, biologie, sprachen oder allgemein
+// fach: kunst, biologie, unterricht, playground oder allgemein
 // fach "allgemein" erscheint oben als große Einstiegskarte
 // tipp: true legt einen gelben Tipp-Sticker auf die Karte (sparsam verwenden)
 const PROJEKTE = [
@@ -337,7 +339,7 @@ const PROJEKTE = [
     titel: "Tre Lingue, ein Vokabeltrainer",
     text: "Ein Vokabeltrainer für Englisch, Französisch und Italienisch mit Karteikarten und Vokabelkasten. Ein Beispiel dafür, was sich mit Vibe Coding für den eigenen Lernbedarf bauen lässt.",
     seite: "tre-lingue.html",
-    fach: "sprachen",
+    fach: "unterricht",
     typ: "werkzeug",
     prompt: "Baue mir eine Vokabel-App als einzelne HTML-Datei für Englisch (B1), Französisch (B1) und Italienisch (A1), die mit dem Handy auf dem Sofa Spaß macht. Lernpsychologisch soll sie wie ein Vokabelkasten mit fünf Fächern arbeiten und wachsenden Wiederholungsabständen von einem, drei, sieben, sechzehn und fünfunddreißig Tagen. Eine Karte rückt nur weiter, wenn sie wirklich fällig ist, und richtig beantwortet man durch Tippen, Antwortauswahl oder Lückensätze. Neue Wörter werden mit Beispielsatz vorgestellt, die Aussprache kommt aus der Sprachausgabe des Browsers. Das Niveau passt sich an, wenn man lange sehr gut oder schlecht abschneidet. Für Italienisch gibt es zusätzlich kurze Grammatiklektionen mit Übungen und Redewendungen. Eine Ansicht zeigt den Kasten mit seinen Fächern, ein Tagesziel und die Serie. Der Fortschritt bleibt im Browser, lässt sich als Datei sichern und laden, ohne Konto. Das Design soll wie eine schöne Apple-App wirken, mit systemeigener Schrift, abgerundeten Karten, leicht schräg gestellten Stickern und einer eigenen Farbe je Sprache.",
     bild: "vorschau/tre-lingue.jpg",
@@ -393,9 +395,19 @@ const PROJEKTE = [
     prompt: "Baue eine HTML-Seite ohne externe Bibliotheken mit einer drehbaren, zoombaren Erdkugel (WebGL, Tag und Nacht nach echter Uhrzeit, Schalter für nur Tag und nur Nacht) und 400 Tierarten mit Bild, Steckbrief, Rote-Liste-Status, Lebensraum und Verbreitung. Startbild mit großem Logo, die Tiere als runde Bilder auf der sich drehenden Kugel und zwei Knöpfen Spielen (sonnengelb) und Lernen (mint). Spielen fragt zuerst nach allen Tieren oder einer Tiergruppe, dann zehn Runden Wo lebt das Tier, ein Tipp auf die Kugel zählt sofort, Punkte nach Entfernung zum Verbreitungsgebiet, eine Linie mit Kilometerangabe, deutlicher Punktestand mit Rundenpunkten, danach Auswertung mit Sternen, Rekord je Gruppe und Bonusrunden. Lernen mit Filter nach Tiergruppe, Los-gehts-Knopf, Tierkarte mit Bild, Eckdaten, Text und abgesetzter Box Mehr dazu, Weiter und Zurück, Verbreitungsgebiet als leuchtende Fläche und Lichtbogen für Wanderrouten. Alle Bilder lassen sich groß öffnen und mit zwei Fingern zoomen. Modernes Spiel-Design in Petrol, Sonnengelb und Mint, Handy zuerst, Zurück-Link zur Übersicht.",
     bild: "vorschau/tierglobus.jpg",
     alt: "Dunkle Erdkugel mit Lichtern der Nachtseite und vielen runden Tierbildern über Nordamerika",
+  },,
+  {
+    titel: "Luftsaiten",
+    text: "Saiten in die Luft spannen und anzupfen, mit der Hand vor der Kamera oder mit dem Finger. Je länger die Saite, desto tiefer der Ton, wie bei einer Gitarre.",
+    seite: "luftsaiten.html",
+    fach: "unterricht",
+    typ: "kamera",
+    prompt: "Baue mir eine einzelne HTML-Datei, mit der man Saiten in die Luft spannt und darauf spielt. Die Hand wird mit der Kamera erkannt, direkt im Browser mit MediaPipe Hand Landmarker, ohne Server. Kneift man Daumen und Zeigefinger zusammen und zieht, entsteht eine leuchtende Saite, die beim Loslassen in der Luft stehen bleibt. Streicht man mit dem ausgestreckten Zeigefinger hindurch, wird sie gezupft, und mit einer Bewegung durch mehrere Saiten spielt man einen Akkord. Wie bei einer Gitarre gilt, je länger die Saite, desto tiefer der Ton, eine doppelt so lange Saite klingt eine Oktave tiefer. Der Klang wird im Browser mit Web Audio als gezupfte Saite erzeugt, wahlweise frei oder auf eine Pentatonik gerundet, und an jeder Saite steht ihr Ton. Höchstens zwölf Saiten, dazu Knöpfe für Spannen oder Spielen, Letzte Saite weg und Alle löschen. Ohne Kamera geht alles mit Finger oder Maus. Das Kamerabild bleibt auf dem Gerät.",
+    bild: "vorschau/luftsaiten.jpg",
+    alt: "Leuchtende Saiten in Pink, Gelb, Violett und Blau mit Tonnamen auf dunklem Grund"
   },
 ];
-const FAECHER = [["alle", "Alle"], ["kunst", "Kunst"], ["biologie", "Biologie"], ["sprachen", "Sprachen"]];
+const FAECHER = [["alle", "Alle"], ["kunst", "Kunst"], ["biologie", "Biologie"], ["unterricht", "Unterricht"], ["playground", "Playground"]];
 const fachName = f => (FAECHER.find(x => x[0] === f) || [, ""])[1];
 const SYMBOLE = { "vibe-coding.html": '<path d="M12 2l2.2 6.6L21 11l-6.8 2.4L12 20l-2.2-6.6L3 11l6.8-2.4z" fill="currentColor" stroke="none"/>', "ueber-dieses-projekt.html": '<circle cx="12" cy="12" r="9"/><path d="M12 11v6M12 7.5v.5"/>' };
 const orga = document.getElementById("orga");
@@ -465,7 +477,7 @@ document.querySelectorAll(".reveal").forEach(el => beobachter ? beobachter.obser
 // Filter nach Fach
 let fach = "alle";
 const faecher = document.getElementById("faecher");
-faecher.innerHTML = FAECHER.map(([id, n]) => `<button type="button" class="chip" data-f="${id}">${n}</button>`).join("");
+faecher.innerHTML = FAECHER.filter(([id]) => id === "alle" || PROJEKTE.some(p => p.fach === id)).map(([id, n]) => `<button type="button" class="chip" data-f="${id}">${n}</button>`).join("");
 function filtern(erstesMal) {
   let n = 0;
   document.querySelectorAll(".kachel").forEach(k => {

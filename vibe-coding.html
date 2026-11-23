@@ -1,100 +1,203 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="de">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Vibe Coding, so fängst du an</title>
 <style>
-  :root { color-scheme: dark; --bg:#090a1c; --panel:#12142b; --text:#f1f0f7; --muted:rgba(241,240,247,.72); --line:rgba(255,255,255,.16); --gold:#e8c27a; --focus:#8fd3ff; }
-  * { box-sizing: border-box; }
-  html, body { margin:0; background:var(--bg); color:var(--text); }
-  body { font: 300 18px/1.6 Georgia, "Times New Roman", serif; -webkit-text-size-adjust:100%; }
-  main { max-width: 760px; margin: 0 auto; padding: clamp(64px, 11vh, 110px) 20px 72px; }
-  h1 { font-weight:400; font-size:clamp(2rem,6vw,3rem); line-height:1.1; letter-spacing:-.01em; margin:0 0 .4em; }
-  .lead { font-size:1.15rem; color:var(--muted); margin:0 0 1.6em; max-width:34em; }
-  h2 { font-weight:400; font-size:1.35rem; line-height:1.25; margin:1.8em 0 .4em; color:var(--gold); }
-  p, li { color:var(--muted); }
-  p { margin:.4em 0 .8em; }
-  ol, ul { padding-left:1.25em; margin:.4em 0 1em; }
-  li { margin:.4em 0; }
-  strong { color:var(--text); font-weight:400; }
-  .vergleich { display:grid; grid-template-columns:repeat(auto-fit,minmax(min(100%,290px),1fr)); gap:14px; margin:.8em 0 1em; }
-  .box { background:var(--panel); border:1px solid var(--line); border-radius:12px; padding:14px 18px 6px; }
-  .box h3 { font-weight:400; font-size:1.1rem; margin:0 0 .3em; color:var(--text); }
-  .box p { font-size:.95rem; }
-  pre { white-space:pre-wrap; word-wrap:break-word; margin:.6em 0 1em; background:var(--panel); border:1px solid var(--line); border-left:3px solid var(--gold); border-radius:8px; padding:14px 16px; font:400 .95rem/1.5 ui-monospace, Menlo, Consolas, monospace; color:var(--text); }
-  .hinweis { border:1px solid var(--line); border-radius:12px; padding:12px 18px; margin:1.6em 0 0; background:rgba(255,255,255,.03); }
-  .hinweis p { margin:.3em 0; font-size:.95rem; }
-  .leiste { display:flex; flex-wrap:wrap; gap:10px; margin:2em 0 0; }
-  button.pdf { font:inherit; font-size:.95rem; color:#090a1c; background:#f1f0f7; border:0; border-radius:999px; padding:.65em 1.3em; cursor:pointer; touch-action:manipulation; }
-  button.pdf:focus-visible, a:focus-visible { outline:2px solid var(--focus); outline-offset:3px; }
-  .kleinschrift { font-size:.85rem; color:var(--muted); margin-top:.6em; }
-  a { color:var(--text); text-underline-offset:4px; text-decoration-color:rgba(255,255,255,.45); }
-  .zurueck{position:fixed;top:max(12px,env(safe-area-inset-top));left:max(12px,env(safe-area-inset-left));z-index:9999;font:400 14px/1 Georgia,serif;color:#f1f0f7;background:rgba(9,10,28,.7);border:1px solid rgba(255,255,255,.22);border-radius:999px;padding:9px 14px;text-decoration:none;touch-action:manipulation}
-  @media print {
-    :root { color-scheme: light; }
-    html, body { background:#fff !important; color:#000 !important; }
-    body { font-size:11.5pt; line-height:1.45; }
-    main { max-width:none; padding:0; }
-    h1, h2, h3, strong, p, li, .lead, .kleinschrift { color:#000 !important; }
-    h2 { margin-top:1.2em; } strong { font-weight:700 !important; }
-    .box, pre, .hinweis { background:#fff !important; border-color:#999 !important; color:#000 !important; break-inside:avoid; }
-    pre { border-left:3px solid #555 !important; }
-    .zurueck, .leiste, .nurbildschirm { display:none !important; }
-    a { color:#000; text-decoration:none; }
-    .druckfuss { display:block !important; }
-    @page { margin: 18mm; }
+  /* Gleicher Stil wie die Startseite: dunkel als Start, Farbwolke, weiche Karten, kursives Serifenwort, wenige schiefe Elemente */
+  @font-face { font-family: "Instrument Serif"; font-style: italic; font-weight: 400; font-display: swap; src: url(fonts/instrument-serif-latin-400-italic.woff2) format("woff2"); }
+  :root {
+    color-scheme: dark;
+    --bg: #07070C; --card: #15151C; --ink: #F5F5FA; --muted: #9C9CB0; --line: rgba(255,255,255,.1); --soft: rgba(160,160,190,.17); --acc: #FF7A5C;
+    --lemon-soft: #3A3210; --lemon-ink: #FFE88A;
+    --grad: linear-gradient(135deg, #F2542D, #D61F69);
+    --shadow: 0 0 0 1px rgba(255,255,255,.07), 0 16px 34px -18px rgba(0,0,0,.85);
+    --sans: -apple-system, BlinkMacSystemFont, "SF Pro Display", Inter, "Segoe UI", system-ui, sans-serif;
+    --serif: "Instrument Serif", Georgia, serif;
   }
-  .druckfuss { display:none; margin-top:2em; font-size:9.5pt; color:#444; border-top:1px solid #999; padding-top:.6em; }
+  :root[data-theme="light"] { color-scheme: light; --bg: #F2F2F7; --card: #FFFFFF; --ink: #0F1020; --muted: #68687A; --line: rgba(15,16,32,.09); --soft: rgba(120,120,140,.13); --acc: #D93A2B;
+    --lemon-soft: #FFF1B8; --lemon-ink: #4A3800;
+    --shadow: 0 1px 0 rgba(255,255,255,.9) inset, 0 14px 34px -18px rgba(30,20,60,.35), 0 0 0 1px rgba(15,16,32,.04); }
+  * { box-sizing: border-box; min-width: 0; }
+  html { -webkit-text-size-adjust: 100%; }
+  body { margin: 0; background: var(--bg); color: var(--ink); font: 400 17px/1.55 var(--sans); -webkit-font-smoothing: antialiased; overflow-x: clip; }
+  a { color: inherit; }
+
+  .leiste { position: sticky; top: 0; z-index: 10; display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 12px max(4vw, 18px); background: color-mix(in srgb, var(--bg) 78%, transparent); backdrop-filter: blur(18px) saturate(1.6); -webkit-backdrop-filter: blur(18px) saturate(1.6); border-bottom: 1px solid var(--line); }
+  .marke { text-decoration: none; font-weight: 800; font-size: 1.4rem; letter-spacing: -.045em; }
+  .marke em { font-family: var(--serif); font-style: italic; font-weight: 400; font-size: 1.18em; letter-spacing: -.01em; color: #D61F69; }
+  .rechts { display: flex; align-items: center; gap: 6px; }
+  .rechts a { text-decoration: none; font-weight: 600; font-size: .95rem; color: var(--muted); padding: .5em .85em; border-radius: 999px; }
+  .rechts a:hover { color: var(--ink); background: var(--soft); }
+  .thema { width: 40px; height: 40px; border-radius: 50%; border: 0; background: var(--soft); color: var(--ink); display: grid; place-items: center; cursor: pointer; }
+  .thema svg { width: 19px; height: 19px; }
+
+  main { max-width: 860px; margin: 0 auto; padding: 14px max(4vw, 16px) 64px; }
+
+  .hero { position: relative; overflow: hidden; border-radius: 40px; color: #fff; padding: clamp(26px, 5vw, 56px); outline: 1px solid rgba(255,255,255,.08); outline-offset: -1px;
+    background: radial-gradient(70% 80% at 100% 0, #FF5A36 0, transparent 60%), radial-gradient(60% 70% at 0 100%, #D61F69 0, transparent 62%), radial-gradient(40% 40% at 70% 110%, #FFD84A 0, transparent 60%), #0E0F1A;
+    box-shadow: 0 30px 60px -30px rgba(214,31,105,.6); }
+  .hero::after { content: ""; position: absolute; inset: 0; pointer-events: none; background: linear-gradient(118deg, rgba(255,255,255,.26), rgba(255,255,255,.04) 32%, transparent 52%); }
+  .hero > * { position: relative; z-index: 1; }
+  .sticker { display: inline-block; background: #FFD84A; color: #2b2100; font-weight: 800; font-size: 12.5px; letter-spacing: .09em; text-transform: uppercase; padding: 6px 12px; border-radius: 10px; transform: rotate(-3deg); box-shadow: 0 6px 14px -6px rgba(0,0,0,.5); }
+  h1 { font-weight: 800; font-size: clamp(2.4rem, 7.5vw, 4.4rem); line-height: .98; letter-spacing: -.05em; margin: 20px 0 14px; text-wrap: balance; }
+  h1 em, h2 em { font-family: var(--serif); font-style: italic; font-weight: 400; letter-spacing: -.01em; }
+  h1 em { font-size: 1.12em; color: #FFD84A; }
+  .hero p { margin: 0; max-width: 32em; font-size: clamp(1.02rem, 2.2vw, 1.2rem); font-weight: 500; opacity: .9; }
+
+  section { margin-top: 44px; }
+  .lbl { font-size: 12px; letter-spacing: .12em; text-transform: uppercase; color: var(--muted); font-weight: 700; margin: 0 4px 10px; }
+  h2 { font-weight: 800; font-size: clamp(1.7rem, 4.5vw, 2.3rem); line-height: 1.05; letter-spacing: -.04em; margin: 0 4px 8px; }
+  h2 em { font-size: 1.1em; }
+  .intro { color: var(--muted); margin: 0 4px 18px; max-width: 40em; }
+
+  /* Die drei Werkzeuge */
+  .werkzeuge { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 240px), 1fr)); gap: 14px; }
+  .wz { background: linear-gradient(180deg, color-mix(in srgb, var(--c1) 14%, var(--card)), var(--card) 60%); border-radius: 26px; padding: 18px 18px 20px; box-shadow: var(--shadow); outline: 1px solid color-mix(in srgb, var(--c1) 30%, transparent); outline-offset: -1px; display: flex; flex-direction: column; gap: 8px; }
+  .wz .kopf { display: flex; align-items: center; gap: 10px; }
+  .wz .punkt { width: 36px; height: 36px; border-radius: 12px; background: var(--c1); display: grid; place-items: center; color: #fff; font-weight: 800; font-size: 15px; flex: none; }
+  .wz h3 { margin: 0; font-size: 1.25rem; font-weight: 800; letter-spacing: -.03em; }
+  .wz .adr { font-size: .85rem; color: var(--c1); font-weight: 700; }
+  .wz p { margin: 0; color: var(--muted); font-size: .95rem; }
+  .wz b { color: var(--ink); font-weight: 600; }
+  .claude { --c1: #D97757; } .chatgpt { --c1: #10A37F; } .gemini { --c1: #4C8DF6; }
+  .gemini .punkt { background: linear-gradient(135deg, #4C8DF6, #9B72CB, #D96570); }
+
+  /* Schritte */
+  .schritte { list-style: none; margin: 0; padding: 0; display: grid; gap: 12px; counter-reset: s; }
+  .schritte li { counter-increment: s; display: grid; grid-template-columns: 54px 1fr; gap: 14px; align-items: start; background: var(--card); border-radius: 24px; padding: 16px 18px; box-shadow: var(--shadow); }
+  .schritte li::before { content: counter(s); font-weight: 800; font-size: 40px; line-height: 1; letter-spacing: -.06em; background: var(--grad); -webkit-background-clip: text; background-clip: text; color: transparent; padding-top: 2px; }
+  .schritte li:nth-child(4) { transform: rotate(-.8deg); }
+  .schritte h3 { margin: 0 0 3px; font-size: 1.1rem; font-weight: 700; letter-spacing: -.02em; }
+  .schritte p { margin: 0; color: var(--muted); font-size: .97rem; }
+
+  /* Beispielauftrag */
+  .auftrag { background: var(--card); border-radius: 26px; box-shadow: var(--shadow); overflow: hidden; }
+  .auftrag .oben { display: flex; justify-content: space-between; align-items: center; gap: 10px; padding: 12px 14px 12px 18px; border-bottom: 1px solid var(--line); }
+  .auftrag .oben span { font-size: 12px; letter-spacing: .12em; text-transform: uppercase; font-weight: 700; color: var(--muted); }
+  pre { margin: 0; padding: 18px; white-space: pre-wrap; overflow-wrap: anywhere; font: 400 1rem/1.6 var(--sans); }
+  .btn { display: inline-flex; align-items: center; gap: 8px; min-height: 42px; padding: 0 18px; border-radius: 21px; color: #fff; font: inherit; font-weight: 700; font-size: .95rem; border: 0; cursor: pointer; text-decoration: none; white-space: nowrap;
+    background-image: linear-gradient(180deg, rgba(255,255,255,.3), rgba(255,255,255,0) 55%), var(--grad); box-shadow: inset 0 1px 0 rgba(255,255,255,.5), 0 10px 18px -10px rgba(214,31,105,.8); }
+  .btn.alt { background: var(--soft); color: var(--acc); box-shadow: none; }
+
+  /* Tipps */
+  .tipps { list-style: none; margin: 0; padding: 18px 20px; background: var(--card); border-radius: 26px; box-shadow: var(--shadow); display: grid; gap: 12px; }
+  .tipps li { padding-left: 24px; position: relative; color: var(--muted); }
+  .tipps li::before { content: ""; position: absolute; left: 3px; top: 9px; width: 9px; height: 9px; border-radius: 2px; background: #FFD84A; transform: rotate(45deg); }
+
+  .hinweis { margin-top: 44px; background: var(--lemon-soft); color: var(--lemon-ink); border-radius: 24px; padding: 18px 20px; transform: rotate(-.6deg); }
+  .hinweis b { display: block; font-size: 12px; letter-spacing: .12em; text-transform: uppercase; margin-bottom: 4px; }
+  .hinweis p { margin: 0; }
+
+  .ende { margin-top: 32px; display: flex; flex-wrap: wrap; gap: 10px; align-items: center; }
+  .klein { color: var(--muted); font-size: .88rem; margin: 8px 4px 0; }
+  .druckfuss { display: none; }
+  :focus-visible { outline: 3px solid #FFD84A; outline-offset: 2px; border-radius: 12px; }
+
+  @media print {
+    :root, :root[data-theme] { color-scheme: light; --bg: #fff; --card: #fff; --ink: #000; --muted: #222; --line: #999; --lemon-soft: #fff; --lemon-ink: #000; --shadow: none; }
+    body { font-size: 11pt; line-height: 1.45; }
+    .leiste, .ende, .klein, .auftrag .oben button { display: none !important; }
+    main { max-width: none; padding: 0; }
+    .hero { background: none !important; color: #000; padding: 0; box-shadow: none; outline: 0; border-radius: 0; }
+    .hero::after, .sticker { display: none; }
+    h1 em { color: #000; }
+    .wz, .schritte li, .auftrag, .tipps, .hinweis { border: 1px solid #999; outline: 0; background: #fff !important; transform: none !important; break-inside: avoid; }
+    .schritte li::before { color: #000; background: none; -webkit-text-fill-color: #000; }
+    section { margin-top: 18px; }
+    .druckfuss { display: block; margin-top: 2em; font-size: 9pt; border-top: 1px solid #999; padding-top: .6em; }
+    @page { margin: 16mm; }
+  }
 </style>
+<script>try{document.documentElement.dataset.theme=localStorage.getItem("artlab-thema")||"dark"}catch(e){document.documentElement.dataset.theme="dark"}</script>
 </head>
 <body>
-<a class="zurueck" href="index.html" aria-label="Zurück zur Übersicht">← Übersicht</a>
+<div class="leiste">
+  <a class="marke" href="index.html">Art<em>Lab</em></a>
+  <div class="rechts"><a href="index.html">← Übersicht</a><button type="button" class="thema" id="thema" aria-label="Hell oder dunkel"></button></div>
+</div>
 <main>
-<h1>Vibe Coding, so fängst du an</h1>
-<p class="lead">Du beschreibst in normaler Sprache, was du brauchst, und eine KI schreibt das Programm. Du musst dafür nicht programmieren können.</p>
+  <header class="hero">
+    <span class="sticker">Anleitung</span>
+    <h1>Vibe Coding, so fängst du <em>an</em></h1>
+    <p>Du beschreibst in normaler Sprache, was du brauchst, und eine KI schreibt das Programm. Du musst dafür nicht programmieren können.</p>
+  </header>
 
-<h2>Was dazu nötig ist</h2>
-<p>Ein Zugang zu einer KI wie <strong>Claude</strong> oder <strong>ChatGPT</strong>, ein Browser und eine Idee. Beide funktionieren für den Einstieg, auch mit kostenlosem Konto, dann allerdings mit Begrenzungen.</p>
-<div class="vergleich">
-<div class="box"><h3>Claude</h3><p>Zu finden unter claude.ai. Fertige Seiten kann Claude oft direkt im Chat als „Artifact“ anzeigen, du siehst das Ergebnis also sofort neben dem Gespräch.</p></div>
-<div class="box"><h3>ChatGPT</h3><p>Zu finden unter chatgpt.com. Je nach Version zeigt es Seiten in einem Arbeitsfenster („Canvas“) mit Vorschau. Sonst kopierst du den Code selbst in eine Datei.</p></div>
-</div>
+  <section>
+    <p class="lbl">Was dazu nötig ist</p>
+    <h2>Eine KI, ein Browser, eine <em>Idee</em></h2>
+    <p class="intro">Alle drei Anbieter funktionieren für den Einstieg, auch mit kostenlosem Konto, dann allerdings mit Begrenzungen.</p>
+    <div class="werkzeuge">
+      <div class="wz claude"><div class="kopf"><span class="punkt">C</span><div><h3>Claude</h3><span class="adr">claude.ai</span></div></div><p>Fertige Seiten zeigt Claude als <b>Artifact</b> direkt neben dem Gespräch. Du siehst das Ergebnis sofort und kannst es per Link teilen.</p></div>
+      <div class="wz chatgpt"><div class="kopf"><span class="punkt" style="font-size:11px">GPT</span><div><h3>ChatGPT</h3><span class="adr">chatgpt.com</span></div></div><p>Je nach Version erscheinen Seiten in einem Arbeitsfenster, dem <b>Canvas</b>, mit Vorschau. Sonst kopierst du den Code selbst in eine Datei.</p></div>
+      <div class="wz gemini"><div class="kopf"><span class="punkt">G</span><div><h3>Gemini</h3><span class="adr">gemini.google.com</span></div></div><p>Im Eingabefeld das Werkzeug <b>Canvas</b> wählen. Die Seite erscheint mit Vorschau neben dem Chat und lässt sich als Link teilen.</p></div>
+    </div>
+  </section>
 
-<h2>In sechs Schritten</h2>
-<ol>
-<li><strong>Idee in einem Satz.</strong> Zum Beispiel „Ein Flipboard mit Gesichtern, das beim Antippen umklappt“.</li>
-<li><strong>Bitte um eine einzelne HTML-Seite.</strong> So lässt sie sich leicht speichern und weitergeben. Beispiel unten.</li>
-<li><strong>Ausprobieren.</strong> Schau dir das Ergebnis an und beschreibe, was dir nicht gefällt.</li>
-<li><strong>In kleinen Schritten verbessern.</strong> Immer nur eine Änderung pro Nachricht, zum Beispiel „Die Linie zittert, bitte glätte sie“.</li>
-<li><strong>Speichern.</strong> Den Code in eine Textdatei kopieren und als <em>name.html</em> ablegen. Ein Doppelklick öffnet sie im Browser.</li>
-<li><strong>Online stellen und teilen.</strong> Zum Beispiel mit GitHub Pages oder Netlify. Dann gibt es eine Adresse und einen QR-Code. Die Kamera funktioniert nur über eine https-Adresse.</li>
-</ol>
+  <section>
+    <p class="lbl">In sechs Schritten</p>
+    <h2>Vom Satz zur <em>Seite</em></h2>
+    <ol class="schritte">
+      <li><div><h3>Idee in einem Satz</h3><p>Zum Beispiel „Ein Flipboard mit Gesichtern, das beim Antippen umklappt“.</p></div></li>
+      <li><div><h3>Um eine einzelne HTML-Seite bitten</h3><p>So lässt sie sich leicht speichern und weitergeben. Ein Beispiel steht unten.</p></div></li>
+      <li><div><h3>Ausprobieren</h3><p>Schau dir das Ergebnis an und beschreibe, was dir nicht gefällt.</p></div></li>
+      <li><div><h3>In kleinen Schritten verbessern</h3><p>Immer nur eine Änderung pro Nachricht, zum Beispiel „Die Linie zittert, bitte glätte sie“.</p></div></li>
+      <li><div><h3>Speichern</h3><p>Den Code in eine Textdatei kopieren und als <i>name.html</i> ablegen. Ein Doppelklick öffnet sie im Browser.</p></div></li>
+      <li><div><h3>Online stellen und teilen</h3><p>Zum Beispiel mit GitHub Pages oder Netlify. Dann gibt es eine Adresse und einen QR-Code. Die Kamera funktioniert nur über eine https-Adresse.</p></div></li>
+    </ol>
+  </section>
 
-<h2>Ein Beispiel für den ersten Auftrag</h2>
-<pre>Baue mir eine einzelne HTML-Datei für den Kunstunterricht.
-Sie soll im Browser ohne Installation laufen, auf dem Handy
-funktionieren und deutsche Beschriftungen haben.
-Idee: Ein Raster aus zwölf Feldern, die beim Antippen
-umklappen und ein anderes Bild zeigen.
+  <section>
+    <p class="lbl">Zum Kopieren</p>
+    <h2>Ein erster <em>Auftrag</em></h2>
+    <div class="auftrag">
+      <div class="oben"><span>Beispielprompt</span><button type="button" class="btn alt" id="kopieren">Kopieren</button></div>
+<pre id="prompt">Baue mir eine einzelne HTML-Datei für den Kunstunterricht. Sie soll im Browser ohne Installation laufen, auf dem Handy funktionieren und deutsche Beschriftungen haben.
+
+Idee: Ein Raster aus zwölf Feldern, die beim Antippen umklappen und ein anderes Bild zeigen.
+
 Frage mich bitte zuerst, wenn dir etwas fehlt.</pre>
+    </div>
+  </section>
 
-<h2>Tipps, die viel Zeit sparen</h2>
-<ul>
-<li>Lass dir Rückfragen stellen. Die KI fragt oft das, was du selbst noch nicht bedacht hast.</li>
-<li>Bei Fehlern den Fehler beschreiben oder einen Screenshot hochladen.</li>
-<li>Frage nach, was ein Teil des Codes macht. So lernst du nebenbei.</li>
-<li>Teste auf dem Gerät, auf dem es später laufen soll.</li>
-<li>Prüfe das Ergebnis selbst. KI baut manchmal Fehler ein oder behauptet, es funktioniere, obwohl es nicht läuft.</li>
-</ul>
+  <section>
+    <p class="lbl">Tipps</p>
+    <h2>Was viel Zeit <em>spart</em></h2>
+    <ul class="tipps">
+      <li>Lass dir Rückfragen stellen. Die KI fragt oft das, was du selbst noch nicht bedacht hast.</li>
+      <li>Bei Fehlern den Fehler beschreiben oder einen Screenshot hochladen.</li>
+      <li>Frag nach, was ein Teil des Codes macht. So lernst du nebenbei.</li>
+      <li>Teste auf dem Gerät, auf dem es später laufen soll.</li>
+      <li>Prüfe das Ergebnis selbst. KI baut manchmal Fehler ein oder behauptet, es funktioniere, obwohl es nicht läuft.</li>
+    </ul>
+  </section>
 
-<div class="hinweis">
-<p><strong>Datenschutz und Einsatz mit Klassen.</strong> Gib keine Namen, Fotos oder andere Daten von Schülerinnen und Schülern in eine KI ein. Die Anbieter haben Altersgrenzen, die du vor dem Einsatz mit Lernenden prüfen solltest. Im Unterricht kannst du die fertige Seite zeigen und das Bauen als Lehrkraft vorführen.</p>
-</div>
-<div class="leiste"><button class="pdf" id="pdf" type="button">Als PDF speichern oder drucken</button></div>
-<p class="kleinschrift nurbildschirm">Im Druckfenster wählst du als Drucker „Als PDF speichern“, wenn du eine Datei möchtest.</p>
-<p class="druckfuss">KI im Kunstunterricht, Seminar WS 2026/27, Universität zu Köln. Dieses Blatt kann frei im Unterricht verwendet werden.</p>
-<script>document.getElementById("pdf").addEventListener("click",function(){window.print();});</script>
+  <div class="hinweis"><b>Datenschutz und Einsatz mit Klassen</b><p>Gib keine Namen, Fotos oder andere Daten von Schülerinnen und Schülern in eine KI ein. Die Anbieter haben Altersgrenzen, die du vor dem Einsatz mit Lernenden prüfen solltest. Im Unterricht kannst du die fertige Seite zeigen und das Bauen als Lehrkraft vorführen.</p></div>
+
+  <div class="ende"><button class="btn" id="pdf" type="button">Als PDF speichern oder drucken</button><a class="btn alt" href="index.html">Zu den Projekten</a></div>
+  <p class="klein">Im Druckfenster wählst du als Drucker „Als PDF speichern“, wenn du eine Datei möchtest.</p>
+  <p class="druckfuss">Vibe Coding im Unterricht, Claus Zirwes. Dieses Blatt kann frei im Unterricht verwendet werden.</p>
 </main>
+<script>
+{
+  document.getElementById("pdf").addEventListener("click", () => window.print());
+  const k = document.getElementById("kopieren"), pre = document.getElementById("prompt");
+  k.addEventListener("click", async () => {
+    let ok = false;
+    try { await navigator.clipboard.writeText(pre.textContent); ok = true; } catch (e) {
+      try { const r = document.createRange(); r.selectNodeContents(pre); const s = getSelection(); s.removeAllRanges(); s.addRange(r); ok = document.execCommand("copy"); s.removeAllRanges(); } catch (e2) {}
+    }
+    k.textContent = ok ? "Kopiert" : "Bitte markieren";
+    setTimeout(() => { k.textContent = "Kopieren"; }, 2200);
+  });
+  const t = document.getElementById("thema");
+  const SONNE = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg>';
+  const MOND = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg>';
+  const zeigen = () => { const d = document.documentElement.dataset.theme !== "light"; t.innerHTML = d ? SONNE : MOND; t.setAttribute("aria-label", d ? "Helle Ansicht" : "Dunkle Ansicht"); };
+  t.addEventListener("click", () => { const neu = document.documentElement.dataset.theme === "light" ? "dark" : "light"; document.documentElement.dataset.theme = neu; try { localStorage.setItem("artlab-thema", neu); } catch (e) {} zeigen(); });
+  zeigen();
+}
+</script>
 </body>
 </html>

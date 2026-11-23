@@ -5,193 +5,191 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Vibe Coding im Unterricht</title>
 <style>
-  /* Stil angelehnt an moderne KI-Lernseiten: Nachthimmel, Raster, Glaskarten, Verlauf in Cyan und Blau */
+  /* Nachthimmel mit Raster, Glaskarten mit farbigem Rand je Projektart, Verläufe in Cyan, Blau und Violett */
   :root {
     color-scheme: dark;
     --bg: #060a1a;
-    --panel: rgba(18, 24, 48, .72);
-    --panel2: rgba(255,255,255,.04);
     --text: #f3f5fb;
-    --muted: rgba(226,232,245,.66);
+    --muted: rgba(226,232,245,.68);
     --line: rgba(148,170,220,.16);
     --cyan: #22d3ee;
-    --blue: #3b82f6;
-    --violet: #a855f7;
-    --pink: #d946ef;
-    --mint: #34d399;
     --focus: #7dd3fc;
-    --verlauf: linear-gradient(100deg, var(--cyan), var(--blue));
+    --verlauf: linear-gradient(100deg, #22d3ee, #3b82f6 55%, #8b5cf6);
   }
   * { box-sizing: border-box; min-width: 0; }
   html, body { margin: 0; background: var(--bg); color: var(--text); }
+  html { scroll-padding-top: 84px; }
   body { font: 400 17px/1.6 Inter, -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", system-ui, sans-serif; -webkit-font-smoothing: antialiased; -webkit-text-size-adjust: 100%; overflow-x: clip; }
-  /* Himmel: zwei Lichthöfe, feines Raster, kleine Sterne */
   body::before { content: ""; position: fixed; inset: 0; z-index: -2; pointer-events: none;
     background:
-      radial-gradient(60vw 50vh at 12% -5%, rgba(34,211,238,.16), transparent 70%),
-      radial-gradient(55vw 60vh at 100% 35%, rgba(168,85,247,.14), transparent 70%),
-      radial-gradient(50vw 40vh at 30% 110%, rgba(59,130,246,.14), transparent 70%),
-      linear-gradient(rgba(148,170,220,.07) 1px, transparent 1px) 0 0 / 120px 120px,
-      linear-gradient(90deg, rgba(148,170,220,.07) 1px, transparent 1px) 0 0 / 120px 120px,
+      radial-gradient(70vw 55vh at 0% 0%, rgba(59,130,246,.22), transparent 70%),
+      radial-gradient(55vw 60vh at 100% 40%, rgba(139,92,246,.16), transparent 70%),
+      radial-gradient(60vw 45vh at 20% 105%, rgba(34,211,238,.12), transparent 70%),
+      linear-gradient(rgba(148,170,220,.07) 1px, transparent 1px) 0 0 / 110px 110px,
+      linear-gradient(90deg, rgba(148,170,220,.07) 1px, transparent 1px) 0 0 / 110px 110px,
       var(--bg); }
-  body::after { content: ""; position: fixed; inset: 0; z-index: -1; pointer-events: none; opacity: .7;
+  body::after { content: ""; position: fixed; inset: 0; z-index: -1; pointer-events: none; opacity: .75;
     background-image:
-      radial-gradient(1.6px 1.6px at 8% 22%, #7dd3fc 50%, transparent 51%),
-      radial-gradient(1.4px 1.4px at 23% 71%, #c4b5fd 50%, transparent 51%),
-      radial-gradient(1.8px 1.8px at 41% 12%, #93c5fd 50%, transparent 51%),
-      radial-gradient(1.4px 1.4px at 57% 48%, #a5f3fc 50%, transparent 51%),
-      radial-gradient(2px 2px at 69% 83%, #93c5fd 50%, transparent 51%),
-      radial-gradient(1.5px 1.5px at 82% 27%, #e9d5ff 50%, transparent 51%),
-      radial-gradient(1.6px 1.6px at 93% 62%, #7dd3fc 50%, transparent 51%),
-      radial-gradient(1.3px 1.3px at 14% 91%, #c4b5fd 50%, transparent 51%),
-      radial-gradient(1.4px 1.4px at 48% 94%, #a5f3fc 50%, transparent 51%); }
+      radial-gradient(2px 2px at 8% 22%, #7dd3fc 50%, transparent 51%),
+      radial-gradient(1.5px 1.5px at 23% 71%, #c4b5fd 50%, transparent 51%),
+      radial-gradient(2.4px 2.4px at 41% 12%, #93c5fd 50%, transparent 51%),
+      radial-gradient(1.5px 1.5px at 57% 48%, #a5f3fc 50%, transparent 51%),
+      radial-gradient(2.2px 2.2px at 69% 83%, #93c5fd 50%, transparent 51%),
+      radial-gradient(1.6px 1.6px at 82% 27%, #e9d5ff 50%, transparent 51%),
+      radial-gradient(2px 2px at 93% 62%, #7dd3fc 50%, transparent 51%),
+      radial-gradient(1.4px 1.4px at 14% 91%, #c4b5fd 50%, transparent 51%),
+      radial-gradient(1.6px 1.6px at 48% 94%, #a5f3fc 50%, transparent 51%); }
 
   /* Kopfleiste */
-  .leiste { position: sticky; top: 0; z-index: 10; display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 12px max(4vw, 16px); background: rgba(6,10,26,.78); backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px); border-bottom: 1px solid var(--line); }
-  .marke { display: flex; align-items: center; gap: 10px; color: var(--text); text-decoration: none; font-weight: 800; font-size: 1.15rem; letter-spacing: -.02em; white-space: nowrap; }
-  .marke svg { width: 32px; height: 32px; flex: none; }
-  .pille { display: inline-flex; align-items: center; gap: .5em; font-weight: 600; font-size: .95rem; color: #a7f3d0; text-decoration: none; padding: .55em 1.1em; border-radius: 999px; border: 1.5px solid rgba(52,211,153,.45); background: rgba(16,185,129,.1); white-space: nowrap; }
-  .pille:hover { background: rgba(16,185,129,.18); }
+  .leiste { position: sticky; top: 0; z-index: 10; display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 14px max(4vw, 18px); background: rgba(5,8,22,.82); backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px); border-bottom: 1px solid var(--line); }
+  .marke { display: flex; align-items: center; gap: 10px; color: var(--text); text-decoration: none; font-weight: 800; font-size: 1.35rem; letter-spacing: -.025em; white-space: nowrap; }
+  .marke em { font-style: italic; background: linear-gradient(100deg, #22d3ee, #3b82f6); -webkit-background-clip: text; background-clip: text; color: transparent; padding-right: .05em; }
+  .marke svg { width: 30px; height: 30px; flex: none; }
+  .leiste nav { display: flex; gap: 6px; }
+  .leiste nav a { color: var(--muted); text-decoration: none; font-weight: 600; font-size: .95rem; padding: .5em .8em; border-radius: 999px; white-space: nowrap; }
+  .leiste nav a:hover { color: var(--text); background: rgba(255,255,255,.06); }
 
-  main { max-width: 1120px; margin: 0 auto; padding: 0 max(4vw, 16px) 64px; }
+  main { max-width: 1160px; margin: 0 auto; padding: 0 max(4vw, 18px) 64px; }
 
-  /* Bühne */
-  .buehne { text-align: center; padding: clamp(48px, 10vh, 110px) 0 clamp(36px, 6vh, 64px); max-width: 820px; margin: 0 auto; }
-  .augenbraue, .buehne .augenbraue { display: inline-flex; align-items: center; gap: .55em; color: var(--cyan); font-weight: 700; font-size: .85rem; letter-spacing: .18em; text-transform: uppercase; margin: 0 0 22px; }
-  .augenbraue svg { width: 1.2em; height: 1.2em; }
-  h1 { font-weight: 800; font-size: clamp(2.4rem, 7.5vw, 4.4rem); line-height: 1.04; letter-spacing: -.035em; margin: 0 0 .45em; text-wrap: balance; }
-  h1 em, h2 em { font-style: italic; background: var(--verlauf); -webkit-background-clip: text; background-clip: text; color: transparent; padding-right: .06em; }
-  .buehne p { margin: 0 auto; color: var(--muted); font-size: clamp(1.05rem, 2.2vw, 1.25rem); line-height: 1.6; max-width: 36em; }
-  .buehne p a { color: var(--text); text-underline-offset: 4px; text-decoration-color: rgba(125,211,252,.5); }
-  .knopfreihe { display: flex; flex-wrap: wrap; gap: 12px; justify-content: center; margin-top: 34px; }
-  .gross { display: inline-flex; align-items: center; gap: .6em; font-weight: 700; font-size: 1.05rem; text-decoration: none; padding: .95em 1.7em; border-radius: 999px; touch-action: manipulation; transition: transform .15s ease, box-shadow .2s ease; }
+  /* Bühne, linksbündig */
+  .buehne { padding: clamp(48px, 11vh, 120px) 0 clamp(40px, 7vh, 72px); max-width: 800px; }
+  .augenbraue { display: inline-flex; align-items: center; gap: .6em; color: var(--cyan); font-weight: 700; font-size: .82rem; letter-spacing: .2em; text-transform: uppercase; margin: 0 0 22px; }
+  .augenbraue svg { width: 1.15em; height: 1.15em; }
+  h1 { font-weight: 800; font-size: clamp(2.7rem, 9vw, 5rem); line-height: 1.02; letter-spacing: -.04em; margin: 0 0 .5em; text-wrap: balance; }
+  h1 em, h2 em { font-style: italic; background: var(--verlauf); -webkit-background-clip: text; background-clip: text; color: transparent; padding-right: .07em; }
+  .buehne p.lead { margin: 0; color: var(--muted); font-size: clamp(1.08rem, 2.4vw, 1.3rem); line-height: 1.6; max-width: 34em; }
+  .knopfreihe { display: flex; flex-wrap: wrap; gap: 14px 22px; align-items: center; margin-top: 36px; }
+  .gross { display: inline-flex; align-items: center; gap: .6em; font-weight: 700; font-size: 1.08rem; text-decoration: none; padding: 1em 1.8em; border-radius: 999px; color: #07101f; background: linear-gradient(100deg, #67e8f9, #3b82f6); box-shadow: 0 12px 40px -12px rgba(34,211,238,.65); transition: transform .15s ease; touch-action: manipulation; }
   .gross svg { width: 1.1em; height: 1.1em; }
-  .gross.blau { color: #fff; background: linear-gradient(100deg, #06b6d4, #3b82f6); box-shadow: 0 10px 34px -10px rgba(34,211,238,.6); }
-  .gross.lila { color: #160b2a; background: linear-gradient(100deg, #8b5cf6, #d946ef); box-shadow: 0 10px 34px -10px rgba(217,70,239,.55); }
   .gross:hover { transform: translateY(-2px); }
-  .gross:active { transform: scale(.97); }
+  .zweit { display: inline-flex; align-items: center; gap: .8em; color: var(--text); text-decoration: none; font-weight: 600; }
+  .zweit span { width: 46px; height: 46px; border-radius: 50%; border: 1px solid var(--line); display: grid; place-items: center; background: rgba(255,255,255,.04); }
+  .zweit svg { width: 18px; height: 18px; }
 
-  /* Abschnitte */
-  .abschnitt { margin: clamp(48px, 8vh, 88px) 0 0; }
-  .abschnitt::before { content: ""; display: block; width: 110px; height: 5px; border-radius: 3px; background: var(--verlauf); margin-bottom: 22px; }
-  h2.titel { font-weight: 800; font-size: clamp(1.9rem, 4.5vw, 2.6rem); line-height: 1.1; letter-spacing: -.03em; margin: 0 0 24px; }
+  /* Abschnittskopf, zentriert mit Strich darunter */
+  .kopf { text-align: center; margin: clamp(28px, 5vh, 56px) auto 30px; max-width: 760px; }
+  .kopf h2 { font-weight: 800; font-size: clamp(2rem, 6vw, 3rem); line-height: 1.08; letter-spacing: -.035em; margin: 0; text-wrap: balance; }
+  .kopf p { color: var(--muted); margin: 14px auto 0; max-width: 36em; }
+  .kopf::after { content: ""; display: block; width: 96px; height: 5px; border-radius: 3px; background: linear-gradient(90deg, #22d3ee, #3b82f6); margin: 26px auto 0; }
 
-  /* Der Weg im Überblick */
-  .weg { list-style: none; margin: 0; padding: clamp(22px, 4vw, 40px); border-radius: 28px; border: 1px solid var(--line); background: var(--panel); backdrop-filter: blur(8px); display: grid; gap: 26px; }
-  .weg li { display: flex; align-items: center; gap: 22px; position: relative; }
-  .weg li:not(:last-child)::after { content: ""; position: absolute; left: 39px; top: 80px; height: 26px; width: 2px; background: rgba(59,130,246,.55); }
-  .kreis { position: relative; flex: none; width: 80px; height: 80px; border-radius: 50%; display: grid; place-items: center; border: 1.5px solid; }
-  .kreis svg { width: 34px; height: 34px; }
-  .kreis b { position: absolute; top: -6px; right: -6px; width: 30px; height: 30px; border-radius: 50%; display: grid; place-items: center; font-size: .95rem; color: #fff; background: linear-gradient(140deg, #22d3ee, #2563eb); box-shadow: 0 0 0 3px var(--bg); }
-  .k1 { color: var(--cyan); border-color: rgba(34,211,238,.4); background: rgba(34,211,238,.08); }
-  .k2 { color: #60a5fa; border-color: rgba(59,130,246,.45); background: rgba(59,130,246,.1); }
-  .k3 { color: #c084fc; border-color: rgba(168,85,247,.45); background: rgba(168,85,247,.1); }
-  .k4 { color: var(--mint); border-color: rgba(52,211,153,.4); background: rgba(52,211,153,.08); }
-  .weg h3 { margin: 0; font-size: clamp(1.1rem, 2.6vw, 1.4rem); font-weight: 700; letter-spacing: -.01em; }
-  .weg p { margin: 2px 0 0; color: var(--muted); font-size: .95rem; line-height: 1.45; }
+  /* Suche */
+  .suche { display: grid; gap: 16px; justify-items: center; margin-bottom: 30px; }
+  .feld { position: relative; width: min(100%, 640px); }
+  .feld svg { position: absolute; left: 18px; top: 50%; translate: 0 -50%; width: 20px; height: 20px; color: var(--muted); pointer-events: none; }
+  .feld input { width: 100%; font: inherit; font-size: 16px; color: var(--text); background: rgba(10,15,35,.85); border: 1px solid var(--line); border-radius: 16px; padding: 15px 18px 15px 50px; outline: none; }
+  .feld input::placeholder { color: rgba(226,232,245,.45); }
+  .feld input:focus { border-color: rgba(34,211,238,.6); box-shadow: 0 0 0 4px rgba(34,211,238,.15); }
+  .seg { display: flex; flex-wrap: wrap; justify-content: center; gap: 4px; padding: 6px; border-radius: 28px; border: 1px solid var(--line); background: rgba(255,255,255,.04); max-width: 100%; overflow-x: auto; scrollbar-width: none; }
+  .seg::-webkit-scrollbar { display: none; }
+  .seg button { flex: none; font: inherit; font-weight: 600; font-size: .98rem; color: var(--muted); background: transparent; border: 0; border-radius: 999px; padding: .62em 1.2em; cursor: pointer; min-height: 44px; touch-action: manipulation; }
+  .seg button[aria-pressed="true"] { color: #07101f; background: linear-gradient(100deg, #67e8f9, #3b82f6); box-shadow: 0 6px 22px -8px rgba(34,211,238,.7); }
+  .chips { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; }
+  .chips button { font: inherit; font-weight: 600; font-size: .92rem; color: var(--text); background: transparent; border: 1px solid color-mix(in srgb, var(--c1) 45%, transparent); border-radius: 999px; padding: .5em 1em .5em .8em; cursor: pointer; display: inline-flex; align-items: center; gap: .45em; min-height: 42px; touch-action: manipulation; }
+  .chips button svg { width: 1.05em; height: 1.05em; color: var(--c1); }
+  .chips button[aria-pressed="true"] { background: color-mix(in srgb, var(--c1) 22%, transparent); border-color: var(--c1); }
+  .anzahl { margin: 0; color: var(--muted); font-size: .92rem; }
 
-  /* Reiter und Kacheln */
-  .reiter { display: flex; flex-wrap: wrap; gap: 8px; margin: 0 0 24px; }
-  .reiter button { font: inherit; font-weight: 600; font-size: .95rem; color: var(--text); background: var(--panel2); border: 1px solid var(--line); border-radius: 999px; padding: .55em 1.15em; cursor: pointer; touch-action: manipulation; min-height: 42px; }
-  .reiter button[aria-pressed="true"] { background: var(--verlauf); color: #fff; border-color: transparent; }
-  .raster { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 440px), 1fr)); gap: 22px; }
-  .kachel { background: var(--panel); border: 1px solid var(--line); border-radius: 28px; overflow: hidden; display: flex; flex-direction: column; backdrop-filter: blur(8px); box-shadow: 0 24px 50px -30px rgba(0,0,0,.8); transition: border-color .25s ease, box-shadow .25s ease; }
-  .kachel:hover { border-color: rgba(34,211,238,.45); box-shadow: 0 0 0 1px rgba(34,211,238,.15), 0 24px 60px -28px rgba(34,211,238,.35); }
+  /* Farben je Projektart */
+  [data-typ="anleitung"] { --c1: #22d3ee; --c2: #3b82f6; }
+  [data-typ="bild"]      { --c1: #a78bfa; --c2: #d946ef; }
+  [data-typ="kamera"]    { --c1: #f472b6; --c2: #fb7185; }
+  [data-typ="lernspiel"] { --c1: #fbbf24; --c2: #f97316; }
+  [data-typ="einheit"]   { --c1: #60a5fa; --c2: #6366f1; }
+  [data-typ="werkzeug"]  { --c1: #34d399; --c2: #22d3ee; }
+
+  /* Karten */
+  .raster { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 440px), 1fr)); gap: 24px; }
+  .kachel { position: relative; border-radius: 30px; overflow: hidden; display: flex; flex-direction: column;
+    border: 1.5px solid color-mix(in srgb, var(--c1) 50%, transparent);
+    background: linear-gradient(170deg, color-mix(in srgb, var(--c1) 13%, #0b1124) 0%, #070b1a 75%);
+    box-shadow: 0 0 0 1px rgba(0,0,0,.2), 0 20px 60px -30px color-mix(in srgb, var(--c1) 55%, transparent);
+    transition: border-color .25s ease, box-shadow .25s ease, transform .25s ease; }
+  .kachel:hover { border-color: var(--c1); box-shadow: 0 0 34px -8px color-mix(in srgb, var(--c1) 55%, transparent); transform: translateY(-2px); }
   .kachel[hidden] { display: none; }
-  .bild { display: block; aspect-ratio: 8 / 5; background: #03050f; overflow: hidden; }
+  .bild { display: block; aspect-ratio: 8 / 5; background: #03050f; overflow: hidden; border-bottom: 1px solid color-mix(in srgb, var(--c1) 25%, transparent); }
   .bild img { width: 100%; height: 100%; object-fit: cover; display: block; transition: transform .5s ease; }
   .bild:hover img, .bild:focus-visible img { transform: scale(1.03); }
-  .unten { display: flex; gap: 18px; align-items: flex-end; justify-content: space-between; padding: 22px 24px 24px; }
-  .text h2 { font-weight: 700; font-size: 1.35rem; line-height: 1.2; letter-spacing: -.02em; margin: 0 0 .35em; }
-  .text h2 a { color: inherit; text-decoration: none; }
-  .text p { margin: 0 0 1.1em; color: var(--muted); font-size: .95rem; line-height: 1.55; }
-  .aktionen { flex-wrap: wrap; display: flex; align-items: center; gap: 10px; }
-  .oeffnen { display: inline-flex; align-items: center; gap: .45em; font-size: .95rem; font-weight: 700; color: #fff; background: linear-gradient(100deg, #06b6d4, #3b82f6); text-decoration: none; padding: .7em 1.25em .7em 1.35em; border-radius: 999px; white-space: nowrap; flex: none; touch-action: manipulation; transition: transform .15s ease, box-shadow .2s ease; box-shadow: 0 8px 24px -12px rgba(34,211,238,.7); }
+  .unten { padding: 22px 24px 24px; display: flex; flex-direction: column; gap: 14px; flex: 1; }
+  .marker { display: flex; align-items: center; gap: 14px; }
+  .symbol { flex: none; width: 52px; height: 52px; border-radius: 16px; display: grid; place-items: center; color: var(--c1); border: 1px solid color-mix(in srgb, var(--c1) 40%, transparent); background: color-mix(in srgb, var(--c1) 10%, transparent); box-shadow: 0 0 22px -6px color-mix(in srgb, var(--c1) 60%, transparent); }
+  .symbol svg { width: 24px; height: 24px; }
+  .etikett { color: var(--c1); font-weight: 700; font-size: .78rem; letter-spacing: .18em; text-transform: uppercase; line-height: 1.3; }
+  .kachel h2 { font-weight: 800; font-size: 1.45rem; line-height: 1.18; letter-spacing: -.025em; margin: 0; }
+  .kachel h2 a { color: inherit; text-decoration: none; }
+  .kachel p { margin: 0; color: var(--muted); font-size: .98rem; line-height: 1.6; }
+  .fuss { display: flex; gap: 18px; align-items: flex-end; justify-content: space-between; margin-top: auto; padding-top: 6px; }
+  .aktionen { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; }
+  .oeffnen { display: inline-flex; align-items: center; gap: .5em; font-size: 1rem; font-weight: 700; color: #07101f; background: linear-gradient(100deg, var(--c1), var(--c2)); text-decoration: none; padding: .78em 1.35em; border-radius: 999px; white-space: nowrap; box-shadow: 0 10px 28px -12px var(--c1); transition: transform .15s ease; touch-action: manipulation; }
   .oeffnen:hover { transform: translateY(-1px); }
   .oeffnen:active { transform: scale(.96); }
   .oeffnen svg { width: 1em; height: 1em; }
-  .startprompt { display: inline-flex; align-items: center; gap: .6em; font: inherit; text-align: left; color: var(--text); background: rgba(168,85,247,.1); border: 1px solid rgba(168,85,247,.35); padding: .5em 1em .5em .8em; border-radius: 18px; cursor: pointer; white-space: nowrap; flex: none; touch-action: manipulation; transition: background .15s ease, transform .15s ease; }
-  .startprompt:hover { background: rgba(168,85,247,.18); }
-  .startprompt:active { transform: scale(.96); }
-  .startprompt svg { width: 1.35em; height: 1.35em; flex: none; color: #e879f9; }
+  .startprompt { display: inline-flex; align-items: center; gap: .6em; font: inherit; text-align: left; color: var(--text); background: transparent; border: 1px solid color-mix(in srgb, var(--c1) 40%, transparent); padding: .5em 1em .5em .8em; border-radius: 18px; cursor: pointer; white-space: nowrap; touch-action: manipulation; }
+  .startprompt:hover { background: color-mix(in srgb, var(--c1) 12%, transparent); }
+  .startprompt svg { width: 1.3em; height: 1.3em; flex: none; color: var(--c1); }
   .startprompt b { display: block; font-size: .92rem; font-weight: 700; line-height: 1.15; }
   .startprompt small { display: block; font-size: .74rem; line-height: 1.2; color: var(--muted); }
-  .qr { flex: none; width: 112px; text-align: center; }
+  .qr { flex: none; width: 104px; text-align: center; }
   .qr .platte { background: #fff; border-radius: 12px; padding: 7px; line-height: 0; }
   .qr svg { width: 100%; height: auto; display: block; }
   .qr small { display: block; margin-top: 6px; font-size: .72rem; line-height: 1.25; color: var(--muted); }
   .qr .leer { border: 1px dashed var(--line); color: var(--muted); font-size: .72rem; line-height: 1.3; padding: 10px 6px; border-radius: 12px; }
+  .leerstand { text-align: center; color: var(--muted); padding: 40px 0; }
+  .leerstand button { margin-top: 14px; font: inherit; font-weight: 700; color: #07101f; background: linear-gradient(100deg, #67e8f9, #3b82f6); border: 0; border-radius: 999px; padding: .7em 1.4em; cursor: pointer; }
 
-  /* Lila Hinweiskarte wie ein Campus-Teaser */
-  .teaser { margin-top: clamp(48px, 8vh, 88px); padding: clamp(24px, 4vw, 44px); border-radius: 28px; border: 1px solid rgba(168,85,247,.35); background: linear-gradient(160deg, rgba(76,29,149,.35), rgba(18,24,48,.7)); }
-  .teaser .augenbraue, .teaser p.augenbraue { color: #c084fc; margin-bottom: 14px; }
-  .teaser h2 { font-weight: 800; font-size: clamp(1.7rem, 4vw, 2.3rem); line-height: 1.12; letter-spacing: -.03em; margin: 0 0 14px; }
-  .teaser h2 em { background: linear-gradient(100deg, #a78bfa, #e879f9); -webkit-background-clip: text; background-clip: text; }
-  .teaser p { color: var(--muted); margin: 0 0 24px; max-width: 40em; font-size: 1.05rem; }
-
-  footer { margin-top: 56px; padding-top: 22px; border-top: 1px solid var(--line); font-size: .9rem; color: var(--muted); display: flex; flex-wrap: wrap; gap: 8px 18px; }
+  footer { margin-top: 64px; padding-top: 22px; border-top: 1px solid var(--line); font-size: .9rem; color: var(--muted); display: flex; flex-wrap: wrap; gap: 8px 18px; }
   footer a { color: inherit; }
 
-  /* Dialog */
-  dialog { width: min(92vw, 640px); max-height: 86vh; padding: 0; border: 1px solid var(--line); border-radius: 24px; background: #0d1330; color: var(--text); }
-  dialog::backdrop { background: rgba(2, 4, 14, .75); backdrop-filter: blur(4px); }
+  dialog { width: min(92vw, 640px); max-height: 86vh; padding: 0; border: 1px solid rgba(139,92,246,.4); border-radius: 26px; background: #0c1130; color: var(--text); }
+  dialog::backdrop { background: rgba(2, 4, 14, .78); backdrop-filter: blur(4px); }
   .dlg { padding: 24px; display: flex; flex-direction: column; gap: 14px; max-height: 86vh; }
-  .dlg h2 { font-weight: 700; font-size: 1.3rem; line-height: 1.2; letter-spacing: -.02em; margin: 0; }
+  .dlg h2 { font-weight: 800; font-size: 1.3rem; line-height: 1.2; letter-spacing: -.02em; margin: 0; }
   .dlg p { margin: 0; color: var(--muted); font-size: .92rem; line-height: 1.45; }
   .dlg pre { margin: 0; padding: 14px 16px; background: #050817; border: 1px solid var(--line); border-radius: 14px; font: inherit; font-size: .95rem; line-height: 1.5; white-space: pre-wrap; overflow-wrap: anywhere; overflow-y: auto; user-select: text; -webkit-user-select: text; }
   .dlg .knoepfe { display: flex; gap: 10px; flex-wrap: wrap; }
-  .dlg button { font: inherit; font-weight: 700; font-size: .95rem; padding: .65em 1.3em; border-radius: 999px; cursor: pointer; border: 1px solid var(--line); background: transparent; color: var(--text); touch-action: manipulation; }
-  .dlg button.primaer { background: linear-gradient(100deg, #06b6d4, #3b82f6); color: #fff; border-color: transparent; }
+  .dlg button { font: inherit; font-weight: 700; font-size: .95rem; padding: .65em 1.3em; border-radius: 999px; cursor: pointer; border: 1px solid var(--line); background: transparent; color: var(--text); }
+  .dlg button.primaer { background: linear-gradient(100deg, #8b5cf6, #d946ef); color: #fff; border-color: transparent; }
 
-  a:focus-visible, button:focus-visible, .startprompt:focus-visible { outline: 2px solid var(--focus); outline-offset: 3px; }
-  @media (max-width: 560px) {
-    .leiste .pille span { display: none; }
-    .weg li { gap: 16px; } .kreis { width: 64px; height: 64px; } .kreis svg { width: 28px; height: 28px; }
-    .weg li:not(:last-child)::after { left: 31px; top: 64px; height: 26px; }
-  }
-  @media (max-width: 420px) { .unten { flex-direction: column; align-items: flex-start; } .qr { width: 132px; } }
+  a:focus-visible, button:focus-visible { outline: 2px solid var(--focus); outline-offset: 3px; }
+  @media (max-width: 640px) { .leiste nav a.weg { display: none; } }
+  @media (max-width: 460px) { .seg button { padding: .55em .9em; } .fuss { flex-direction: column; align-items: flex-start; } .qr { width: 110px; } .unten { padding: 20px; } }
   @media (prefers-reduced-motion: reduce) { .bild img, .gross, .oeffnen, .kachel { transition: none; } }
 </style>
 </head>
 <body>
 <div class="leiste">
   <a class="marke" href="./">
-    <svg viewBox="0 0 32 32" fill="none" aria-hidden="true"><defs><linearGradient id="lg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#22d3ee"/><stop offset="1" stop-color="#3b82f6"/></linearGradient></defs><rect x="2" y="6" width="28" height="22" rx="6" stroke="url(#lg)" stroke-width="2.2"/><path d="M11 13l-4 4 4 4M21 13l4 4-4 4M17.5 12l-3 10" stroke="url(#lg)" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/><path d="M26 1l.9 2.1L29 4l-2.1.9L26 7l-.9-2.1L23 4l2.1-.9z" fill="#22d3ee"/></svg>
-    ArtLab
+    <svg viewBox="0 0 32 32" fill="none" aria-hidden="true"><defs><linearGradient id="lg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#67e8f9"/><stop offset="1" stop-color="#3b82f6"/></linearGradient></defs><rect x="2" y="7" width="27" height="21" rx="6" stroke="url(#lg)" stroke-width="2.2"/><path d="M11 14l-4 3.5 4 3.5M20 14l4 3.5-4 3.5M17 13l-3 9" stroke="url(#lg)" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/><path d="M27 0l.9 2.1L30 3l-2.1.9L27 6l-.9-2.1L24 3l2.1-.9z" fill="#fff"/></svg>
+    <span>Art<em>Lab</em></span>
   </a>
-  <a class="pille" href="vibe-coding.html"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg>So fängst du an<span>mit Vibe Coding</span></a>
+  <nav aria-label="Seiten">
+    <a href="#projekte">Projekte</a>
+    <a class="weg" href="vibe-coding.html">Anleitung</a>
+    <a href="ueber-dieses-projekt.html">Über</a>
+  </nav>
 </div>
 <main>
   <header class="buehne">
     <p class="augenbraue"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2l2.2 6.6L21 11l-6.8 2.4L12 20l-2.2-6.6L3 11l6.8-2.4z"/></svg>Selbst gebaut mit KI</p>
     <h1>Vibe Coding im <em>Unterricht</em></h1>
-    <p>Lernspiele, Bilder zum Anfassen und kleine Werkzeuge für Kunst und Biologie. Alles ist mit KI entstanden, ohne selbst zu programmieren. Zu jedem Projekt gibt es den Startprompt zum Nachbauen. Mehr unter <a href="ueber-dieses-projekt.html">Worum es hier geht</a>.</p>
+    <p class="lead">Lernspiele, Bilder zum Anfassen und kleine Werkzeuge für Kunst, Biologie und Sprachen. Alles ist mit KI entstanden, ohne selbst zu programmieren. Zu jedem Projekt gibt es den Startprompt zum Nachbauen.</p>
     <div class="knopfreihe">
-      <a class="gross blau" href="#projekte">Zu den Projekten<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 8h10M9 4l4 4-4 4"/></svg></a>
+      <a class="gross" href="#projekte">Projekte entdecken<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 3v10M4 9l4 4 4-4"/></svg></a>
+      <a class="zweit" href="vibe-coding.html"><span><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M8 5v14l11-7z"/></svg></span>So fängst du an</a>
     </div>
   </header>
 
-  <section class="abschnitt" aria-labelledby="wegTitel">
-    <h2 class="titel" id="wegTitel">Der Weg im Überblick</h2>
-    <ol class="weg">
-      <li><span class="kreis k1"><b>1</b><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 18h6M10 22h4M12 2a7 7 0 0 0-4 12.7c.6.5 1 1.3 1 2.3h6c0-1 .4-1.8 1-2.3A7 7 0 0 0 12 2z"/></svg></span><div><h3>Idee aus dem Unterricht</h3><p>Was fehlt dir gerade? Ein Spiel, eine Übung, ein Bild zum Anfassen.</p></div></li>
-      <li><span class="kreis k2"><b>2</b><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg></span><div><h3>Prompt schicken</h3><p>In normalen Sätzen beschreiben, was entstehen soll.</p></div></li>
-      <li><span class="kreis k3"><b>3</b><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polygon points="6 4 20 12 6 20 6 4"/></svg></span><div><h3>Ausprobieren</h3><p>Am Handy, am Tablet, mit der Klasse.</p></div></li>
-      <li><span class="kreis k4"><b>4</b><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 20h9M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z"/></svg></span><div><h3>Nachbessern lassen</h3><p>Sagen, was stört, bis es passt. Dann per QR-Code teilen.</p></div></li>
-    </ol>
-  </section>
-
-  <section class="abschnitt" id="projekte" aria-labelledby="projTitel">
-    <h2 class="titel" id="projTitel">Projekte</h2>
-    <nav class="reiter" id="reiter" aria-label="Bereiche"></nav>
+  <section id="projekte" aria-labelledby="projTitel">
+    <div class="kopf">
+      <h2 id="projTitel">Was möchtest du <em>ausprobieren</em>?</h2>
+    </div>
+    <div class="suche">
+      <label class="feld"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg><input id="q" type="search" placeholder="Suchen, etwa Van Gogh" aria-label="Projekte durchsuchen" autocomplete="off"></label>
+      <div class="seg" id="faecher" role="group" aria-label="Fach"></div>
+      <div class="chips" id="arten" role="group" aria-label="Art des Projekts"></div>
+      <p class="anzahl" id="anzahl" aria-live="polite"></p>
+    </div>
     <div class="raster" id="raster"></div>
-  </section>
-
-  <section class="teaser">
-    <p class="augenbraue">Seminar und Fortbildung</p>
-    <h2>Für alle, die <em>selbst bauen</em> wollen</h2>
-    <p>Die Anleitung führt vom ersten Satz bis zur fertigen Seite mit QR-Code, mit Claude oder ChatGPT. Keine Vorkenntnisse nötig.</p>
-    <a class="gross lila" href="vibe-coding.html">Zur Anleitung<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 8h10M9 4l4 4-4 4"/></svg></a>
+    <div class="leerstand" id="leer" hidden><p>Dazu gibt es noch nichts.</p><button type="button" id="zurueck">Alles zeigen</button></div>
   </section>
 
   <footer><span>Claus Zirwes, Universität zu Köln</span><a href="impressum.html">Impressum</a><a href="datenschutz.html">Datenschutz</a></footer>
@@ -209,12 +207,15 @@
 <script src="qrcode.js"></script>
 <script>
 // Neue Projekte: einfach einen weiteren Eintrag ergänzen.
+// fach: kunst, biologie, sprachen oder allgemein (fachübergreifend)
+// typ: anleitung, bild, kamera, lernspiel, einheit oder werkzeug
 const PROJEKTE = [
   {
     titel: "Worum es hier geht",
     text: "Wozu dieses Projekt dient und wie es mit meinem Seminar an der Uni Köln zusammenhängt. Mit Druck- und PDF-Funktion.",
     seite: "ueber-dieses-projekt.html",
-    bereiche: "organisatorisches",
+    fach: "allgemein",
+    typ: "anleitung",
     bild: "vorschau/ueber-dieses-projekt.jpg",
     alt: "Seite mit der Überschrift Worum es hier geht auf dunklem Grund"
   },
@@ -222,7 +223,8 @@ const PROJEKTE = [
     titel: "Vibe Coding, so fängst du an",
     text: "Eine kurze Anleitung mit Claude und ChatGPT, vom ersten Satz bis zur Seite mit QR-Code. Mit Druck- und PDF-Funktion.",
     seite: "vibe-coding.html",
-    bereiche: "organisatorisches",
+    fach: "allgemein",
+    typ: "anleitung",
     bild: "vorschau/vibe-coding.jpg",
     alt: "Seite mit der Überschrift Vibe Coding, so fängst du an auf dunklem Grund"
   },
@@ -230,7 +232,8 @@ const PROJEKTE = [
     titel: "Fließendes Licht",
     text: "Leuchtende Spuren folgen dem Finger und ziehen in weichen Strömungen davon.",
     seite: "fliessendes-licht.html",
-    bereiche: "produktion",
+    fach: "kunst",
+    typ: "bild",
     prompt: "Baue mir eine einzelne HTML-Datei, die im Browser und auf dem Handy flüssig läuft, ohne Server und ohne Konto. Die Seite füllt den ganzen Bildschirm mit einem sehr dunklen Blau. Wenn ich mit dem Finger oder der Maus darüberstreiche, entstehen dort leuchtende Lichtpunkte mit weichem Hof, die einem Strömungsfeld aus Rauschen folgen und in sanften Kurven davonziehen. Der Farbton der Punkte wandert langsam durch das ganze Spektrum, die Punkte überlagern sich additiv und die Spur verblasst nach und nach. Wenn eine Weile niemand das Bild berührt, zieht ein einzelner Lichtpunkt von selbst ruhige Bahnen, damit das Bild nie leer wirkt. Scrollen und Zoomen sollen beim Zeichnen unterdrückt sein, und ein kurzer Hinweis am unteren Rand verschwindet, sobald man das Bild berührt.",
     bild: "vorschau/fliessendes-licht.jpg",
     alt: "Leuchtende blau-violette Lichtspuren auf dunklem Grund"
@@ -239,7 +242,8 @@ const PROJEKTE = [
     titel: "Datenpigment",
     text: "Eine Strömung aus feinen Farblinien, die sich mit dem Finger verwirbeln lässt.",
     seite: "datenpigment.html",
-    bereiche: "produktion",
+    fach: "kunst",
+    typ: "bild",
     prompt: "Baue mir eine einzelne HTML-Datei im Vollbild auf fast schwarzem Grund, die auf dem Handy flüssig läuft, ohne Server und ohne Konto. Etwa fünftausend feine Linien fließen in einem Strömungsfeld aus Rauschen. Jede Linie ist ein kurzer Strich von ihrer letzten zur aktuellen Position, halbtransparent in tiefem Blau, Cyan, Mint, Gold, Magenta oder Violett. Der Hintergrund wird in jedem Bild mit einem sehr schwachen Dunkel überdeckt, so entstehen Spuren, die langsam verblassen. Mit dem Finger oder der Maus lässt sich die Strömung verwirbeln, die Linien weichen aus und werden mitgezogen. Dazu soll es Klang geben, komplett im Browser mit Web Audio erzeugt. Mystisch, wie Klangschalen, mit einem leisen tiefen Grundton, der leicht schwebt, und mit Hall. Beim Wischen schlagen Töne an, je schneller die Bewegung, desto öfter, und die Tonhöhe folgt der Höhe der Berührung in einer d-Moll-Tonleiter. Auf dem iPhone gibt erst ein Antippen den Ton frei, deshalb braucht es einen Knopf „Ton einschalten“, der nach dem Start verschwindet.",
     bild: "vorschau/datenpigment.jpg",
     alt: "Dichte Strömung aus feinen violetten, blauen und goldenen Linien"
@@ -248,7 +252,8 @@ const PROJEKTE = [
     titel: "Sternennacht fließt",
     text: "Van Goghs Gemälde als Strömung aus Farblinien, die den Pinselstrichen folgen und sich verwirbeln lassen.",
     seite: "sternennacht-fliessend.html",
-    bereiche: "rezeption",
+    fach: "kunst",
+    typ: "bild",
     prompt: "Baue mir eine einzelne HTML-Datei, die Van Goghs Sternennacht nicht als Bild zeigt, sondern aus tausenden feinen Linien entstehen lässt. Das Gemälde (ich lade es dir als gemeinfreies Foto hoch, bette es bitte in die Datei ein) wird nur im Hintergrund ausgewertet. Jede Linie nimmt die Farbe des Gemäldes an ihrer Stelle an und fließt in die Richtung des Pinselstrichs dort, die du aus dem Helligkeitsverlauf berechnest. So wirken die Linien zusammen wie Pinselstriche und bewegen sich die ganze Zeit. Sie verblassen langsam und werden immer wieder neu gesetzt. Mit Finger oder Maus lässt sich die Strömung verwirbeln. Im Querformat füllt das Bild den Bildschirm, im Hochformat auf dem Handy soll das ganze Gemälde zu sehen sein. Dazu gibt es Klang, im Browser mit Web Audio erzeugt. Mystisch, wie Klangschalen, mit leisem tiefem Grundton und Hall. Beim Wischen schlagen Töne an, je schneller, desto öfter, und die Tonhöhe folgt der Höhe der Berührung. Auf dem iPhone braucht es dafür einen Knopf „Ton einschalten“, der nach dem Start verschwindet.",
     bild: "vorschau/sternennacht-fliessend.jpg",
     alt: "Van Goghs Sternennacht, aus feinen blauen und gelben Linien gezeichnet"
@@ -257,7 +262,8 @@ const PROJEKTE = [
     titel: "Pigmentfäden",
     text: "Spreize die Finger vor der Kamera, und zwischen den Fingerspitzen ziehen sich leuchtende Fäden aus Farbe wie Kaugummi. Braucht die Kamera.",
     seite: "pigmentfaeden.html",
-    bereiche: "produktion",
+    fach: "kunst",
+    typ: "kamera",
     prompt: "Baue mir eine einzelne HTML-Datei, die mit der Kamera meine Hand erkennt, direkt im Browser mit MediaPipe Hand Landmarker, ohne Server. Das Kamerabild wird gespiegelt, füllt den Bildschirm und ist abgedunkelt, damit das Leuchten wirkt. Spreize ich die Finger langsam, ziehen sich zwischen den Fingerspitzen benachbarter Finger leuchtende Fäden aus Farbe, wie gezogener Kaugummi. Sie hängen durch, solange sie locker sind, werden in der Mitte dünner und reißen bei unterschiedlichen Abständen nacheinander, wobei ein Spritzer Pigment wegfliegt, der abtropft und verblasst. Sobald sich die Finger wieder berühren, können neue Fäden entstehen. Mit zwei Händen spannen sich Fäden auch zwischen den gleichen Fingerspitzen beider Hände. Alle Abstände sollen relativ zur Handgröße gemessen werden, damit es bei jeder Entfernung gleich wirkt. Farben sind tiefes Blau, Cyan, Mint, Gold, Magenta und Violett. Gestartet wird über einen Knopf „Kamera starten“, und die Seite weist darauf hin, dass das Kamerabild das Gerät nicht verlässt.",
     bild: "vorschau/pigmentfaeden.jpg",
     alt: "Leuchtende bunte Fäden zwischen den Fingerspitzen zweier Hände auf dunklem Grund"
@@ -266,7 +272,8 @@ const PROJEKTE = [
     titel: "Handnetz",
     text: "Halte eine oder beide Hände vor die Kamera. Kleine leuchtende Punkte sitzen auf den Fingern, und zwischen beiden Händen spannen sich bunte feine Linien. Braucht die Kamera.",
     seite: "handnetz.html",
-    bereiche: "produktion",
+    fach: "kunst",
+    typ: "kamera",
     prompt: "Baue mir eine einzelne HTML-Datei, die mit der Kamera eine oder zwei Hände erkennt, direkt im Browser mit MediaPipe Hand Landmarker, ohne Server. Das gespiegelte Kamerabild füllt den Bildschirm und wird abgedunkelt. Auf den einundzwanzig Handpunkten jeder Hand sitzen kleine leuchtende Punkte mit weißem Kern und warmem Hof. Sie folgen der Hand über eine gedämpfte Feder und hängen etwas nach. Zwischen Punkten, die nah beieinander liegen, werden feine leuchtende Linien gezogen, und bei zwei Händen spannen sich auch Linien von Fingerspitzen und Fingergliedern der einen zur anderen Hand. Die Farbe jedes Punktes wandert langsam durch das ganze Spektrum. Das Leuchten entsteht, indem das Bild in zwei Stufen weichgezeichnet und mit dem Kamerabild im Screen-Modus überlagert wird. Gestartet wird über einen Knopf „Kamera starten“, mit dem Hinweis, dass das Kamerabild das Gerät nicht verlässt.",
     bild: "vorschau/handnetz.jpg",
     alt: "Leuchtendes buntes Bündel feiner Linien zwischen den Fingern zweier Hände, dazu kleine leuchtende Punkte auf dunklem Grund"
@@ -275,7 +282,8 @@ const PROJEKTE = [
     titel: "Van Gogh und die Bildanalyse",
     text: "Unterrichtseinheit für Klasse 10 in zwei Doppelstunden. Mit Arbeitsblättern als PDF, Übungen, Spiel, Quiz und Lehrkraftbereich.",
     seite: "van-gogh-einheit/index.html",
-    bereiche: "rezeption",
+    fach: "kunst",
+    typ: "einheit",
     prompt: "Baue mir eine kleine Website mit einer Unterrichtseinheit für Klasse 10 Kunst zu Van Gogh und Bildanalyse, aufgeteilt auf zwei Doppelstunden. Sie besteht aus mehreren Seiten, die ich als Ordner auf GitHub Pages stellen kann. Dazu gehören Arbeitsblätter, die man sauber als PDF ausdrucken kann, interaktive Übungen zur Bildanalyse, ein kleines Spiel, ein Quiz mit Auswertung und ein Bereich für Lehrkräfte mit Verlaufsplan, Lösungen und Hinweisen. Alles soll ohne Server und ohne Konto laufen und auf Tablet und Handy gut lesbar sein. Frag mich zuerst nach Lernzielen, Vorwissen der Klasse und den Bildern, mit denen ich arbeiten darf, und nutze nur Fakten, die du sicher belegen kannst.",
     bild: "vorschau/van-gogh-einheit.jpg",
     alt: "Vincent van Goghs Sternennacht mit blauem Wirbelhimmel, gelbem Mond und Zypresse"
@@ -284,7 +292,8 @@ const PROJEKTE = [
     titel: "Aus Kritzel wird Bild",
     text: "Zeichne eine kleine Skizze, beschreibe sie, und eine KI macht daraus ein Bild, zum Beispiel im Stil von Van Gogh. Kostenloser Demo-Dienst bei Hugging Face, eingebettet.",
     seite: "kritzel-bild.html",
-    bereiche: "produktion,reflexion",
+    fach: "kunst",
+    typ: "werkzeug",
     prompt: "Baue mir eine einzelne HTML-Seite für den Unterricht mit dem Titel „Aus Kritzel wird Bild“. Man zeichnet eine kleine Skizze, beschreibt in einem Satz, was daraus werden soll, und eine KI erzeugt daraus ein Bild, zum Beispiel ein Porträt im Stil von Van Gogh. Dafür bindest du kostenlose Demo-Zeichenbretter von Hugging Face als iframe ein und lässt mich zwischen zwei Varianten wählen, einem schnellen modernen Sketch Board und dem klassischen ControlNet Scribble. Der iframe darf erst nach einem Klick auf „Zeichenbrett laden“ geladen werden, und davor muss ein Hinweis stehen, dass sich der Browser dann mit Hugging Face in den USA verbindet. Dazu kommen ein Link „In neuem Tab öffnen“ und drei kurze Tipps. Zeichnen mit wenigen klaren Linien, Beschreiben (englisch klappt meist besser) und Vergleichen, was sich ändert, wenn nur der Stil wechselt. Ein Hinweis erklärt, dass ohne Anmeldung nur wenige Bilder pro Tag und Netzwerk möglich sind.",
     bild: "vorschau/kritzel-bild.jpg",
     alt: "Ein eingebettetes Zeichenbrett mit weißer Fläche, Werkzeugen und Eingabefeld für die Bildbeschreibung"
@@ -293,7 +302,8 @@ const PROJEKTE = [
     titel: "Gesichter klappen und du",
     text: "Wie Gesichter klappen, aber mit Kamera. Dein eigenes Foto klappt als dreizehntes Gesicht mit und bleibt auf deinem Gerät.",
     seite: "gesichter-klappen-kamera.html",
-    bereiche: "reflexion",
+    fach: "kunst",
+    typ: "kamera",
     prompt: "Baue mir eine einzelne HTML-Seite, die wie eine Klappanzeige am Flughafen funktioniert. Zwölf Felder in drei Spalten und vier Zeilen ergeben zusammen ein Gesicht, jedes Feld ist in eine obere und eine untere Klappe geteilt. Tippe ich auf ein Feld, klappt die obere Hälfte nach unten, mit sichtbarer Rückseite und einer Animation von gut einer halben Sekunde, und zeigt das nächste Gesicht, sodass oben und unten oft verschiedene Menschen stehen und immer neue Mischgesichter entstehen. Ich lege dir zwölf Porträtfotos im Format drei zu vier hoch, bei denen Augen und Mund jeweils auf derselben Höhe liegen. Dazu gibt es Knöpfe „Zufall“ mit Tempo-Regler, „Alle weiter“, „Mischen“ und „Bild speichern“. Mit „Mein Gesicht“ macht man per Kamera ein Foto mit drei Sekunden Countdown, die Augen sollen auf einer eingeblendeten Linie liegen und der Mund auf einer zweiten. Das Foto wird passend ausgerichtet und klappt als dreizehntes Gesicht mit. Es bleibt auf dem Gerät und ist nach dem Neuladen weg. Dazu gibt es einen schaltbaren Klack-Ton, bei dem jede Klappe ein kurzes Klickgeräusch macht wie eine echte Anzeigetafel. Nimm dafür echte Klickgeräusche als Audiodateien, die ich dir gebe, und ein einfaches erzeugtes Ersatzgeräusch, falls sie fehlen. Bei vielen gleichzeitigen Klappen sollen sich die Geräusche nicht übereinander stapeln.",
     bild: "vorschau/gesichter-klappen.jpg",
     alt: "Ein Brett aus zwölf Klappfeldern, das ein aus Teilen verschiedener Menschen gemischtes Gesicht zeigt"
@@ -302,7 +312,8 @@ const PROJEKTE = [
     titel: "Lichtzeichnung",
     text: "Zeichne mit dem Finger in die Luft. Daumen und Zeigefinger zusammenkneifen, dann leuchtet der Stift. Mit Verblassen, Farbwechsel und Bild speichern.",
     seite: "lichtzeichnung.html",
-    bereiche: "produktion",
+    fach: "kunst",
+    typ: "kamera",
     prompt: "Baue mir eine einzelne HTML-Datei, die mit der Kamera meine Hand erkennt, direkt im Browser mit MediaPipe Hand Landmarker, ohne Server. Wenn ich Daumen und Zeigefinger zusammenkneife, leuchtet ein Stift an der Zeigefingerspitze, und ich zeichne damit in die Luft, ähnlich wie Picassos Lichtzeichnungen von 1949. Die Linie hat einen hellen weißen Kern und einen farbigen Hof und wird dünner, je schneller ich zeichne. Der Farbton wandert mit der Länge der Linie. Die Linie soll glatt sein, nutze dafür einen One-Euro-Filter, ignoriere Ausreißer der Handerkennung und zeichne mit minimaler Verzögerung, damit beim Loslassen kein Haken entsteht. Eine Leiste bietet „Löschen“, „Verblassen“ (Linien verschwinden nach etwa fünf Sekunden), „Farbe“, „Speichern“ als Bild und „Mit Kamerabild“. Mit einer zweiten, offenen Hand wechselt man die Farbe, wenn man sie kurz hält, und mit einer Faust löscht man, wenn man sie etwas länger hält. Das Kamerabild ist abgedunkelt, damit das Licht wirkt, und die Seite weist darauf hin, dass es das Gerät nicht verlässt.",
     bild: "vorschau/lichtzeichnung.jpg",
     alt: "Eine leuchtende, bunte Linie schwingt in Schleifen über einen dunklen Grund"
@@ -311,7 +322,8 @@ const PROJEKTE = [
     titel: "Blickwechsel",
     text: "Ein Kaleidoskop aus Kristall und Glut dreht sich um deinen Standpunkt. Mit der Hand vom Frosch zum Vogel, auf Wunsch mit deinem Kamerabild in den Facetten.",
     seite: "blickwechsel.html",
-    bereiche: "produktion,reflexion",
+    fach: "kunst",
+    typ: "kamera",
     prompt: "Baue mir eine einzelne HTML-Datei mit einem Kaleidoskop aus leuchtenden Kristallfacetten, das sich um meinen Standpunkt dreht, gerechnet in einem WebGL-Fragment-Shader im Vollbild. Der Raum zerfällt in Facetten, fließt ineinander und setzt sich neu zusammen, mit glimmernden Kernen, leuchtenden Kanten und einer Vignette. Die Höhe meines Blicks verändert die Perspektive, oben schaut man flach auf ein Mandala herab, unten wird es ein Tunnel nach oben. Gesteuert wird entweder mit dem Finger oder der Maus oder, nach Start über „Mit Kamera und Hand“, mit der Höhe und Drehung meiner Hand, erkannt mit MediaPipe Hand Landmarker im Browser. Es gibt auch „Nur Licht, ohne Kamera“. Lasse ich die Seite in Ruhe, treibt der Raum von selbst weiter. In einer Leiste lassen sich das Kamerabild in den Facetten, die Vorder- oder Rückkamera, die Handsteuerung, vier Farbwelten (Lava, Eis, Violett, Regenbogen) und das Speichern als Bild schalten. Die Rechenauflösung passt sich schwachen Geräten automatisch an, und das Kamerabild verlässt das Gerät nicht.",
     bild: "vorschau/blickwechsel.jpg",
     alt: "Ein symmetrisches Kaleidoskop aus glühenden orange-roten Kristallfacetten mit hellen Kanten"
@@ -320,7 +332,8 @@ const PROJEKTE = [
     titel: "Die Gesandten, Escape Room",
     text: "Ein Escape-Room-Lernspiel zu Holbeins Gemälde. Rätsel öffnen sich als Blätter über dem Bild, bis das Geheimnis des verzerrten Schädels gelöst ist.",
     seite: "gesandten-escape-room.html",
-    bereiche: "rezeption",
+    fach: "kunst",
+    typ: "lernspiel",
     prompt: "Baue mir ein Escape-Room-Lernspiel als einzelne HTML-Datei zu Hans Holbeins Gemälde Die Gesandten (1533), für eine Einzelstunde Kunst in der Oberstufe, das vier Schüler an einem Gerät spielen. Die Rahmengeschichte: Das Kuratorenteam hat das Bild für die Ausstellung „Vergänglichkeit“ aufgehängt, doch der Schädel hat den Spiegel zerbrochen und vier Splitter an vier Orten im Bild versteckt. Das Bild ist zoombar, mit zwei Fingern oder mit Plus und Minus. Die vier Orte tippt man an, jeder öffnet ein Rätsel als Blatt über dem Bild mit Tipps, die nichts kosten. Gefundene Splitter landen in einem Katalog mit Fundstücken. Es läuft ein 30-Minuten-Timer, es gibt einen Start- und einen Neu-beginnen-Knopf, und am Ende setzt man den Spiegel zusammen und entzerrt mit einem Regler den Totenkopf, der nur aus schrägem Winkel lesbar ist (Anamorphose). Eine Abschlussseite erklärt Vanitas, Memento mori, Anamorphose und das kleine Kreuz. Der Spielstand bleibt im Browser. Nutze nur Fakten, die du sicher belegen kannst, und frag mich vorher nach dem Bild, das ich dir als Datei gebe.",
     bild: "vorschau/gesandten-escape-room.jpg",
     alt: "Holbeins Gemälde Die Gesandten in goldenem Rahmen vor einer dunkelroten Galeriewand"
@@ -329,7 +342,8 @@ const PROJEKTE = [
     titel: "Auflösung",
     text: "Dein Live-Bild besteht aus tausenden Farbtupfern. Mit Finger, Maus oder Hand tragen sie sich ab, verlaufen, tropfen oder zerfallen und setzen sich wieder zusammen.",
     seite: "aufloesung.html",
-    bereiche: "produktion,reflexion",
+    fach: "kunst",
+    typ: "bild",
     prompt: "Baue mir eine einzelne HTML-Datei, die ein Bild, ein Live-Kamerabild oder ein Foto eines Gesichts in tausende kleine glänzende Farbtupfer zerlegt, jeder wie ein flachgedrückter Klecks Ölfarbe mit leicht wackeligem Rand. Ich nutze WebGL mit Punktsprites. Fahre ich mit dem Finger oder der Maus darüber, lösen sich die Tupfer ab, und lasse ich los, setzt sich das Bild langsam wieder zusammen. Der Pinsel ist klein bei langsamer Bewegung und größer bei schneller. Es gibt die Modi Abtragen, Verlaufen, Schmelzen, Zerfallen und Fäden (dünne Pigmentfäden entstehen dort, wo man wischt, und verschwinden wieder) sowie Automatisch, der zwischen den anderen wechselt und beim Start aktiv ist. Dazu kommt Klang, im Browser mit Web Audio erzeugt. Je schneller ich wische, desto häufiger schlägt ein Ton an, wie bei einem Glockenspiel, und die Tonhöhe folgt der Höhe der Bewegung. Es gibt drei Klänge, Mystisch, Fröhlich und Sanft, und einen Schalter für Klang aus. Auf dem iPhone braucht der Ton erst ein Antippen. Mit der Kamera kann man auch mit der eigenen Hand wischen (MediaPipe) und optional nur das Gesicht verwenden. Zusätzlich gibt es einen Knopf zum Speichern und zum Zusammensetzen. Kamerabild und Fotos bleiben auf dem Gerät.",
     bild: "vorschau-aufloesung.jpg",
     alt: "Ein Porträt aus kleinen Farbtupfern, in das eine Stelle als schwarzes Loch hineingewischt ist"
@@ -338,7 +352,8 @@ const PROJEKTE = [
     titel: "Tre Lingue, ein Vokabeltrainer",
     text: "Ein Vokabeltrainer für Englisch, Französisch und Italienisch mit Karteikarten und Vokabelkasten. Ein Beispiel dafür, was sich mit Vibe Coding für den eigenen Lernbedarf bauen lässt.",
     seite: "tre-lingue.html",
-    bereiche: "reflexion",
+    fach: "sprachen",
+    typ: "werkzeug",
     prompt: "Baue mir eine Vokabel-App als einzelne HTML-Datei für Englisch (B1), Französisch (B1) und Italienisch (A1), die mit dem Handy auf dem Sofa Spaß macht. Lernpsychologisch soll sie wie ein Vokabelkasten mit fünf Fächern arbeiten und wachsenden Wiederholungsabständen von einem, drei, sieben, sechzehn und fünfunddreißig Tagen. Eine Karte rückt nur weiter, wenn sie wirklich fällig ist, und richtig beantwortet man durch Tippen, Antwortauswahl oder Lückensätze. Neue Wörter werden mit Beispielsatz vorgestellt, die Aussprache kommt aus der Sprachausgabe des Browsers. Das Niveau passt sich an, wenn man lange sehr gut oder schlecht abschneidet. Für Italienisch gibt es zusätzlich kurze Grammatiklektionen mit Übungen und Redewendungen. Eine Ansicht zeigt den Kasten mit seinen Fächern, ein Tagesziel und die Serie. Der Fortschritt bleibt im Browser, lässt sich als Datei sichern und laden, ohne Konto. Das Design soll wie eine schöne Apple-App wirken, mit systemeigener Schrift, abgerundeten Karten, leicht schräg gestellten Stickern und einer eigenen Farbe je Sprache.",
     bild: "vorschau/tre-lingue.jpg",
     alt: "Die Startseite eines Vokabeltrainers mit der Überschrift Tre Lingue und einer grünen Karte für Italienisch"
@@ -347,7 +362,8 @@ const PROJEKTE = [
     titel: "Immunlabor, Immunologie in Klasse 9",
     text: "Acht Missionen zum Immunsystem mit Schulbuchtexten, bunten Abbildungen, drei Lernwegen, Lernspielen und Selbstkontrolle. Von Bakterien und Viren über Impfung und Antibiotika bis zur Allergie.",
     seite: "immunlabor.html",
-    bereiche: "rezeption,produktion",
+    fach: "biologie",
+    typ: "einheit",
     prompt: "Baue mir ein Lernmaterial als einzelne HTML-Datei für den Biologieunterricht in Klasse 9 zum Thema Immunbiologie, das sich wie ein buntes, modernes Schulbuch liest. Es gibt acht Missionen mit je einer Doppelstunde. Diese sind Erreger (Bakterien und Viren), Übertragungswege, angeborene Abwehr, gezielte Abwehr mit Antikörpern und Gedächtnis, Impfung, Antibiotika und Resistenz, Allergie und Transplantation, und eine Fallanalyse. Jede Mission hat eine Alltagsszene als Einstieg, einen Forscherauftrag, ausführliche Erklärtexte mit Zwischenüberschriften, Merkkästen, Wusstest-du-Kästen, Tabellen und Fachbegriffen und mehrere selbst gezeichnete SVG-Abbildungen im Stil eines Schulbuchs (Aufbau eines Bakteriums und eines Virus, Fresszelle, Antikörper nach dem Schlüssel-Schloss-Prinzip, Antikörperkurve, Resistenz in Petrischalen und so weiter), mit klarer Beschriftung. Dazu gehören drei Lernwege Förder, Basis und Erweitert mit Arbeitsblättern und Textfeldern, deren Antworten im Browser gespeichert werden, ein Lernspiel mit drei Fragen und Rückmeldung, eine Selbstkontrolle und ein Exit-Ticket. Jede Mission bekommt eine eigene kräftige Farbe, oben gibt es eine Navigation und einen Fortschrittsbalken. Das Design soll schülergerecht, bunt und mit großer Schrift am Handy gut lesbar sein, ohne Server und ohne Konto.",
     bild: "vorschau/immunlabor.jpg",
     alt: "Die Startseite des Immunlabors mit farbigem Titel und den acht Missionskarten"
@@ -356,7 +372,8 @@ const PROJEKTE = [
     titel: "Werbung lesen, Beispiel Lieferando",
     text: "Eine Anzeige in vier Schritten auseinandernehmen. W-Fragen beantworten, AIDA direkt im Bild aufleuchten lassen, Gestaltungsmittel per Spiel zuordnen, kritisch reflektieren und danach eine eigene Anzeige analysieren.",
     seite: "lieferando.html",
-    bereiche: "rezeption,produktion",
+    fach: "kunst",
+    typ: "einheit",
     prompt: "Baue mir ein Lernmaterial als einzelne HTML-Datei für den Kunstunterricht (Klasse 9 bis 10) zur Analyse von Werbung am Beispiel einer Lieferando-Anzeige (Burger auf rotem Grund, Überschrift „Ich will ein Rind von dir!“). Es gibt fünf Abschnitte. Erstens die Anzeige mit einem Feld für den ersten Eindruck. Zweitens die W-Fragen Wer, Wen, Wovon, Wie, bei denen die Lernenden zuerst selbst schreiben und dann einen Vorschlag aufdecken. Drittens eine AIDA-Leiste mit vier Pfeilen, bei der ein Tipp auf einen Schritt die passende Stelle in der Anzeige hervorhebt (restliches Bild abgedunkelt) und erklärt, wodurch Attention, Interest, Desire und Action erreicht werden. Viertens ein Zuordnungsspiel, bei dem zehn Gestaltungsmittel (zum Beispiel Rot als Signalfarbe, Wortspiel, Zahl 10.000, Burger in der Bildmitte, Logo unten rechts) per Tipp den vier AIDA-Stufen zugeordnet werden, mit Rückmeldung, dazu Reflexionsfragen mit Vorschlägen und kritische Fragen. Fünftens eine eigene Analyse einer selbst gewählten Anzeige mit Textfeldern, Bild-Vorschau nur auf dem Gerät, Kopieren und Drucken. Eingaben werden im Browser gespeichert. Das Design soll warm, rot und handytauglich sein, ohne Server und ohne Konto.",
     bild: "vorschau/lieferando.jpg",
     alt: "Die Startseite zur Lieferando-Anzeige mit rotem Titel und der Anzeige mit Burger"
@@ -365,7 +382,8 @@ const PROJEKTE = [
     titel: "Neonwellen",
     text: "Leuchtende Wellenlinien in Rot und Blau, jede Linie ist eine Saite. Beim Überstreichen erklingt eine Harfe, tief wie eine Gitarre.",
     seite: "neonwellen.html",
-    bereiche: "produktion",
+    fach: "kunst",
+    typ: "bild",
     prompt: "Baue mir eine einzelne HTML-Datei im Vollbild auf schwarzem Grund, die auf dem Handy flüssig läuft, ohne Server und ohne Konto. Etwa fünfzig leuchtende Neonlinien laufen als Wellen quer über den Bildschirm, wie auf einem Foto mit Lichtwellen. Oben sind sie leuchtend rot und orange, unten blau und violett, dazwischen verläuft eine helle rosa-weiße Naht, die sich langsam bewegt. Jede Linie wird dreifach gezeichnet (breiter Schein, mittlerer Schein, feiner heller Kern) mit additivem Mischen. Jede Linie ist eine Saite mit Federn zu ihren Nachbarn, sodass Berührungen Wellen auslösen, die über den Bildschirm laufen. Dazu soll es Klang geben, komplett im Browser mit Web Audio erzeugt. Wer eine Linie überquert, zupft eine Saite an, wie bei einer Harfe oder einer tiefen Gitarre (Karplus-Strong im Browser berechnet, E-Dur-Pentatonik von E2 aufwärts, unten tief, oben hoch, Stereoposition nach links und rechts), mit Echo und Hall. Im Hintergrund schwebt ein sehr leiser Klangteppich, ohne Rauschen. Die Farben wechseln von selbst sanft zwischen drei Farbwelten (Glut und Eis, Aurora, Abendglut), ein Knopf springt zur nächsten. Auf dem iPhone gibt erst ein Antippen den Ton frei, deshalb braucht es einen Knopf „Ton einschalten“, der nach dem Start verschwindet.",
     bild: "vorschau/neonwellen.jpg",
     alt: "Rote und blau-violette Neonwellen auf schwarzem Grund mit heller Naht"
@@ -374,7 +392,8 @@ const PROJEKTE = [
     titel: "Kunstglobus",
     text: "Die 100 wichtigsten Kunstwerke und 50 Bauwerke der Welt auf einer drehbaren Erdkugel mit Tag und Nacht. Frei erkunden, mit dem Zeitregler durch 40.000 Jahre reisen, Rundgänge machen, das Werk des Tages und ein Tagesrätsel, dazu Spiele wie Zeitstrahl und Detailrätsel.",
     seite: "kunstglobus.html",
-    bereiche: "rezeption,reflexion",
+    fach: "kunst",
+    typ: "lernspiel",
     prompt: "Baue eine HTML-Seite ohne externe Bibliotheken mit einer drehbaren, zoombaren Erdkugel (WebGL, orthografische Projektion, Tag und Nacht nach echter Uhrzeit, hochaufgelöste Erdbilder werden nachgeladen) und 150 Einträgen: 100 Kunstwerke und 50 Bauwerke mit Bild, Künstler, Jahr, Epoche, Region, Entstehungsort und heutigem Standort. Die Punkte sitzen genau am Ort, Bilder aus derselben Stadt werden im Kreis aufgefächert. Ein Tipp öffnet eine Karte mit großem Bild, Eckdaten samt Standort und einem langen Text; ein Lichtbogen verbindet Entstehungsort und Standort. Unten ein Zeitregler mit Abspielknopf und eine Leiste mit Heute (Werk des Tages, tägliches Rätsel zum Teilen), Rundgänge (nach Zeit, Region und Thema, jederzeit verlassbar, freiwilliges Quiz mit Sternen), Spiele (Wo steht es, Zeitstrahl, Detailrätsel, Werk erkennen, Wer, Epoche, Gemischt) und Sammlung (entdeckte und sicher gekonnte Werke, Abzeichen, freiwillige Wiederholung). Fortschritt im Browser. Handy zuerst, Zurück-Link zur Übersicht.",
     bild: "vorschau/kunstglobus.jpg",
     alt: "Dunkle Erdkugel mit vielen runden Werkbildern über Europa, rechts eine Karte mit der Arnolfini-Hochzeit"
@@ -383,12 +402,25 @@ const PROJEKTE = [
     titel: "Tierglobus",
     text: "400 Tierarten auf einer drehbaren Erdkugel mit Tag und Nacht nach echter Uhrzeit. Spielen heißt raten, wo ein Tier lebt, mit Punkten nach Entfernung, wahlweise mit allen Tieren oder einer Tiergruppe, danach Bonusrunden. Lernen heißt Tiere antippen oder mit Weiter von Tier zu Tier gehen, mit Verbreitungsgebiet, Wanderwegen, Steckbrief und Bildern zum Reinzoomen.",
     seite: "tierglobus.html",
-    bereiche: "rezeption,reflexion",
+    fach: "biologie",
+    typ: "lernspiel",
     prompt: "Baue eine HTML-Seite ohne externe Bibliotheken mit einer drehbaren, zoombaren Erdkugel (WebGL, Tag und Nacht nach echter Uhrzeit, Schalter für nur Tag und nur Nacht) und 400 Tierarten mit Bild, Steckbrief, Rote-Liste-Status, Lebensraum und Verbreitung. Startbild mit großem Logo, die Tiere als runde Bilder auf der sich drehenden Kugel und zwei Knöpfen Spielen (sonnengelb) und Lernen (mint). Spielen fragt zuerst nach allen Tieren oder einer Tiergruppe, dann zehn Runden Wo lebt das Tier, ein Tipp auf die Kugel zählt sofort, Punkte nach Entfernung zum Verbreitungsgebiet, eine Linie mit Kilometerangabe, deutlicher Punktestand mit Rundenpunkten, danach Auswertung mit Sternen, Rekord je Gruppe und Bonusrunden. Lernen mit Filter nach Tiergruppe, Los-gehts-Knopf, Tierkarte mit Bild, Eckdaten, Text und abgesetzter Box Mehr dazu, Weiter und Zurück, Verbreitungsgebiet als leuchtende Fläche und Lichtbogen für Wanderrouten. Alle Bilder lassen sich groß öffnen und mit zwei Fingern zoomen. Modernes Spiel-Design in Petrol, Sonnengelb und Mint, Handy zuerst, Zurück-Link zur Übersicht.",
     bild: "vorschau/tierglobus.jpg",
     alt: "Dunkle Erdkugel mit Lichtern der Nachtseite und vielen runden Tierbildern über Nordamerika",
   },
 ];
+
+const FAECHER = [["alle", "Alle"], ["kunst", "Kunst"], ["biologie", "Biologie"], ["sprachen", "Sprachen"], ["allgemein", "Allgemein"]];
+const ARTEN = {
+  anleitung: { name: "Anleitung", icon: '<path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20V3H6.5A2.5 2.5 0 0 0 4 5.5z"/><path d="M6.5 17A2.5 2.5 0 0 0 4 19.5 2.5 2.5 0 0 0 6.5 22H20v-5"/>' },
+  bild: { name: "Bild zum Anfassen", icon: '<path d="M9 11V5a2 2 0 0 1 4 0v6"/><path d="M13 9a2 2 0 0 1 4 0v3"/><path d="M17 11a2 2 0 0 1 4 0v4a7 7 0 0 1-7 7h-1a7 7 0 0 1-6-3.4L4.5 15a2 2 0 0 1 3.4-2L9 14.5"/>' },
+  kamera: { name: "Kamera und Hand", icon: '<path d="M23 7l-7 5 7 5V7z"/><rect x="1" y="5" width="15" height="14" rx="2"/>' },
+  lernspiel: { name: "Lernspiel", icon: '<rect x="2" y="6" width="20" height="12" rx="4"/><path d="M6 12h4M8 10v4"/><circle cx="16" cy="11" r=".6" fill="currentColor"/><circle cx="18" cy="13" r=".6" fill="currentColor"/>' },
+  einheit: { name: "Unterrichtseinheit", icon: '<rect x="8" y="2" width="8" height="4" rx="1"/><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><path d="M9 14l2 2 4-4"/>' },
+  werkzeug: { name: "Werkzeug", icon: '<path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.8-3.8a6 6 0 0 1-7.9 7.9l-6.9 6.9a2.1 2.1 0 0 1-3-3l6.9-6.9a6 6 0 0 1 7.9-7.9z"/>' }
+};
+const svgIcon = i => `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${i}</svg>`;
+const fachName = f => (FAECHER.find(x => x[0] === f) || [, ""])[1];
 
 function qrSvg(adresse) {
   const q = qrcode(0, "M");
@@ -398,30 +430,33 @@ function qrSvg(adresse) {
 }
 
 const FUNKEL = '<svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M10 3l1.9 5.1L17 10l-5.1 1.9L10 17l-1.9-5.1L3 10l5.1-1.9z"/><path d="M18.5 12l.9 2.6 2.6.9-2.6.9-.9 2.6-.9-2.6-2.6-.9 2.6-.9z"/><path d="M18 3l.6 1.9 1.9.6-1.9.6L18 8l-.6-1.9-1.9-.6 1.9-.6z"/></svg>';
+const PFEIL = '<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 8h10M9 4l4 4-4 4"/></svg>';
 const imNetz = location.protocol === "http:" || location.protocol === "https:";
 const raster = document.getElementById("raster");
 
-for (const p of PROJEKTE) {
+PROJEKTE.forEach((p, i) => {
   const adresse = new URL(p.seite, location.href).href;
+  const art = ARTEN[p.typ] || ARTEN.werkzeug;
   const k = document.createElement("article");
   k.className = "kachel";
-  k.dataset.bereiche = p.bereiche;
+  k.dataset.typ = p.typ;
+  k.dataset.fach = p.fach;
+  k.dataset.such = [p.titel, p.text, art.name, fachName(p.fach)].join(" ").toLowerCase();
   k.innerHTML = `
-    <a class="bild" href="${p.seite}" aria-label="${p.titel} öffnen"><img src="${p.bild}" alt="${p.alt}" loading="lazy"></a>
+    <a class="bild" href="${p.seite}" aria-label="${p.titel} öffnen" tabindex="-1"><img src="${p.bild}" alt="${p.alt}" loading="lazy"></a>
     <div class="unten">
-      <div class="text">
-        <h2><a href="${p.seite}">${p.titel}</a></h2>
-        <p>${p.text}</p>
-        <div class="aktionen"><a class="oeffnen" href="${p.seite}">Hier öffnen<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 8h10M9 4l4 4-4 4"/></svg></a>${p.prompt ? `<button type="button" class="startprompt" data-i="${PROJEKTE.indexOf(p)}" aria-label="Startprompt zu ${p.titel} anzeigen">${FUNKEL}<span><b>Startprompt</b><small>zum Nachbauen</small></span></button>` : ""}</div>
-      </div>
-      <div class="qr">
-        ${imNetz
+      <div class="marker"><span class="symbol">${svgIcon(art.icon)}</span><span class="etikett">${fachName(p.fach)} · ${art.name}</span></div>
+      <h2><a href="${p.seite}">${p.titel}</a></h2>
+      <p>${p.text}</p>
+      <div class="fuss">
+        <div class="aktionen"><a class="oeffnen" href="${p.seite}">Öffnen${PFEIL}</a>${p.prompt ? `<button type="button" class="startprompt" data-i="${i}" aria-label="Startprompt zu ${p.titel} anzeigen">${FUNKEL}<span><b>Startprompt</b><small>zum Nachbauen</small></span></button>` : ""}</div>
+        <div class="qr">${imNetz
           ? `<div class="platte" role="img" aria-label="QR-Code zu ${p.titel}">${qrSvg(adresse)}</div><small>Mit dem Handy scannen</small>`
-          : `<div class="leer">QR-Code erscheint, sobald die Seite online liegt</div>`}
+          : `<div class="leer">QR-Code erscheint, sobald die Seite online liegt</div>`}</div>
       </div>
     </div>`;
   raster.appendChild(k);
-}
+});
 
 // Startprompt anzeigen und kopieren
 const dlg = document.getElementById("promptDialog"), pdText = document.getElementById("pdText"), pdKopieren = document.getElementById("pdKopieren");
@@ -443,19 +478,30 @@ pdKopieren.addEventListener("click", async () => {
   if (ok) setTimeout(() => { pdKopieren.textContent = "Kopieren"; }, 2200);
 });
 
-// Reiter nach Kompetenzbereichen
-const BEREICHE = [["alle", "Alle"], ["organisatorisches", "Organisatorisches"], ["produktion", "Produktion"], ["rezeption", "Rezeption"], ["reflexion", "Reflexion"]];
-function zeige(b) {
-  if (!BEREICHE.some(x => x[0] === b)) b = "alle";
-  document.querySelectorAll(".kachel").forEach(k => { k.hidden = b !== "alle" && !k.dataset.bereiche.split(",").includes(b); });
-  document.querySelectorAll("#reiter button").forEach(x => x.setAttribute("aria-pressed", x.dataset.b === b));
-  try { if (b !== "alle") history.replaceState(null, "", "#" + b); } catch (e) {}
+// Suche nach Fach, Art und Stichwort
+let fach = "alle", typ = null;
+const q = document.getElementById("q"), faecher = document.getElementById("faecher"), arten = document.getElementById("arten");
+faecher.innerHTML = FAECHER.map(([id, n]) => `<button type="button" data-f="${id}">${n}</button>`).join("");
+arten.innerHTML = Object.entries(ARTEN).map(([id, a]) => `<button type="button" data-t="${id}" data-typ="${id}" aria-pressed="false">${svgIcon(a.icon)}${a.name}</button>`).join("");
+function filtern() {
+  const woerter = q.value.toLowerCase().trim().split(/\s+/).filter(Boolean);
+  let n = 0;
+  document.querySelectorAll(".kachel").forEach(k => {
+    const ok = (fach === "alle" || k.dataset.fach === fach) && (!typ || k.dataset.typ === typ) && woerter.every(w => k.dataset.such.includes(w));
+    k.hidden = !ok; if (ok) n++;
+  });
+  faecher.querySelectorAll("button").forEach(b => b.setAttribute("aria-pressed", b.dataset.f === fach));
+  arten.querySelectorAll("button").forEach(b => b.setAttribute("aria-pressed", b.dataset.t === typ));
+  document.getElementById("anzahl").textContent = n === 1 ? "1 Projekt" : n + " Projekte";
+  document.getElementById("leer").hidden = n > 0;
 }
-for (const [id, name] of BEREICHE) {
-  const b = document.createElement("button"); b.type = "button"; b.textContent = name; b.dataset.b = id;
-  b.addEventListener("click", () => zeige(id)); reiter.appendChild(b);
-}
-zeige(location.hash.slice(1));
+faecher.addEventListener("click", e => { const b = e.target.closest("button"); if (!b) return; fach = b.dataset.f; try { history.replaceState(null, "", fach === "alle" ? "#projekte" : "#" + fach); } catch (x) {} filtern(); });
+arten.addEventListener("click", e => { const b = e.target.closest("button"); if (!b) return; typ = typ === b.dataset.t ? null : b.dataset.t; filtern(); });
+q.addEventListener("input", filtern);
+document.getElementById("zurueck").addEventListener("click", () => { fach = "alle"; typ = null; q.value = ""; filtern(); });
+const h = location.hash.slice(1);
+if (FAECHER.some(x => x[0] === h)) { fach = h; requestAnimationFrame(() => document.getElementById("projekte").scrollIntoView()); }
+filtern();
 </script>
 </body>
 </html>
